@@ -3,9 +3,19 @@ import { ref, nextTick, computed, onMounted, onUnmounted } from "vue";
 import { useSidebarStore } from "../Stores/sidebarStore.js";
 import { Link, usePage, router } from "@inertiajs/vue3";
 import { menuItems } from "../Data/menu.js";
+import ConfirmModal from "./ConfirmModal.vue";
 
 const sidebarStore = useSidebarStore();
 const page = usePage();
+const showLogoutModal = ref(false);
+
+const promptLogout = () => {
+  showLogoutModal.value = true;
+};
+
+const handleLogout = () => {
+  router.post(route("logout"));
+};
 
 const menuItemRefs = ref(new Map());
 const activeSubmenu = ref(null);
@@ -68,7 +78,6 @@ const activeStates = computed(() => {
 
   const checkActive = (item) => {
     if (item.routeName) {
-      console.log(page.props.ziggy.current);
       return page.props.ziggy.current === item.routeName;
     }
     if (item.submenu) {
@@ -220,7 +229,10 @@ const activeStates = computed(() => {
                               :key="nestedItem.name"
                               class="p-2 pl-4 text-white text-xs cursor-pointer hover:bg-[#f9f6f630] rounded-l-3xl"
                             >
-                              <Link :href="route(nestedItem.routeName)">
+                              <Link
+                                :href="route(nestedItem.routeName)"
+                                class="block"
+                              >
                                 <i :class="`${nestedItem.icon} mr-2`"></i>
                                 <span>{{ nestedItem.name }}</span>
                               </Link>
@@ -236,8 +248,32 @@ const activeStates = computed(() => {
           </ul>
         </nav>
       </div>
+
+      <!-- Logout section at bottom -->
+      <div class="mb-2 ml-3">
+        <div
+          class="p-2 text-white cursor-pointer flex items-center hover:bg-[#f9f6f630] rounded-l-3xl"
+          @click="promptLogout"
+        >
+          <i class="pi pi-sign-out p-2"></i>
+          <span class="ml-2" v-if="!sidebarStore.isCollapsed">LOGOUT</span>
+        </div>
+      </div>
     </div>
   </div>
+  <!-- Logout Confirmation Modal -->
+  <ConfirmModal
+    :show="showLogoutModal"
+    title="Logout Confirmation"
+    message="Are you sure you want to logout?"
+    confirm-text="Logout"
+    icon-name="pi pi-sign-out"
+    icon-color="text-red-600"
+    icon-bg-color="bg-red-100"
+    confirm-button-bg="bg-red-600 hover:bg-red-700"
+    @confirm="handleLogout"
+    @cancel="showLogoutModal = false"
+  />
 </template>
 
 <style scoped>

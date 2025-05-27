@@ -5,6 +5,11 @@ export const menuItems = [
     routeName: "dashboard",
   },
   {
+    name: "EMPLOYEES",
+    icon: "pi pi-users",
+    routeName: "team.employees",
+  },
+  {
     name: "ATTENDANCE",
     icon: "pi pi-address-book",
     hasSubmenu: true,

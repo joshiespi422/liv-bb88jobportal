@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -21,6 +22,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'user_type_id',
     ];
 
     /**
@@ -44,5 +46,24 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+     /**
+     * Get the user type that owns the user.
+     */
+    public function userType(): BelongsTo 
+    {
+        return $this->belongsTo(UserType::class);
+    }
+
+    /**
+     * Check if the user has a specific role.
+     *
+     * @param string $typeName
+     * @return bool
+     */
+    public function hasRole(string $typeName): bool 
+    {
+        return $this->userType && $this->userType->type_name === $typeName;
     }
 }

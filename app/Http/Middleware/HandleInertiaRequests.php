@@ -36,6 +36,16 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+        $userType = null;
+
+        if ($user) {
+            if (!$user->relationLoaded('userType')) {
+                $user->load('userType');
+            }
+            $userType = $user->userType ? $user->userType->type_name : null;
+        }
+
         return [
             ...parent::share($request),
             'ziggy' => function () use ($request) { 
@@ -43,7 +53,17 @@ class HandleInertiaRequests extends Middleware
                     'location' => $request->url(),
                     'current' => $request->route() ? $request->route()->getName() : null,
                 ]);
-            }
+            },
+            'auth' => [
+                'user' => $request->user() ? [
+                    'id' => $request->user()->id,
+                    'user_type' => $userType,
+                ] : null,
+            ],
+            'flash' => [
+                'message' => fn () => $request->session()->get('message'),
+                'error' => fn () => $request->session()->get('error'),
+            ],
         ];
     }
 }
