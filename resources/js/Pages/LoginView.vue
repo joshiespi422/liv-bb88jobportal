@@ -35,8 +35,8 @@ const handleLogin = () => {
 
         <!-- Title -->
         <div class="text-center">
-          <h2 class="text-2xl font-bold">Welcome back!</h2>
-          <p class="font-medium text-gray-primary">
+          <h2 class="text-2xl font-bold text-neutral-800">Welcome back!</h2>
+          <p class="font-semibold text-gray-primary">
             Sign in by entering the information below.
           </p>
         </div>
@@ -46,7 +46,7 @@ const handleLogin = () => {
           <!-- Form -->
           <div class="w-full overflow-hidden">
             <form @submit.prevent="handleLogin">
-              <div class="my-4 text-sm">
+              <div class="w-[95%] mx-auto my-4 text-sm">
                 <label class="block font-bold ms-1 text-gray-primary"
                   >Email</label
                 >
@@ -56,7 +56,7 @@ const handleLogin = () => {
                   @input="form.clearErrors('auth')"
                   placeholder="Enter your email"
                   :class="[
-                    'w-full p-2 border border-gray-primary rounded bg-white',
+                    'w-full p-2 border border-gray-primary rounded bg-white text-black',
                     {
                       'border-red-500 border-2': form.errors.auth,
                     },
@@ -64,7 +64,7 @@ const handleLogin = () => {
                   required
                 />
               </div>
-              <div class="mt-4 text-sm">
+              <div class="w-[95%] mx-auto mt-4 text-sm">
                 <label class="block font-bold ms-1 text-gray-primary"
                   >Password</label
                 >
@@ -74,7 +74,7 @@ const handleLogin = () => {
                   @input="form.clearErrors('auth')"
                   placeholder="Enter your password"
                   :class="[
-                    'w-full p-2 border border-gray-primary rounded bg-white',
+                    'w-full p-2 border border-gray-primary rounded bg-white text-black',
                     {
                       'border-red-500 border-2': form.errors.auth,
                     },

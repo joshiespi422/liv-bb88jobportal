@@ -57,6 +57,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Defines a one-to-one relationship with users and user_employees
+     */
+    public function employeeDetails()
+    {
+        return $this->hasOne(UserEmployee::class);
+    }
+
+    /**
      * Check if the user has a specific role.
      *
      * @param string $typeName

@@ -1,31 +1,51 @@
+<script setup>
+import { ref } from "vue";
+import DataTable from "../Components/DataTable.vue";
+
+// Define the props received from Inertia (passed by EmployeeController)
+const props = defineProps({
+  employees: {
+    type: Array,
+    default: () => [],
+  },
+  // any other props your page might need
+});
+
+// Define the columns specifically for the employees table
+// This structure matches what Tanstack Table expects for column definitions.
+const employeeTableColumns = ref([
+  // Using ref if you might dynamically change columns, otherwise const is fine
+  {
+    accessorKey: "name", // Corresponds to the key in your employee data objects
+    header: "Name",
+    // You can add cell formatting here if needed:
+    // cell: info => info.getValue(), // Default rendering
+    // size: 200, // Optional: define column width
+  },
+  {
+    accessorKey: "dept_name",
+    header: "Department",
+  },
+  {
+    accessorKey: "hierarchy",
+    header: "Hierarchy",
+  },
+  // Example of a custom cell render:
+  // {
+  //   accessorKey: 'id', // Assuming your employee data has an ID
+  //   header: 'Actions',
+  //   cell: ({ row }) => h('button', { onClick: () => handleEdit(row.original) }, 'Edit')
+  //   // Make sure to import `h` from `vue` if you use render functions: import { h } from 'vue';
+  //   // Or use <template> syntax within the cell definition for more complex custom cells
+  //   enableSorting: false,
+  // },
+]);
+</script>
+
 <template>
   <div class="p-20">
     <h1>EmployeesView</h1>
-    <table class="table-fixed">
-      <thead>
-        <tr>
-          <th>Song</th>
-          <th>Artist</th>
-          <th>Year</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>The Sliding Mr. Bones (Next Stop, Pottersville)</td>
-          <td>Malcolm Lockyer</td>
-          <td>1961</td>
-        </tr>
-        <tr>
-          <td>Witchy Woman</td>
-          <td>The Eagles</td>
-          <td>1972</td>
-        </tr>
-        <tr>
-          <td>Shining Star</td>
-          <td>Earth, Wind, and Fire</td>
-          <td>1975</td>
-        </tr>
-      </tbody>
-    </table>
+
+    <DataTable :data="props.employees" :columns="employeeTableColumns" />
   </div>
 </template>

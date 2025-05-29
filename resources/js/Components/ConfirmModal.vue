@@ -1,4 +1,12 @@
 <script setup>
+import {
+  Dialog,
+  DialogPanel,
+  DialogTitle,
+  TransitionChild,
+  TransitionRoot,
+} from "@headlessui/vue";
+
 defineProps({
   show: Boolean,
   title: {
@@ -39,85 +47,87 @@ defineEmits(["confirm", "cancel"]);
 </script>
 
 <template>
-  <teleport to="body">
-    <transition
-      enter-active-class="ease-out duration-300"
-      leave-active-class="ease-in duration-200"
-    >
-      <div v-show="show" class="relative z-50">
-        <!-- Background backdrop -->
-        <div
-          v-show="show"
-          class="fixed inset-0 bg-gray-500/75 transition-opacity"
-          aria-hidden="true"
-          @click.self="$emit('cancel')"
-        />
+  <TransitionRoot as="template" :show="show">
+    <Dialog as="div" class="relative z-50" @close="$emit('cancel')">
+      <!-- Background backdrop -->
+      <TransitionChild
+        as="template"
+        enter="ease-out duration-300"
+        enter-from="opacity-0"
+        enter-to="opacity-100"
+        leave="ease-in duration-200"
+        leave-from="opacity-100"
+        leave-to="opacity-0"
+      >
+        <div class="fixed inset-0 bg-black/25 transition-opacity" />
+      </TransitionChild>
 
-        <!-- Modal container -->
+      <!-- Modal container -->
+      <div class="fixed inset-0 z-10 overflow-y-auto">
         <div
-          class="fixed inset-0 z-10 w-screen overflow-y-auto pointer-events-none"
+          class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0"
         >
-          <div
-            class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0"
+          <TransitionChild
+            as="template"
+            enter="ease-out duration-300"
+            enter-from="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+            enter-to="opacity-100 translate-y-0 sm:scale-100"
+            leave="ease-in duration-200"
+            leave-from="opacity-100 translate-y-0 sm:scale-100"
+            leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
           >
-            <transition
-              enter-active-class="ease-out duration-300"
-              enter-from-class="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-              enter-to-class="opacity-100 translate-y-0 sm:scale-100"
-              leave-active-class="ease-in duration-200"
-              leave-from-class="opacity-100 translate-y-0 sm:scale-100"
-              leave-to-class="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+            <DialogPanel
+              class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg"
             >
-              <div
-                v-show="show"
-                class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg pointer-events-auto"
-              >
-                <!-- Modal content -->
-                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                  <div class="sm:flex sm:items-start">
-                    <div
-                      class="mx-auto flex size-12 shrink-0 items-center justify-center rounded-full sm:mx-0 sm:size-10"
-                      :class="iconBgColor"
+              <!-- Modal content -->
+              <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="sm:flex sm:items-start">
+                  <!-- Modal icon -->
+                  <div
+                    class="mx-auto flex size-12 shrink-0 items-center justify-center rounded-full sm:mx-0 sm:size-10"
+                    :class="iconBgColor"
+                  >
+                    <i class="text-2xl" :class="[iconName, iconColor]"></i>
+                  </div>
+                  <!-- Modal title and message -->
+                  <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                    <DialogTitle
+                      as="h3"
+                      class="text-base font-semibold leading-6 text-gray-900"
                     >
-                      <i class="text-2xl" :class="[iconName, iconColor]"></i>
-                    </div>
-                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                      <h3
-                        class="text-base font-semibold text-gray-900"
-                        id="modal-title"
-                      >
-                        {{ title }}
-                      </h3>
-                      <div class="mt-2">
-                        <p class="text-sm text-gray-500">{{ message }}</p>
-                      </div>
+                      {{ title }}
+                    </DialogTitle>
+                    <div class="mt-2">
+                      <p class="text-sm text-gray-500">{{ message }}</p>
                     </div>
                   </div>
                 </div>
-                <div
-                  class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6"
-                >
-                  <button
-                    type="button"
-                    class="inline-flex w-full justify-center rounded-md px-3 py-2 text-sm font-semibold text-white shadow-xs sm:ml-3 sm:w-auto cursor-pointer"
-                    :class="confirmButtonBg"
-                    @click="$emit('confirm')"
-                  >
-                    {{ confirmText }}
-                  </button>
-                  <button
-                    type="button"
-                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-gray-300 hover:bg-gray-100 sm:mt-0 sm:w-auto cursor-pointer"
-                    @click="$emit('cancel')"
-                  >
-                    {{ cancelText }}
-                  </button>
-                </div>
               </div>
-            </transition>
-          </div>
+
+              <!-- Modal footer -->
+              <div
+                class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6"
+              >
+                <button
+                  type="button"
+                  class="inline-flex w-full justify-center rounded-md px-3 py-2 text-sm font-semibold text-white shadow-xs sm:ml-3 sm:w-auto cursor-pointer"
+                  :class="confirmButtonBg"
+                  @click="$emit('confirm')"
+                >
+                  {{ confirmText }}
+                </button>
+                <button
+                  type="button"
+                  class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-gray-300 hover:bg-gray-100 sm:mt-0 sm:w-auto cursor-pointer"
+                  @click="$emit('cancel')"
+                >
+                  {{ cancelText }}
+                </button>
+              </div>
+            </DialogPanel>
+          </TransitionChild>
         </div>
       </div>
-    </transition>
-  </teleport>
+    </Dialog>
+  </TransitionRoot>
 </template>

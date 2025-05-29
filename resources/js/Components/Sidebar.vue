@@ -96,171 +96,162 @@ const activeStates = computed(() => {
 
 <template>
   <div
-    :class="[
-      'h-screen transition-[width] duration-300 ease-in-out relative',
-      {
-        'w-20': sidebarStore.isCollapsed,
-        'w-2xs': !sidebarStore.isCollapsed,
-      },
-    ]"
+    class="h-[97%] ml-2 my-2 relative bg-gradient-to-b from-green-primary-1 to-green-secondary rounded-3xl flex flex-col"
   >
-    <div
-      class="h-[97%] ml-2 my-2 bg-gradient-to-b from-green-primary-1 to-green-secondary rounded-3xl flex flex-col"
-    >
-      <div class="ml-2 mr-4 py-3 h-20" v-if="!sidebarStore.isCollapsed">
-        <img src="../../assets/img/bb88-logo.png" alt="" />
-      </div>
-      <div class="flex justify-center py-3" v-else>
-        <img src="../../assets/img/bb88-solo-logo.png" alt="" class="w-13" />
-      </div>
+    <div class="ml-2 mr-4 py-3 h-20" v-if="!sidebarStore.isCollapsed">
+      <img src="../../assets/img/bb88-logo.png" alt="" />
+    </div>
+    <div class="flex justify-center py-3" v-else>
+      <img src="../../assets/img/bb88-solo-logo.png" alt="" class="w-13" />
+    </div>
 
-      <div class="overflow-y-auto overflow-x-hidden flex-grow sidebar-scroll">
-        <!-- Main navigation -->
-        <nav class="ml-3 mt-3">
-          <ul>
-            <li
-              v-for="item in allMenuItems"
-              :key="item.name"
-              class="text-white mb-1"
+    <div class="overflow-y-auto overflow-x-hidden flex-grow sidebar-scroll">
+      <!-- Main navigation -->
+      <nav class="ml-3 mt-3">
+        <ul>
+          <li
+            v-for="item in allMenuItems"
+            :key="item.name"
+            class="text-white mb-1"
+          >
+            <!-- Menu item -->
+            <component
+              :is="item.hasSubmenu ? 'div' : Link"
+              :ref="(el) => setMenuItemRef(el, item.name)"
+              :href="item.hasSubmenu ? undefined : route(item.routeName)"
+              :class="[
+                'relative p-2 rounded-l-3xl flex items-center cursor-pointer',
+                {
+                  'bg-base-100 text-green-primary-1 font-extrabold item-active':
+                    activeStates[item.name],
+                  'hover:bg-[#f9f6f630]': !activeStates[item.name],
+                  'justify-center pr-4': sidebarStore.isCollapsed,
+                },
+              ]"
+              @click="item.hasSubmenu && toggleSubmenu(item.name)"
             >
-              <!-- Menu item -->
-              <component
-                :is="item.hasSubmenu ? 'div' : Link"
-                :ref="(el) => setMenuItemRef(el, item.name)"
-                :href="item.hasSubmenu ? undefined : route(item.routeName)"
+              <i :class="`${item.icon} p-2`"></i>
+              <span class="ml-2" v-if="!sidebarStore.isCollapsed">{{
+                item.name
+              }}</span>
+              <i
+                v-if="item.hasSubmenu && !sidebarStore.isCollapsed"
                 :class="[
-                  'relative p-2 rounded-l-3xl flex items-center cursor-pointer',
+                  'pi pi-chevron-right ml-auto mr-5 transition-transform duration-300',
                   {
-                    'bg-white-primary text-green-primary-1 font-extrabold item-active':
-                      activeStates[item.name],
-                    'hover:bg-[#f9f6f630]': !activeStates[item.name],
-                    'justify-center pr-4': sidebarStore.isCollapsed,
+                    'rotate-90': activeSubmenu === item.name,
+                    'rotate-0': activeSubmenu !== item.name,
                   },
                 ]"
-                @click="item.hasSubmenu && toggleSubmenu(item.name)"
-              >
-                <i :class="`${item.icon} p-2`"></i>
-                <span class="ml-2" v-if="!sidebarStore.isCollapsed">{{
-                  item.name
-                }}</span>
-                <i
-                  v-if="item.hasSubmenu && !sidebarStore.isCollapsed"
-                  :class="[
-                    'pi pi-chevron-right ml-auto mr-5 transition-transform duration-300',
-                    {
-                      'rotate-90': activeSubmenu === item.name,
-                      'rotate-0': activeSubmenu !== item.name,
-                    },
-                  ]"
-                ></i>
-              </component>
+              ></i>
+            </component>
 
-              <!-- Submenu items if any -->
-              <transition name="submenu">
-                <div
-                  v-if="item.hasSubmenu && activeSubmenu === item.name"
+            <!-- Submenu items if any -->
+            <transition name="submenu">
+              <div
+                v-if="item.hasSubmenu && activeSubmenu === item.name"
+                :class="{
+                  'absolute left-full ml-2 bg-gradient-to-b from-green-primary-1 to-green-secondary rounded-lg shadow-lg min-w-[200px] z-50':
+                    sidebarStore.isCollapsed,
+                }"
+                :style="
+                  sidebarStore.isCollapsed
+                    ? { top: submenuTopPosition + 'px' }
+                    : {}
+                "
+              >
+                <ul
                   :class="{
-                    'absolute left-full ml-2 bg-gradient-to-b from-green-primary-1 to-green-secondary rounded-lg shadow-lg min-w-[200px] z-50':
-                      sidebarStore.isCollapsed,
+                    'pl-5 border-l border-white': !sidebarStore.isCollapsed,
+                    'my-3': sidebarStore.isCollapsed,
                   }"
-                  :style="
-                    sidebarStore.isCollapsed
-                      ? { top: submenuTopPosition + 'px' }
-                      : {}
-                  "
                 >
-                  <ul
-                    :class="{
-                      'pl-5 border-l border-white': !sidebarStore.isCollapsed,
-                      'my-3': sidebarStore.isCollapsed,
-                    }"
+                  <li
+                    v-for="subItem in item.submenu"
+                    :key="subItem.name"
+                    class="text-white text-sm"
                   >
-                    <li
-                      v-for="subItem in item.submenu"
-                      :key="subItem.name"
-                      class="text-white text-sm"
+                    <!-- 1st Nested submenu -->
+                    <component
+                      :is="subItem.hasSubmenu ? 'div' : Link"
+                      :href="
+                        !subItem.hasSubmenu
+                          ? route(subItem.routeName)
+                          : undefined
+                      "
+                      class="p-2 pl-5 flex items-center cursor-pointer hover:bg-[#f9f6f630] rounded-l-3xl"
+                      @click="
+                        subItem.hasSubmenu &&
+                          toggleNestedSubmenu($event, subItem.name)
+                      "
                     >
-                      <!-- 1st Nested submenu -->
-                      <component
-                        :is="subItem.hasSubmenu ? 'div' : Link"
-                        :href="
-                          !subItem.hasSubmenu
-                            ? route(subItem.routeName)
-                            : undefined
-                        "
-                        class="p-2 pl-5 flex items-center cursor-pointer hover:bg-[#f9f6f630] rounded-l-3xl"
-                        @click="
+                      <i :class="`${subItem.icon} mr-2`"></i>
+                      <span>{{ subItem.name }}</span>
+                      <i
+                        v-if="subItem.hasSubmenu"
+                        :class="[
+                          'pi pi-chevron-right ml-auto mr-3 transition-transform duration-300',
+                          {
+                            'rotate-90': activeNestedSubmenu === subItem.name,
+                            'rotate-0': activeNestedSubmenu !== subItem.name,
+                          },
+                        ]"
+                      ></i>
+                    </component>
+
+                    <!-- 2nd Nested submenu -->
+                    <transition name="nested-submenu">
+                      <div
+                        v-if="
                           subItem.hasSubmenu &&
-                            toggleNestedSubmenu($event, subItem.name)
+                          activeNestedSubmenu === subItem.name
                         "
                       >
-                        <i :class="`${subItem.icon} mr-2`"></i>
-                        <span>{{ subItem.name }}</span>
-                        <i
-                          v-if="subItem.hasSubmenu"
-                          :class="[
-                            'pi pi-chevron-right ml-auto mr-3 transition-transform duration-300',
-                            {
-                              'rotate-90': activeNestedSubmenu === subItem.name,
-                              'rotate-0': activeNestedSubmenu !== subItem.name,
-                            },
-                          ]"
-                        ></i>
-                      </component>
-
-                      <!-- 2nd Nested submenu -->
-                      <transition name="nested-submenu">
-                        <div
-                          v-if="
-                            subItem.hasSubmenu &&
-                            activeNestedSubmenu === subItem.name
-                          "
+                        <ul
+                          :class="{
+                            'ml-4 pl-2 border-l border-white':
+                              sidebarStore.isCollapsed,
+                            'pl-6 border-l border-white':
+                              !sidebarStore.isCollapsed,
+                          }"
                         >
-                          <ul
-                            :class="{
-                              'ml-4 pl-2 border-l border-white':
-                                sidebarStore.isCollapsed,
-                              'pl-6 border-l border-white':
-                                !sidebarStore.isCollapsed,
-                            }"
+                          <li
+                            v-for="nestedItem in subItem.submenu"
+                            :key="nestedItem.name"
+                            class="p-2 pl-4 text-white text-xs cursor-pointer hover:bg-[#f9f6f630] rounded-l-3xl"
                           >
-                            <li
-                              v-for="nestedItem in subItem.submenu"
-                              :key="nestedItem.name"
-                              class="p-2 pl-4 text-white text-xs cursor-pointer hover:bg-[#f9f6f630] rounded-l-3xl"
+                            <Link
+                              :href="route(nestedItem.routeName)"
+                              class="block"
                             >
-                              <Link
-                                :href="route(nestedItem.routeName)"
-                                class="block"
-                              >
-                                <i :class="`${nestedItem.icon} mr-2`"></i>
-                                <span>{{ nestedItem.name }}</span>
-                              </Link>
-                            </li>
-                          </ul>
-                        </div>
-                      </transition>
-                    </li>
-                  </ul>
-                </div>
-              </transition>
-            </li>
-          </ul>
-        </nav>
-      </div>
+                              <i :class="`${nestedItem.icon} mr-2`"></i>
+                              <span>{{ nestedItem.name }}</span>
+                            </Link>
+                          </li>
+                        </ul>
+                      </div>
+                    </transition>
+                  </li>
+                </ul>
+              </div>
+            </transition>
+          </li>
+        </ul>
+      </nav>
+    </div>
 
-      <!-- Logout section at bottom -->
-      <div class="mb-2 ml-3">
-        <div
-          class="p-2 text-white cursor-pointer flex items-center hover:bg-[#f9f6f630] rounded-l-3xl"
-          @click="promptLogout"
-        >
-          <i class="pi pi-sign-out p-2"></i>
-          <span class="ml-2" v-if="!sidebarStore.isCollapsed">LOGOUT</span>
-        </div>
+    <!-- Logout section at bottom -->
+    <div class="mb-2 ml-3">
+      <div
+        class="p-2 text-white cursor-pointer flex items-center hover:bg-[#f9f6f630] rounded-l-3xl"
+        @click="promptLogout"
+      >
+        <i class="pi pi-sign-out p-2"></i>
+        <span class="ml-2" v-if="!sidebarStore.isCollapsed">LOGOUT</span>
       </div>
     </div>
   </div>
+
   <!-- Logout Confirmation Modal -->
   <ConfirmModal
     :show="showLogoutModal"
@@ -288,13 +279,21 @@ const activeStates = computed(() => {
 }
 .item-active::after {
   top: -20px;
-  box-shadow: 6px 6px 0 6px #f1f1f1;
+  box-shadow: 6px 6px 0 6px;
   border-radius: 0 0 20px 0;
 }
 .item-active::before {
   bottom: -20px;
-  box-shadow: 6px -6px 0 6px #f1f1f1;
+  box-shadow: 6px -6px 0 6px;
   border-radius: 0 20px 0 0;
+}
+[data-theme="nord"] .item-active::before,
+[data-theme="nord"] .item-active::after {
+  color: var(--nord-color);
+}
+[data-theme="dracula"] .item-active::before,
+[data-theme="dracula"] .item-active::after {
+  color: var(--dracula-color);
 }
 
 .sidebar-scroll::-webkit-scrollbar {
