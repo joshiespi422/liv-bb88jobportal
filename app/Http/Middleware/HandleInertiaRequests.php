@@ -38,12 +38,19 @@ class HandleInertiaRequests extends Middleware
     {
         $user = $request->user();
         $userType = null;
+        $department = null;
 
         if ($user) {
             if (!$user->relationLoaded('userType')) {
                 $user->load('userType');
             }
             $userType = $user->userType ? $user->userType->type_name : null;
+
+                // Load department if user is an employee
+            if ($userType === 'employee') {
+                $user->load(['employeeDetails.department']);
+                $department = $user->employeeDetails->department ?? null;
+            }
         }
 
         return [
@@ -58,6 +65,10 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user() ? [
                     'id' => $request->user()->id,
                     'user_type' => $userType,
+                    'department' => $department ? [
+                        'id' => $department->id,
+                        'name' => $department->dept_name
+                    ] : null
                 ] : null,
             ],
             'flash' => [

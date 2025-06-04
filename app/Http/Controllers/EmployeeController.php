@@ -4,9 +4,13 @@ namespace App\Http\Controllers;
 
 
 use App\Models\User;
+use App\Models\Department;
+use App\Models\UserEmployee;
+use App\Models\UserType;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
+
 
 class EmployeeController extends Controller
 {
@@ -24,6 +28,7 @@ class EmployeeController extends Controller
             ->get()
             ->map(function ($user) {
                 return [
+                    'id' => $user->id,
                     'name' => $user->name,
                     'dept_name' => $user->employeeDetails && $user->employeeDetails->department
                                     ? $user->employeeDetails->department->dept_name
@@ -35,7 +40,8 @@ class EmployeeController extends Controller
             });
 
         return Inertia::render('EmployeesView', [
-            'employees' => $employeesList
+            'employees' => $employeesList,
+            'departments' => Department::all(['id', 'dept_name']),
         ]);
     }
 
@@ -52,7 +58,38 @@ class EmployeeController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'email' => 'required|email|unique:users,email',
+            'name' => 'required|string|max:255',
+            'qr_code' => 'nullable|string|regex:/^\d{2}-[A-Z]\d{4}-\d{4}$/',
+            'position' => 'required|string|max:255',
+            'department_id' => 'required|exists:departments,id',
+            'hierarchy' => 'required|in:Leader,Member',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        DB::transaction(function () use ($request) {
+            // Find employee user type
+            $employeeType = UserType::where('type_name', 'employee')->firstOrFail();
+
+            // Create user
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => bcrypt($request->password),
+                'user_type_id' => $employeeType->id,
+                'position' => $request->position,
+                'qr_code' => $request->qr_code,
+            ]);
+
+            // Create employee details
+            UserEmployee::create([
+                'user_id' => $user->id,
+                'department_id' => $request->department_id,
+                'hierarchy' => $request->hierarchy,
+            ]);
+        });
+        return redirect()->back()->with('success', 'Employee created successfully');
     }
 
     /**
@@ -60,7 +97,29 @@ class EmployeeController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $employee = User::with([
+                'employeeDetails:user_id,hierarchy,department_id',
+                'employeeDetails.department:id,dept_name'
+            ])
+            ->whereHas('employeeDetails')
+            ->select('id', 'name', 'position', 'address', 'gender', 'bday')
+            ->findOrFail($id);
+
+        $employeeDetails = [
+            'id' => $employee->id,
+            'name' => $employee->name,
+            'position' => $employee->position,
+            'address' => $employee->address,
+            'gender' => $employee->gender,
+            'bday' => $employee->bday,
+            'dept_name' => $employee->employeeDetails && $employee->employeeDetails->department
+                            ? $employee->employeeDetails->department->dept_name
+                            : null,
+            'hierarchy' => $employee->employeeDetails
+                            ? $employee->employeeDetails->hierarchy
+                            : null,
+        ];
+        return response()->json($employeeDetails);
     }
 
     /**
