@@ -20,6 +20,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('team')->name('team.')->group(function () {
         Route::get('/employees', [EmployeeController::class, 'index'])->name('employees');
         Route::get('/employees/{id}', [EmployeeController::class, 'show'])->name('employees.show');
+        Route::post('/employees', [EmployeeController::class, 'store'])->name('employees.store'); 
     });
     
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');

@@ -15,6 +15,7 @@ return new class extends Migration
             $table->unsignedBigInteger('user_id')->primary();
             $table->foreignId('department_id')->constrained('departments')->onDelete('restrict');
             $table->string('school');
+            $table->timestamps();
 
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });

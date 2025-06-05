@@ -65,31 +65,37 @@ class EmployeeController extends Controller
             'position' => 'required|string|max:255',
             'department_id' => 'required|exists:departments,id',
             'hierarchy' => 'required|in:Leader,Member',
-            'password' => 'required|string|min:8|confirmed',
+            'password' => 'required|string|min:8',
         ]);
 
-        DB::transaction(function () use ($request) {
-            // Find employee user type
-            $employeeType = UserType::where('type_name', 'employee')->firstOrFail();
+        try {
+            DB::transaction(function () use ($request) {
+                // Find employee user type
+                $employeeType = UserType::where('type_name', 'employee')->firstOrFail();
 
-            // Create user
-            $user = User::create([
-                'name' => $request->name,
-                'email' => $request->email,
-                'password' => bcrypt($request->password),
-                'user_type_id' => $employeeType->id,
-                'position' => $request->position,
-                'qr_code' => $request->qr_code,
-            ]);
+                // Create user
+                $user = User::create([
+                    'name' => $request->name,
+                    'email' => $request->email,
+                    'password' => bcrypt($request->password),
+                    'user_type_id' => $employeeType->id,
+                    'position' => $request->position,
+                    'qr_code' => $request->qr_code,
+                ]);
 
-            // Create employee details
-            UserEmployee::create([
-                'user_id' => $user->id,
-                'department_id' => $request->department_id,
-                'hierarchy' => $request->hierarchy,
-            ]);
-        });
-        return redirect()->back()->with('success', 'Employee created successfully');
+                // Create employee details
+                UserEmployee::create([
+                    'user_id' => $user->id,
+                    'department_id' => $request->department_id,
+                    'hierarchy' => $request->hierarchy,
+                ]);
+            });
+            return redirect()->back()->with('success', 'Employee created successfully');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Failed to create employee: ' . $e->getMessage());
+        }
+        
+        
     }
 
     /**

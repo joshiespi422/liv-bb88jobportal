@@ -15,6 +15,7 @@ return new class extends Migration
             $table->unsignedBigInteger('user_id')->primary();
             $table->foreignId('department_id')->constrained('departments')->onDelete('restrict');
             $table->enum('hierarchy', ['Leader', 'Member'])->default('Member');
+            $table->timestamps();
 
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
@@ -26,5 +27,5 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('user_employees');
-    }
+    }   
 };

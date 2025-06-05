@@ -1,6 +1,7 @@
 <script setup>
 import Sidebar from "../Components/Sidebar.vue";
 import Header from "../Components/Header.vue";
+import ToastContainer from "../Components/toast/ToastContainer.vue";
 
 import { useSidebarStore } from "../Stores/sidebarStore.js";
 
@@ -19,7 +20,8 @@ const sidebarStore = useSidebarStore();
       <Header />
       <!-- Dynamic content area -->
       <main class="overflow-auto">
-        <slot></slot>
+        <slot />
+        <ToastContainer />
       </main>
     </div>
   </div>

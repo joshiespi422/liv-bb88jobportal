@@ -59,11 +59,11 @@ defineEmits(["confirm", "cancel"]);
         leave-from="opacity-100"
         leave-to="opacity-0"
       >
-        <div class="fixed inset-0 bg-black/25 transition-opacity" />
+        <div class="fixed inset-0 bg-black/50 transition-opacity" />
       </TransitionChild>
 
       <!-- Modal container -->
-      <div class="fixed inset-0 z-10 overflow-y-auto">
+      <div class="fixed inset-0 z-50 overflow-y-auto">
         <div
           class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0"
         >

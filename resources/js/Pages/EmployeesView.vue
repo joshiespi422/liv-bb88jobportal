@@ -1,6 +1,7 @@
 <script setup>
-import { ref, h, computed } from "vue";
+import { ref, h, computed, watch } from "vue";
 import { useForm, usePage } from "@inertiajs/vue3";
+import { useToast } from "../Composables/useToast";
 import DataTable from "../Components/DataTable.vue";
 import DetailsModal from "../Components/DetailsModal.vue";
 import FormModal from "../Components/FormModal.vue";
@@ -21,12 +22,11 @@ const props = defineProps({
   },
 });
 
-// For adding new employee
+// For adding new employee and toast
 const page = usePage();
 const isFormModalOpen = ref(false);
 // confirmation before adding
 const showConfirmModal = ref(false);
-const isConfirming = ref(false);
 
 // Add form state
 const addForm = useForm({
@@ -37,7 +37,6 @@ const addForm = useForm({
   department_id: getDefaultDepartment(),
   hierarchy: "",
   password: "",
-  password_confirmation: "",
 });
 
 // Form field configuration for adding new employee
@@ -130,23 +129,43 @@ const handleFormSubmit = () => {
 };
 const closeConfirmModal = () => {
   showConfirmModal.value = false;
-  console.log(isFormModalOpen.value);
 };
+
+// for toast messages
+const toast = useToast();
+// Watch for flash messages
+watch(
+  () => page.props.flash,
+  (flash) => {
+    if (flash.success) {
+      toast.success(flash.success);
+    }
+    if (flash.error) {
+      toast.error(flash.error);
+    }
+  },
+  { deep: true, immediate: true }
+);
 
 // after confirmation
 const submitAddForm = () => {
-  isConfirming.value = true;
   showConfirmModal.value = false;
 
   addForm.post(route("team.employees.store"), {
     onSuccess: () => {
       isFormModalOpen.value = false;
       addForm.reset();
-      isConfirming.value = false;
     },
-    onError: () => {
-      isConfirming.value = false;
-      console.error("Form errors:", errors);
+    onError: (errors) => {
+      // Handle validation errors
+      if (Object.keys(errors).length > 0) {
+        // Validation errors are already handled in form component
+        return;
+      }
+
+      // Handle general errors from the server
+      const errorMessage = errors.message || "An unexpected error occurred";
+      toast.error(errorMessage);
     },
   });
 };
@@ -254,6 +273,7 @@ const employeeTableColumns = [
     <!-- Add Employee Modal -->
     <FormModal
       :isOpen="isFormModalOpen"
+      :inert="showConfirmModal"
       title="Add New Employee"
       :form="addForm"
       :fields="formFields"

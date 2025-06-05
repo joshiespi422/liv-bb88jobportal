@@ -13,7 +13,9 @@ class UserEmployee extends Model
     public $incrementing = false;
  
     protected $fillable = [
-        // 
+        'user_id',
+        'department_id',
+        'hierarchy'
     ];
 
     // Define a one-to-one relationship between user_employees and users

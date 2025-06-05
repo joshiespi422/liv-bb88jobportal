@@ -6,9 +6,10 @@ import {
   TransitionChild,
   TransitionRoot,
 } from "@headlessui/vue";
-
+import { ref } from "vue";
 const props = defineProps({
   isOpen: Boolean,
+  inert: Boolean,
   title: String,
   form: Object,
   fields: Array,
@@ -19,11 +20,18 @@ const props = defineProps({
 });
 
 const emit = defineEmits(["close", "submit"]);
+const focusElement = ref(null);
 </script>
 
 <template>
   <TransitionRoot as="template" :show="isOpen">
-    <Dialog as="div" class="relative z-10" @close="$emit('close')">
+    <Dialog
+      as="div"
+      class="relative z-10"
+      :inert="inert"
+      @close="!inert && $emit('close')"
+      :initial-focus="inert ? undefined : focusElement"
+    >
       <TransitionChild
         as="template"
         enter="ease-out duration-300"
@@ -76,7 +84,14 @@ const emit = defineEmits(["close", "submit"]);
                         :id="field.key"
                         v-bind="field.attrs"
                         v-model="form[field.key]"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                        :class="[
+                          'mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm',
+                          {
+                            'border-red-300 text-red-900 placeholder-red-300 focus:border-red-500 focus:ring-red-500':
+                              form.errors[field.key],
+                          },
+                        ]"
+                        @change="form.clearErrors(field.key)"
                       />
                       <p
                         v-if="form.errors[field.key]"
@@ -94,7 +109,7 @@ const emit = defineEmits(["close", "submit"]);
                   <button
                     type="submit"
                     :disabled="form.processing"
-                    class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
+                    class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
                   >
                     {{ submitText }}
                   </button>
