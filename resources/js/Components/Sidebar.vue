@@ -276,6 +276,7 @@ const activeStates = computed(() => {
   width: 20px;
   height: 20px;
   cursor: default;
+  color: var(--color-base-100);
 }
 .item-active::after {
   top: -20px;
@@ -286,14 +287,6 @@ const activeStates = computed(() => {
   bottom: -20px;
   box-shadow: 6px -6px 0 6px;
   border-radius: 0 20px 0 0;
-}
-[data-theme="nord"] .item-active::before,
-[data-theme="nord"] .item-active::after {
-  color: var(--nord-color);
-}
-[data-theme="dracula"] .item-active::before,
-[data-theme="dracula"] .item-active::after {
-  color: var(--dracula-color);
 }
 
 .sidebar-scroll::-webkit-scrollbar {

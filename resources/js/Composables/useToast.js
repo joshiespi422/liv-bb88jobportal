@@ -10,7 +10,7 @@ export function useToast() {
     // Auto-remove after animation completes
     setTimeout(() => {
       toasts.value = toasts.value.filter((toast) => toast.id !== id);
-    }, duration + 1000);
+    }, duration + 500);
   };
 
   return {

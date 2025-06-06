@@ -41,9 +41,7 @@ const focusElement = ref(null);
         leave-from="opacity-100"
         leave-to="opacity-0"
       >
-        <div
-          class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
-        />
+        <div class="fixed inset-0 bg-black/30 transition-opacity" />
       </TransitionChild>
 
       <div class="fixed inset-0 z-10 w-screen overflow-y-auto">

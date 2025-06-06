@@ -30,7 +30,7 @@ watch(show, (value) => {
 
 <template>
   <Transition name="fade">
-    <div v-if="show" class="toast toast-top toast-end z-50">
+    <div v-if="show" class="toast toast-top toast-end mt-16">
       <div :class="['alert', alertClass]">
         <span>{{ message }}</span>
       </div>

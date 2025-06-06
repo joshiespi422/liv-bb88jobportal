@@ -10,21 +10,42 @@ use App\Models\UserType;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Support\Facades\Log;
 
 class EmployeeController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $employeesList = User::with([
-                'employeeDetails:user_id,hierarchy,department_id', // Select specific columns from employeeDetails relationship
-                'employeeDetails.department:id,dept_name' // Select specific columns from department relationship
-            ])
-            ->whereHas('employeeDetails') // Only select users with employee details
-            ->select('id', 'name') // Select specific columns from users table
+        $user = auth()->user();
+        $selectedDepartmentId = null;
+        
+        // For employees, use their department
+        if ($user->hasRole('employee')) {
+            $user->load(['employeeDetails.department']);
+            $selectedDepartmentId = $user->employeeDetails->department->id ?? null;
+        } 
+        // For super_admin, use request parameter or default to first department
+        else if ($user->hasRole('super_admin')) {
+            $selectedDepartmentId = $request->get('department_id') ?? Department::first()?->id;
+        }
+
+        $employeesQuery = User::with([
+            'employeeDetails:user_id,hierarchy,department_id',
+            'employeeDetails.department:id,dept_name'
+        ])
+        ->whereHas('employeeDetails');
+        
+        // Filter by department if selected
+        if ($selectedDepartmentId) {
+            $employeesQuery->whereHas('employeeDetails', function ($query) use ($selectedDepartmentId) {
+                $query->where('department_id', $selectedDepartmentId);
+            });
+        }
+        
+        $employeesList = $employeesQuery->select('id', 'name')
             ->get()
             ->map(function ($user) {
                 return [
@@ -42,6 +63,7 @@ class EmployeeController extends Controller
         return Inertia::render('EmployeesView', [
             'employees' => $employeesList,
             'departments' => Department::all(['id', 'dept_name']),
+            'selectedDepartmentId' => $selectedDepartmentId,
         ]);
     }
 
@@ -91,11 +113,10 @@ class EmployeeController extends Controller
                 ]);
             });
             return redirect()->back()->with('success', 'Employee created successfully');
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Failed to create employee: ' . $e->getMessage());
+        } catch (\Exception $e) {     
+            Log::error('Employee creation failed: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to create employee. Please try again.');
         }
-        
-        
     }
 
     /**

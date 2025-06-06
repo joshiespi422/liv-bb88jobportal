@@ -1,6 +1,6 @@
 <script setup>
-import { ref, h, computed, watch } from "vue";
-import { useForm, usePage } from "@inertiajs/vue3";
+import { ref, h, computed, watch, onMounted } from "vue";
+import { useForm, usePage, router } from "@inertiajs/vue3";
 import { useToast } from "../Composables/useToast";
 import DataTable from "../Components/DataTable.vue";
 import DetailsModal from "../Components/DetailsModal.vue";
@@ -9,6 +9,7 @@ import ConfirmModal from "../Components/ConfirmModal.vue";
 import TextInput from "../Components/forms/TextInput.vue";
 import SelectInput from "../Components/forms/SelectInput.vue";
 import PasswordInput from "../Components/forms/PasswordInput.vue";
+import ListBox from "../Components/ListBox.vue";
 
 // Props received from Inertia
 const props = defineProps({
@@ -19,6 +20,10 @@ const props = defineProps({
   departments: {
     type: Array,
     default: () => [],
+  },
+  selectedDepartmentId: {
+    type: Number,
+    default: null,
   },
 });
 
@@ -162,7 +167,6 @@ const submitAddForm = () => {
         // Validation errors are already handled in form component
         return;
       }
-
       // Handle general errors from the server
       const errorMessage = errors.message || "An unexpected error occurred";
       toast.error(errorMessage);
@@ -258,12 +262,58 @@ const employeeTableColumns = [
     enableSorting: false,
   },
 ];
+
+// Department filtering
+const selectedDepartment = ref(props.selectedDepartmentId);
+
+// Filter employees when department changes
+const handleDepartmentChange = (departmentId) => {
+  selectedDepartment.value = departmentId;
+
+  // Store in session for persistence
+  sessionStorage.setItem("selectedDepartmentId", departmentId);
+
+  // Fetch filtered employees
+  router.get(
+    route("team.employees"),
+    { department_id: departmentId },
+    {
+      preserveState: true,
+      preserveScroll: true,
+    }
+  );
+};
+
+// Restore from session on component mount
+onMounted(() => {
+  if (page.props.auth.user?.user_type === "super_admin") {
+    const storedDepartmentId = sessionStorage.getItem("selectedDepartmentId");
+    if (
+      storedDepartmentId &&
+      storedDepartmentId !== props.selectedDepartmentId?.toString()
+    ) {
+      handleDepartmentChange(parseInt(storedDepartmentId));
+    }
+  }
+});
+
+const isSuperAdmin = page.props.auth.user?.user_type === "super_admin";
 </script>
 
 <template>
   <div class="p-4 md:p-8 lg:p-20">
-    <h1 class="text-2xl font-semibold mb-6">Employees</h1>
+    <div class="flex justify-between">
+      <h1 class="text-2xl font-semibold mb-6">Employee Management</h1>
+      <ListBox
+        v-if="isSuperAdmin"
+        :items="departments"
+        :selected="selectedDepartment"
+        @change="handleDepartmentChange"
+        class="mb-4"
+      />
+    </div>
 
+    <!-- Employee Table -->
     <DataTable :data="props.employees" :columns="employeeTableColumns">
       <template #custom-actions>
         <button @click="handleAddNewEmployee" class="btn">Add New</button>
