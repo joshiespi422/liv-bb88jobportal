@@ -1,5 +1,5 @@
 <script setup>
-import { ref, h, computed, watch, onMounted } from "vue";
+import { ref, h, computed, watch } from "vue";
 import { useForm, usePage, router } from "@inertiajs/vue3";
 import { useToast } from "../Composables/useToast";
 import DataTable from "../Components/DataTable.vue";
@@ -21,14 +21,16 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
-  selectedDepartmentId: {
+  currentDepartmentId: {
     type: Number,
     default: null,
   },
 });
+// logged in user data
+const authUser = computed(() => page.props.auth.user);
+const page = usePage();
 
 // For adding new employee and toast
-const page = usePage();
 const isFormModalOpen = ref(false);
 // confirmation before adding
 const showConfirmModal = ref(false);
@@ -46,8 +48,6 @@ const addForm = useForm({
 
 // Form field configuration for adding new employee
 const formFields = computed(() => {
-  const isSuperAdmin = page.props.auth.user?.user_type === "super_admin";
-
   return [
     {
       key: "email",
@@ -79,18 +79,20 @@ const formFields = computed(() => {
     {
       key: "department_id",
       label: "Department",
-      component: isSuperAdmin ? SelectInput : TextInput,
-      attrs: isSuperAdmin
-        ? {
-            options: props.departments.map((d) => ({
-              value: d.id,
-              label: d.dept_name,
-            })),
-          }
-        : {
-            readonly: true,
-            value: page.props.auth.user?.department?.name || "N/A",
-          },
+      component:
+        authUser.value.userType === "super_admin" ? SelectInput : TextInput,
+      attrs:
+        authUser.value.userType === "super_admin"
+          ? {
+              options: props.departments.map((d) => ({
+                value: d.id,
+                label: d.dept_name,
+              })),
+            }
+          : {
+              readonly: true,
+              value: authUser.value.department?.name || "N/A",
+            },
     },
     {
       key: "hierarchy",
@@ -113,12 +115,12 @@ const formFields = computed(() => {
   ];
 });
 
-// Set default department based on user role
+// Set the default department for the "Add" form based on user role
 function getDefaultDepartment() {
-  if (page.props.auth.user?.user_type === "super_admin") {
+  if (authUser.value.userType === "super_admin") {
     return "";
   }
-  return page.props.auth.user?.department?.id || null;
+  return authUser.value.department?.id || null;
 }
 
 // Add employee form modal state
@@ -174,6 +176,32 @@ const submitAddForm = () => {
   });
 };
 
+// core logic for the super_admin filter
+const selectedDepartment = computed({
+  // GET: This runs on initial load and whenever props change.
+  get() {
+    return props.currentDepartmentId;
+  },
+  // SET: This runs when the user selects a new item in the ListBox.
+  set(newDeptId) {
+    if (authUser.value.userType === "super_admin" && newDeptId) {
+      router.get(
+        route("team.employees"),
+        { department_id: newDeptId },
+        {
+          preserveState: true, // Keeps Vue component state
+          preserveScroll: true, // Keeps scroll position
+          replace: true, // Avoids polluting browser history
+        }
+      );
+    }
+  },
+});
+// format of departments for the ListBox component
+const departmentOptions = computed(() => {
+  return props.departments.map((d) => ({ value: d.id, label: d.dept_name }));
+});
+
 // Details Modal state
 const isDetailsModalOpen = ref(false);
 const selectedDetails = ref(null);
@@ -194,7 +222,7 @@ const formatDate = (dateString) => {
 const employeeDetailFields = ref([
   { key: "name", label: "Full Name" },
   { key: "position", label: "Position" },
-  { key: "dept_name", label: "Department" },
+  { key: "deptName", label: "Department" },
   { key: "hierarchy", label: "Hierarchy Level" },
   { key: "address", label: "Address" },
   { key: "gender", label: "Gender" },
@@ -239,7 +267,7 @@ const employeeTableColumns = [
     header: "NAME",
   },
   {
-    accessorKey: "dept_name",
+    accessorKey: "deptName",
     header: "DEPARTMENT",
   },
   {
@@ -262,55 +290,22 @@ const employeeTableColumns = [
     enableSorting: false,
   },
 ];
-
-// Department filtering
-const selectedDepartment = ref(props.selectedDepartmentId);
-
-// Filter employees when department changes
-const handleDepartmentChange = (departmentId) => {
-  selectedDepartment.value = departmentId;
-
-  // Store in session for persistence
-  sessionStorage.setItem("selectedDepartmentId", departmentId);
-
-  // Fetch filtered employees
-  router.get(
-    route("team.employees"),
-    { department_id: departmentId },
-    {
-      preserveState: true,
-      preserveScroll: true,
-    }
-  );
-};
-
-// Restore from session on component mount
-onMounted(() => {
-  if (page.props.auth.user?.user_type === "super_admin") {
-    const storedDepartmentId = sessionStorage.getItem("selectedDepartmentId");
-    if (
-      storedDepartmentId &&
-      storedDepartmentId !== props.selectedDepartmentId?.toString()
-    ) {
-      handleDepartmentChange(parseInt(storedDepartmentId));
-    }
-  }
-});
-
-const isSuperAdmin = page.props.auth.user?.user_type === "super_admin";
 </script>
 
 <template>
   <div class="p-4 md:p-8 lg:p-20">
     <div class="flex justify-between">
       <h1 class="text-2xl font-semibold mb-6">Employee Management</h1>
-      <ListBox
-        v-if="isSuperAdmin"
-        :items="departments"
-        :selected="selectedDepartment"
-        @change="handleDepartmentChange"
-        class="mb-4"
-      />
+      <div
+        v-if="authUser?.userType === 'super_admin'"
+        class="w-full md:w-72 mt-4 md:mt-0"
+      >
+        <ListBox
+          v-model="selectedDepartment"
+          :options="departmentOptions"
+          placeholder="Select a department"
+        />
+      </div>
     </div>
 
     <!-- Employee Table -->

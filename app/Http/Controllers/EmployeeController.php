@@ -19,56 +19,65 @@ class EmployeeController extends Controller
      */
     public function index(Request $request)
     {
-        $user = auth()->user();
-        $selectedDepartmentId = null;
+        $user = $request->user();
+        $currentDepartmentId = null;
         
-        // For employees, use their department
+        // For employees: always use their department
         if ($user->hasRole('employee')) {
-            $user->load(['employeeDetails.department']);
-            $selectedDepartmentId = $user->employeeDetails->department->id ?? null;
-        } 
-        // For super_admin, use request parameter or default to first department
-        else if ($user->hasRole('super_admin')) {
-            $selectedDepartmentId = $request->get('department_id') ?? Department::first()?->id;
+            $currentDepartmentId = $user->employeeDetails->department_id ?? null;
+        }
+        // For super_admins: use session-stored or request-selected department
+        elseif ($user->hasRole('super_admin')) {
+            // Get from request or session
+            $currentDepartmentId = $request->input('department_id', session('current_department_id'));
+            
+            // Default to first department if none set
+            if (!$currentDepartmentId) {
+                $firstDept = Department::orderBy('id')->first();
+                $currentDepartmentId = $firstDept->id ?? null;
+            }
+            
+            // Store in session for persistence
+            if ($currentDepartmentId) {
+                session(['current_department_id' => $currentDepartmentId]);
+            }
         }
 
+        // Build query
         $employeesQuery = User::with([
-            'employeeDetails:user_id,hierarchy,department_id',
-            'employeeDetails.department:id,dept_name'
-        ])
-        ->whereHas('employeeDetails');
-        
-        // Filter by department if selected
-        if ($selectedDepartmentId) {
-            $employeesQuery->whereHas('employeeDetails', function ($query) use ($selectedDepartmentId) {
-                $query->where('department_id', $selectedDepartmentId);
+                'employeeDetails:user_id,hierarchy,department_id',
+                'employeeDetails.department:id,dept_name'
+            ])
+            ->whereHas('employeeDetails')
+            ->select('id', 'name');
+
+        // Apply department filter if needed
+        if ($currentDepartmentId) {
+            $employeesQuery->whereHas('employeeDetails', function ($q) use ($currentDepartmentId) {
+                $q->where('department_id', $currentDepartmentId);
             });
         }
-        
-        $employeesList = $employeesQuery->select('id', 'name')
+
+        $employeesList = $employeesQuery
             ->get()
             ->map(function ($user) {
                 return [
                     'id' => $user->id,
                     'name' => $user->name,
-                    'dept_name' => $user->employeeDetails && $user->employeeDetails->department
-                                    ? $user->employeeDetails->department->dept_name
-                                    : null,
-                    'hierarchy' => $user->employeeDetails
-                                    ? $user->employeeDetails->hierarchy
-                                    : null,
+                    'deptName' => $user->employeeDetails->department->dept_name ?? null,
+                    'hierarchy' => $user->employeeDetails->hierarchy ?? null,
                 ];
-            });
+        });
 
         return Inertia::render('EmployeesView', [
             'employees' => $employeesList,
             'departments' => Department::all(['id', 'dept_name']),
-            'selectedDepartmentId' => $selectedDepartmentId,
+            'currentDepartmentId' => $currentDepartmentId ? (int)$currentDepartmentId : null,
         ]);
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Show the form for creating a new resource. 
      */
     public function create()
     {

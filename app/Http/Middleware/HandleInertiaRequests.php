@@ -64,7 +64,7 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user() ? [
                     'id' => $request->user()->id,
-                    'user_type' => $userType,
+                    'userType' => $userType,
                     'department' => $department ? [
                         'id' => $department->id,
                         'name' => $department->dept_name
