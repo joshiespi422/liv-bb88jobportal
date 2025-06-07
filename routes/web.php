@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\InternController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -17,10 +18,20 @@ Route::middleware('auth')->group(function () {
         return Inertia::render('DashboardView');
     })->name('dashboard');
 
-    Route::prefix('team')->name('team.')->group(function () {
-        Route::get('/employees', [EmployeeController::class, 'index'])->name('employees');
-        Route::get('/employees/{id}', [EmployeeController::class, 'show'])->name('employees.show');
-        Route::post('/employees', [EmployeeController::class, 'store'])->name('employees.store'); 
+    Route::middleware('user.type:super_admin,employee')->group(function () {
+        Route::prefix('team')->name('team.')->group(function () {
+            Route::get('/employees', [EmployeeController::class, 'index'])->name('employees');
+            Route::get('/employees/{id}', [EmployeeController::class, 'show'])->name('employees.show');
+            Route::post('/employees', [EmployeeController::class, 'store'])->name('employees.store'); 
+        });
+    });
+
+    Route::middleware('user.type:super_admin,intern')->group(function () {
+        Route::prefix('team')->name('team.')->group(function () {
+            Route::get('/interns', [InternController::class, 'index'])->name('interns');
+            Route::get('/interns/{id}', [InternController::class, 'show'])->name('interns.show');
+            Route::post('/interns', [InternController::class, 'store'])->name('interns.store');
+        });
     });
     
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');

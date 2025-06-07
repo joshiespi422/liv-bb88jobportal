@@ -38,18 +38,38 @@ class HandleInertiaRequests extends Middleware
     {
         $user = $request->user();
         $userType = null;
-        $department = null;
 
         if ($user) {
-            if (!$user->relationLoaded('userType')) {
-                $user->load('userType');
-            }
+            $user->loadMissing('userType');  // Always load userType first
+            $userType = $user->userType->type_name ?? null;
+            $hierarchy = null;
+            $department = null;
+
             $userType = $user->userType ? $user->userType->type_name : null;
 
-                // Load department if user is an employee
             if ($userType === 'employee') {
-                $user->load(['employeeDetails.department']);
-                $department = $user->employeeDetails->department ?? null;
+                // Efficient single query with relationship constraints
+                $user->loadMissing([
+                    'employeeDetails' => fn($q) => $q->select('user_id', 'hierarchy', 'department_id'),
+                    'employeeDetails.department' => fn($q) => $q->select('id', 'dept_name')
+                ]);
+
+                // Access the constrained results
+                if ($user->employeeDetails) {
+                    $hierarchy = $user->employeeDetails->hierarchy;
+                    $department = $user->employeeDetails->department;
+                }
+
+            } elseif ($userType === 'intern') {
+                // Efficient single query with relationship constraints
+                $user->loadMissing([
+                    'internDetails.department' => fn($q) => $q->select('id', 'dept_name')
+                ]);
+
+                // Access the constrained results
+                if ($user->internDetails) {
+                    $department = $user->internDetails->department;
+                }
             }
         }
 
@@ -62,9 +82,10 @@ class HandleInertiaRequests extends Middleware
                 ]);
             },
             'auth' => [
-                'user' => $request->user() ? [
-                    'id' => $request->user()->id,
+                'user' => $user ? [
+                    'id' => $user->id,
                     'userType' => $userType,
+                    'hierarchy' => $hierarchy,
                     'department' => $department ? [
                         'id' => $department->id,
                         'name' => $department->dept_name

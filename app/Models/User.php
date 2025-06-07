@@ -65,6 +65,14 @@ class User extends Authenticatable
     {
         return $this->hasOne(UserEmployee::class);
     }
+    
+    /**
+     * Defines a one-to-one relationship with users and user_interns
+     */
+    public function internDetails()
+    {
+        return $this->hasOne(UserIntern::class);
+    }
 
     /**
      * Check if the user has a specific role.

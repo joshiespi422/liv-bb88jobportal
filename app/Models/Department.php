@@ -18,4 +18,10 @@ class Department extends Model
     {
         return $this->hasMany(UserEmployee::class);
     }
+
+    // Define a one-to-many relationship between departments and user_interns (one department can have many employees)
+    public function internDetails()
+    {
+        return $this->hasMany(UserIntern::class);
+    }
 }

@@ -10,6 +10,11 @@ export const menuItems = [
     routeName: "team.employees",
   },
   {
+    name: "INTERNS",
+    icon: "pi pi-users",
+    routeName: "team.interns",
+  },
+  {
     name: "ATTENDANCE",
     icon: "pi pi-address-book",
     hasSubmenu: true,
@@ -52,6 +57,18 @@ export const menuItems = [
             routeName: "leave.special",
           },
         ],
+      },
+    ],
+  },
+  {
+    name: "INTERNSHIP",
+    icon: "pi pi-graduation-cap",
+    hasSubmenu: true,
+    submenu: [
+      {
+        name: "STUDENTS",
+        icon: "pi pi-users",
+        routeName: "team.interns",
       },
     ],
   },
