@@ -24,7 +24,11 @@ class User extends Authenticatable
         'password',
         'user_type_id',
         'qr_code',
-        'position'
+        'position',
+        'picture',
+        'address',
+        'gender',
+        'bday'
     ];
 
     /**

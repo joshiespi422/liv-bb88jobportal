@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import {
   Dialog,
   DialogPanel,
@@ -7,45 +7,60 @@ import {
   TransitionChild,
   TransitionRoot,
 } from "@headlessui/vue";
-import { useForm } from "@inertiajs/vue3";
+import VueCropper from "vue-cropperjs";
 
 const props = defineProps({
   isOpen: Boolean,
   pictureUrl: String,
+  isLoading: Boolean,
 });
 
-const emit = defineEmits(["close"]);
+const emit = defineEmits(["close", "change", "delete"]);
 
+const cropper = ref(null);
 const fileInput = ref(null);
-const form = useForm({
-  picture: null,
-});
+const selectedImage = ref(null);
+const mimeType = ref("image/jpeg");
 
-function openFilePicker() {
+// When the modal opens, reset the state
+watch(
+  () => props.isOpen,
+  (isOpen) => {
+    if (isOpen) {
+      selectedImage.value = null;
+    }
+  }
+);
+
+const triggerFileInput = () => {
   fileInput.value.click();
-}
+};
 
-function handleFileChange(e) {
-  form.picture = e.target.files[0];
-  submitNewPicture();
-}
+const handleFileSelect = (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
 
-function submitNewPicture() {
-  form.post(route("profile.picture.update"), {
-    preserveScroll: true,
-    onSuccess: () => {
-      form.reset();
-      emit("close");
-    },
-  });
-}
+  mimeType.value = file.type;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    selectedImage.value = e.target.result;
+  };
+  reader.readAsDataURL(file);
+  // Reset file input to allow selecting the same file again
+  event.target.value = "";
+};
 
-function deletePicture() {
-  useForm({}).delete(route("profile.picture.delete"), {
-    preserveScroll: true,
-    onSuccess: () => emit("close"),
-  });
-}
+const saveCrop = () => {
+  if (!cropper.value) return;
+
+  cropper.value.getCroppedCanvas().toBlob((blob) => {
+    emit("change", blob);
+  }, mimeType.value);
+};
+
+const requestDelete = () => {
+  emit("delete");
+};
 </script>
 
 <template>
@@ -83,12 +98,23 @@ function deletePicture() {
                 as="h3"
                 class="text-lg font-medium leading-6 text-gray-900"
               >
-                Profile Picture
+                {{ selectedImage ? "Adjust Picture" : "Profile Picture" }}
               </DialogTitle>
 
               <div class="mt-4 flex justify-center">
+                <div v-if="selectedImage">
+                  <VueCropper
+                    ref="cropper"
+                    :src="selectedImage"
+                    :aspect-ratio="1"
+                    alt="Crop source"
+                    class="w-48 h-48 rounded-full object-cover border-2 border-gray-200"
+                  />
+                </div>
                 <img
+                  v-else
                   :src="pictureUrl"
+                  @error="$event.target.src = '/profile-images/default.png'"
                   class="w-48 h-48 rounded-full object-cover border-2 border-gray-200"
                 />
               </div>
@@ -98,27 +124,48 @@ function deletePicture() {
                 ref="fileInput"
                 class="hidden"
                 accept="image/*"
-                @change="handleFileChange"
+                @change="handleFileSelect"
               />
 
               <div class="mt-6 flex justify-center space-x-4">
-                <button
-                  type="button"
-                  class="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none"
-                  @click="openFilePicker"
-                  :disabled="form.processing"
-                >
-                  <span v-if="form.processing">Uploading...</span>
-                  <span v-else>Change</span>
-                </button>
+                <template v-if="selectedImage">
+                  <button
+                    type="button"
+                    class="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none"
+                    @click="saveCrop"
+                    :disabled="isLoading"
+                  >
+                    Save Changes
+                  </button>
 
-                <button
-                  type="button"
-                  class="inline-flex justify-center rounded-md border border-transparent bg-red-100 px-4 py-2 text-sm font-medium text-red-900 hover:bg-red-200 focus:outline-none"
-                  @click="deletePicture"
-                >
-                  Delete
-                </button>
+                  <button
+                    type="button"
+                    class="inline-flex justify-center rounded-md border border-transparent bg-red-100 px-4 py-2 text-sm font-medium text-red-900 hover:bg-red-200 focus:outline-none"
+                    @click="selectedImage = null"
+                    :disabled="isLoading"
+                  >
+                    Cancel
+                  </button>
+                </template>
+                <template v-else>
+                  <button
+                    type="button"
+                    class="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none"
+                    @click="triggerFileInput"
+                    :disabled="isLoading"
+                  >
+                    Change
+                  </button>
+
+                  <button
+                    type="button"
+                    class="inline-flex justify-center rounded-md border border-transparent bg-red-100 px-4 py-2 text-sm font-medium text-red-900 hover:bg-red-200 focus:outline-none"
+                    @click="emit('delete')"
+                    :disabled="isLoading"
+                  >
+                    Delete
+                  </button>
+                </template>
               </div>
             </DialogPanel>
           </TransitionChild>

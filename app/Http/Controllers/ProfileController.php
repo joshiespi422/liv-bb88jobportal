@@ -30,7 +30,7 @@ class ProfileController extends Controller
 
         $pictureUrl = $user->picture
             ? Storage::url($user->picture)  // Generates full URL for stored image
-            : asset('storage/profile-images/default.png');  // Fallback to default image
+            : Storage::url('profile-images/default.png');  // Fallback to default image
 
         // Base data common to all users
         $profileData = [
@@ -60,7 +60,7 @@ class ProfileController extends Controller
     public function updatePicture(Request $request)
     {
         $request->validate([
-            'picture' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048'
+            'picture' => 'required|image|mimes:jpeg,png,jpg|max:2048'
         ]);
 
         /** @var \App\Models\User $user */
@@ -68,7 +68,7 @@ class ProfileController extends Controller
 
         // Delete old picture if exists
         if ($user->picture) {
-            Storage::delete($user->picture);
+            Storage::disk('public')->delete($user->picture);
         }
 
         // Store new picture
@@ -85,9 +85,8 @@ class ProfileController extends Controller
         $user = Auth::user();
 
         if ($user->picture) {
-            Storage::delete($user->picture);
-            $user->picture = null;
-            $user->save();
+            Storage::disk('public')->delete($user->picture);
+            $user->update(['picture' => null]);
         }
 
         return redirect()->back()->with('success', 'Profile picture removed!');
