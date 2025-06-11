@@ -12,7 +12,6 @@ const props = defineProps({
 // State for modals
 const isPictureModalOpen = ref(false);
 const isConfirmModalOpen = ref(false);
-const isLoading = ref(false);
 // Holds the action to be executed on confirmation
 const pendingAction = ref(null);
 
@@ -31,6 +30,10 @@ const confirmModalProps = reactive({
 
 const openPictureModal = () => {
   isPictureModalOpen.value = true;
+};
+
+const closeCancelModal = () => {
+  isConfirmModalOpen.value = false;
 };
 
 const closeAllModals = () => {
@@ -120,6 +123,7 @@ const executeConfirm = () => {
     <PictureModal
       :isOpen="isPictureModalOpen"
       :pictureUrl="profile.picture"
+      :inert="isConfirmModalOpen"
       @close="closeAllModals"
       @change="handleChangeRequest"
       @delete="handleDeleteRequest"
@@ -129,7 +133,7 @@ const executeConfirm = () => {
     <ConfirmModal
       :show="isConfirmModalOpen"
       v-bind="confirmModalProps"
-      @cancel="closeAllModals"
+      @cancel="closeCancelModal"
       @confirm="executeConfirm"
     />
   </div>

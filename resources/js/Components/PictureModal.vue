@@ -7,12 +7,13 @@ import {
   TransitionChild,
   TransitionRoot,
 } from "@headlessui/vue";
-import VueCropper from "vue-cropperjs";
+import { Cropper } from "vue-advanced-cropper";
+import "vue-advanced-cropper/dist/style.css";
 
 const props = defineProps({
   isOpen: Boolean,
   pictureUrl: String,
-  isLoading: Boolean,
+  inert: Boolean,
 });
 
 const emit = defineEmits(["close", "change", "delete"]);
@@ -53,7 +54,9 @@ const handleFileSelect = (event) => {
 const saveCrop = () => {
   if (!cropper.value) return;
 
-  cropper.value.getCroppedCanvas().toBlob((blob) => {
+  const { canvas } = cropper.value.getResult();
+
+  canvas.toBlob((blob) => {
     emit("change", blob);
   }, mimeType.value);
 };
@@ -61,11 +64,19 @@ const saveCrop = () => {
 const requestDelete = () => {
   emit("delete");
 };
+
+const focusElement = ref(null);
 </script>
 
 <template>
   <TransitionRoot appear :show="isOpen" as="template">
-    <Dialog as="div" class="relative z-10" @close="emit('close')">
+    <Dialog
+      as="div"
+      class="relative z-10"
+      :inert="inert"
+      @close="!inert && $emit('close')"
+      :initial-focus="inert ? undefined : focusElement"
+    >
       <TransitionChild
         as="template"
         enter="duration-300 ease-out"
@@ -102,13 +113,14 @@ const requestDelete = () => {
               </DialogTitle>
 
               <div class="mt-4 flex justify-center">
-                <div v-if="selectedImage">
-                  <VueCropper
+                <div v-if="selectedImage" class="w-full mx-20 my-5">
+                  <Cropper
                     ref="cropper"
                     :src="selectedImage"
-                    :aspect-ratio="1"
-                    alt="Crop source"
-                    class="w-48 h-48 rounded-full object-cover border-2 border-gray-200"
+                    :stencil-props="{
+                      aspectRatio: 1,
+                    }"
+                    class="w-full h-auto"
                   />
                 </div>
                 <img
@@ -133,7 +145,6 @@ const requestDelete = () => {
                     type="button"
                     class="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none"
                     @click="saveCrop"
-                    :disabled="isLoading"
                   >
                     Save Changes
                   </button>
@@ -142,7 +153,6 @@ const requestDelete = () => {
                     type="button"
                     class="inline-flex justify-center rounded-md border border-transparent bg-red-100 px-4 py-2 text-sm font-medium text-red-900 hover:bg-red-200 focus:outline-none"
                     @click="selectedImage = null"
-                    :disabled="isLoading"
                   >
                     Cancel
                   </button>
@@ -152,7 +162,6 @@ const requestDelete = () => {
                     type="button"
                     class="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none"
                     @click="triggerFileInput"
-                    :disabled="isLoading"
                   >
                     Change
                   </button>
@@ -160,7 +169,7 @@ const requestDelete = () => {
                   <button
                     type="button"
                     class="inline-flex justify-center rounded-md border border-transparent bg-red-100 px-4 py-2 text-sm font-medium text-red-900 hover:bg-red-200 focus:outline-none"
-                    @click="emit('delete')"
+                    @click="requestDelete"
                     :disabled="isLoading"
                   >
                     Delete
