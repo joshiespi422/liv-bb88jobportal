@@ -60,7 +60,6 @@ const handleChangeRequest = (imageBlob) => {
       onSuccess: () => closeAllModals(),
     });
 
-  isPictureModalOpen.value = false;
   isConfirmModalOpen.value = true;
 };
 
@@ -100,8 +99,7 @@ const executeConfirm = () => {
       <!-- Clickable profile picture -->
       <div class="relative group cursor-pointer" @click="openPictureModal">
         <img
-          :src="profile.picture"
-          @error="$event.target.src = '/profile-images/default.png'"
+          :src="profile.picture || '/profile-images/default.png'"
           class="w-32 h-32 rounded-full object-cover border-2 border-gray-300 shadow-md"
         />
         <div

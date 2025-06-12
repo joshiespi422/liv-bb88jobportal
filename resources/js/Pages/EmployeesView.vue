@@ -1,5 +1,5 @@
 <script setup>
-import { ref, h, computed, watch } from "vue";
+import { ref, h, computed } from "vue";
 import { useForm, usePage, router } from "@inertiajs/vue3";
 import { useToast } from "../Composables/useToast";
 import DataTable from "../Components/DataTable.vue";
@@ -27,10 +27,10 @@ const props = defineProps({
   },
 });
 // logged in user data
-const authUser = computed(() => page.props.auth.user);
 const page = usePage();
+const authUser = computed(() => page.props.auth.user);
 
-// For adding new employee and toast
+// For adding new employee
 const isFormModalOpen = ref(false);
 // confirmation before adding
 const showConfirmModal = ref(false);
@@ -140,19 +140,6 @@ const closeConfirmModal = () => {
 
 // for toast messages
 const toast = useToast();
-// Watch for flash messages
-watch(
-  () => page.props.flash,
-  (flash) => {
-    if (flash.success) {
-      toast.success(flash.success);
-    }
-    if (flash.error) {
-      toast.error(flash.error);
-    }
-  },
-  { deep: true, immediate: true }
-);
 
 // after confirmation
 const submitAddForm = () => {

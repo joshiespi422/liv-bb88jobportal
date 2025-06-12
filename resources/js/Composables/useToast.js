@@ -3,14 +3,16 @@ import { ref } from "vue";
 const toasts = ref([]);
 
 export function useToast() {
-  const showToast = (message, type = "success", duration = 5000) => {
-    const id = Date.now();
-    toasts.value.push({ id, message, type, duration });
+  const removeToast = (id) => {
+    toasts.value = toasts.value.filter((toast) => toast.id !== id);
+  };
 
-    // Auto-remove after animation completes
-    setTimeout(() => {
-      toasts.value = toasts.value.filter((toast) => toast.id !== id);
-    }, duration + 500);
+  const showToast = (message, type = "success", duration = 7000) => {
+    const id = Date.now();
+    const toast = { id, message, type, duration };
+    toasts.value.push(toast);
+
+    setTimeout(() => removeToast(id), duration);
   };
 
   return {

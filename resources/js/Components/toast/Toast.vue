@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch } from "vue";
+import { ref, onMounted, onBeforeUnmount } from "vue";
 
 const props = defineProps({
   type: {
@@ -9,30 +9,47 @@ const props = defineProps({
       ["success", "error", "info", "warning"].includes(value),
   },
   message: String,
-  duration: {
-    type: Number,
-    default: 5000,
-  },
+  duration: Number,
 });
 
 const show = ref(true);
-const alertClass = computed(() => `alert-${props.type}`);
+let timeoutId;
 
 // Auto-hide after duration
-watch(show, (value) => {
-  if (value) {
-    setTimeout(() => {
-      show.value = false;
-    }, props.duration);
-  }
+onMounted(() => {
+  timeoutId = setTimeout(() => {
+    show.value = false;
+  }, props.duration);
+});
+
+// Cleanup timeout
+onBeforeUnmount(() => {
+  clearTimeout(timeoutId);
 });
 </script>
 
 <template>
   <Transition name="fade">
     <div v-if="show" class="toast toast-top toast-end mt-16">
-      <div :class="['alert', alertClass]">
-        <span>{{ message }}</span>
+      <div
+        class="alert text-lg px-6 py-4"
+        :class="{
+          'alert-success': type === 'success',
+          'alert-error': type === 'error',
+          'alert-info': type === 'info',
+          'alert-warning': type === 'warning',
+        }"
+      >
+        <i
+          class="pi"
+          :class="{
+            'pi-check-circle': type === 'success',
+            'pi-times-circle': type === 'error',
+            'pi-info-circle': type === 'info',
+            'pi-exclamation-triangle': type === 'warning',
+          }"
+        ></i>
+        <span class="font-semibold">{{ message }}</span>
       </div>
     </div>
   </Transition>

@@ -125,8 +125,7 @@ const focusElement = ref(null);
                 </div>
                 <img
                   v-else
-                  :src="pictureUrl"
-                  @error="$event.target.src = '/profile-images/default.png'"
+                  :src="pictureUrl || '/profile-images/default.png'"
                   class="w-48 h-48 rounded-full object-cover border-2 border-gray-200"
                 />
               </div>
@@ -170,7 +169,6 @@ const focusElement = ref(null);
                     type="button"
                     class="inline-flex justify-center rounded-md border border-transparent bg-red-100 px-4 py-2 text-sm font-medium text-red-900 hover:bg-red-200 focus:outline-none"
                     @click="requestDelete"
-                    :disabled="isLoading"
                   >
                     Delete
                   </button>
