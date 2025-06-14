@@ -77,7 +77,7 @@ class ProfileController extends Controller
         $user->picture = $path;
         $user->save();
 
-        return redirect()->back()->with('success', 'Profile picture updated!');
+        return back()->with('success', 'Profile picture updated!');
     }
 
     public function deletePicture()
@@ -90,7 +90,7 @@ class ProfileController extends Controller
             $user->update(['picture' => null]);
         }
 
-        return redirect()->back()->with('success', 'Profile picture removed!');
+        return back()->with('success', 'Profile picture removed!');
     }
 
     public function updatePassword(Request $request)

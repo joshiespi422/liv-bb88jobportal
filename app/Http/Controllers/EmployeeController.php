@@ -10,7 +10,6 @@ use App\Models\UserType;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class EmployeeController extends Controller
 {
@@ -99,33 +98,30 @@ class EmployeeController extends Controller
             'password' => 'required|string|min:8',
         ]);
 
-        try {
-            DB::transaction(function () use ($request) {
-                // Find employee user type
-                $employeeType = UserType::where('type_name', 'employee')->firstOrFail();
 
-                // Create user
-                $user = User::create([
-                    'name' => $request->name,
-                    'email' => $request->email,
-                    'password' => bcrypt($request->password),
-                    'user_type_id' => $employeeType->id,
-                    'position' => $request->position,
-                    'qr_code' => $request->qr_code,
-                ]);
+        DB::transaction(function () use ($request) {
+            // Find employee user type
+            $employeeType = UserType::where('type_name', 'employee')->firstOrFail();
 
-                // Create employee details
-                UserEmployee::create([
-                    'user_id' => $user->id,
-                    'department_id' => $request->department_id,
-                    'hierarchy' => $request->hierarchy,
-                ]);
-            });
-            return redirect()->back()->with('success', 'Employee created successfully');
-        } catch (\Exception $e) {     
-            Log::error('Employee creation failed: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Failed to create employee. Please try again.');
-        }
+            // Create user
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => bcrypt($request->password),
+                'user_type_id' => $employeeType->id,
+                'position' => $request->position,
+                'qr_code' => $request->qr_code,
+            ]);
+
+            // Create employee details
+            UserEmployee::create([
+                'user_id' => $user->id,
+                'department_id' => $request->department_id,
+                'hierarchy' => $request->hierarchy,
+            ]);
+        });
+        
+        return back()->with('success', 'Employee created successfully');
     }
 
     /**

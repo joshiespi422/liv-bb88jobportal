@@ -1,7 +1,6 @@
 <script setup>
-import { ref, h, computed, watch } from "vue";
+import { ref, h, computed } from "vue";
 import { useForm, usePage, router } from "@inertiajs/vue3";
-import { useToast } from "../Composables/useToast";
 import DataTable from "../Components/DataTable.vue";
 import DetailsModal from "../Components/DetailsModal.vue";
 import FormModal from "../Components/FormModal.vue";
@@ -122,9 +121,6 @@ const closeConfirmModal = () => {
   showConfirmModal.value = false;
 };
 
-// for toast messages
-const toast = useToast();
-
 // after confirmation
 const submitAddForm = () => {
   showConfirmModal.value = false;
@@ -133,16 +129,6 @@ const submitAddForm = () => {
     onSuccess: () => {
       isFormModalOpen.value = false;
       addForm.reset();
-    },
-    onError: (errors) => {
-      // Handle validation errors
-      if (Object.keys(errors).length > 0) {
-        // Validation errors are already handled in form component
-        return;
-      }
-      // Handle general errors from the server
-      const errorMessage = errors.message || "An unexpected error occurred";
-      toast.error(errorMessage);
     },
   });
 };
@@ -264,12 +250,14 @@ const internTableColumns = [
 </script>
 
 <template>
-  <div class="p-4 md:p-8 lg:p-20">
-    <div class="flex justify-between">
-      <h1 class="text-2xl font-semibold mb-6">Intern Management</h1>
+  <div class="p-4 md:p-8 lg:p-12 xl:p-16">
+    <div
+      class="flex flex-col items-center gap-2 sm:flex-row sm:justify-between sm:gap-0 mx-2 mb-5"
+    >
+      <h1 class="text-2xl lg:text-3xl font-bold">Intern Management</h1>
       <div
         v-if="authUser?.userType === 'super_admin'"
-        class="w-full md:w-72 mt-4 md:mt-0"
+        class="w-52 md:w-60 lg:w-72"
       >
         <ListBox
           v-model="selectedDepartment"

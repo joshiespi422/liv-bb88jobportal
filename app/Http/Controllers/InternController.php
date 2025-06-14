@@ -9,7 +9,6 @@ use App\Models\UserType;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class InternController extends Controller
 {
@@ -97,32 +96,30 @@ class InternController extends Controller
             'password' => 'required|string|min:8',
         ]);
 
-        try {
-            DB::transaction(function () use ($request) {
-                // Find intern user type
-                $internType = UserType::where('type_name', 'intern')->firstOrFail();
+    
+        DB::transaction(function () use ($request) {
+            // Find intern user type
+            $internType = UserType::where('type_name', 'intern')->firstOrFail();
 
-                // Create user
-                $user = User::create([
-                    'name' => $request->name,
-                    'email' => $request->email,
-                    'password' => bcrypt($request->password),
-                    'user_type_id' => $internType->id,
-                    'position' => $request->position,
-                ]);
+            // Create user
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => bcrypt($request->password),
+                'user_type_id' => $internType->id,
+                'position' => $request->position,
+            ]);
 
-                // Create intern details
-                UserIntern::create([
-                    'user_id' => $user->id,
-                    'department_id' => $request->department_id,
-                    'school' => $request->school,
-                ]);
-            });
-            return redirect()->back()->with('success', 'Intern created successfully');
-        } catch (\Exception $e) {     
-            Log::error('Intern creation failed: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Failed to create intern. Please try again.');
-        }
+            // Create intern details
+            UserIntern::create([
+                'user_id' => $user->id,
+                'department_id' => $request->department_id,
+                'school' => $request->school,
+            ]);
+        });
+        
+        return back()->with('success', 'Intern created successfully');
+     
     }
 
     /**
