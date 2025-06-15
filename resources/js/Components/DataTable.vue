@@ -71,7 +71,7 @@ const availablePageSizes = [10, 25, 50, 100];
 
 <template>
   <div
-    class="overflow-x-auto rounded-box border border-base-content/20 bg-base-100"
+    class="overflow-x-auto rounded-3xl border-3 border-green-primary-1 bg-base-100 p-5 shadow-xl"
   >
     <div
       class="flex flex-col sm:flex-row justify-between items-center gap-2 p-2"
@@ -80,7 +80,7 @@ const availablePageSizes = [10, 25, 50, 100];
         <select
           :value="table.getState().pagination.pageSize"
           @change="table.setPageSize(Number($event.target.value))"
-          class="block w-full pl-3 pr-5 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+          class="select select-sm rounded-lg border border-base-content"
         >
           <option v-for="size in availablePageSizes" :key="size" :value="size">
             Show {{ size }}
@@ -92,7 +92,7 @@ const availablePageSizes = [10, 25, 50, 100];
           type="text"
           v-model="globalFilter"
           placeholder="Search"
-          class="block w-full sm:w-64 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+          class="block w-52 sm:w-64 px-3 py-1 border-2 text-sm border-base-content rounded-xl shadow-md focus:outline-none focus:ring-green-primary-1 focus:border-green-primary-1"
         />
         <!-- custom actions here -->
         <slot name="custom-actions"></slot>
@@ -129,7 +129,11 @@ const availablePageSizes = [10, 25, 50, 100];
         </tr>
       </thead>
       <tbody>
-        <tr v-for="row in table.getRowModel().rows" :key="row.id">
+        <tr
+          v-for="row in table.getRowModel().rows"
+          :key="row.id"
+          class="hover:bg-base-300"
+        >
           <td v-for="cell in row.getVisibleCells()" :key="cell.id">
             <FlexRender
               :render="cell.column.columnDef.cell"
