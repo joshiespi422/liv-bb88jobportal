@@ -52,20 +52,24 @@ const formFields = computed(() => {
       key: "email",
       label: "Email Address",
       component: TextInput,
-      attrs: { type: "email", required: true },
+      attrs: {
+        type: "email",
+        required: true,
+        placeholder: "h1D2y@example.com",
+      },
     },
     {
       key: "name",
       label: "Name",
       component: TextInput,
-      attrs: { required: true },
+      attrs: { required: true, placeholder: "John Doe" },
     },
     {
       key: "qr_code",
       label: "QR Code",
       component: TextInput,
       attrs: {
-        placeholder: "00-00000-0000",
+        placeholder: "02-E0001-1925",
         pattern: "^[A-Z0-9]{2}-[A-Z0-9]{5}-[A-Z0-9]{4}$",
       },
     },
@@ -73,7 +77,7 @@ const formFields = computed(() => {
       key: "position",
       label: "Position",
       component: TextInput,
-      attrs: { required: true },
+      attrs: { required: true, placeholder: "Software Engineer" },
     },
     {
       key: "department_id",
@@ -87,6 +91,7 @@ const formFields = computed(() => {
                 value: d.id,
                 label: d.dept_name,
               })),
+              placeholder: "Select a department",
             }
           : {
               readonly: true,
@@ -103,13 +108,14 @@ const formFields = computed(() => {
           { value: "Leader", label: "Leader" },
           { value: "Member", label: "Member" },
         ],
+        placeholder: "Select a hierarchy",
       },
     },
     {
       key: "password",
       label: "Password",
       component: PasswordInput,
-      attrs: { required: true },
+      attrs: { required: true, placeholder: "Enter password" },
     },
   ];
 });
@@ -256,7 +262,7 @@ const employeeTableColumns = [
         {
           onClick: () => handleViewDetails(row.original),
           class:
-            "px-3 py-1 bg-indigo-600 text-white text-sm rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors",
+            "btn rounded-full bg-green-primary-1 text-white hover:bg-green-primary-3",
         },
         "View Details"
       ),
@@ -286,7 +292,12 @@ const employeeTableColumns = [
     <!-- Employee Table -->
     <DataTable :data="props.employees" :columns="employeeTableColumns">
       <template #custom-actions>
-        <button @click="handleAddNewEmployee" class="btn">Add New</button>
+        <button
+          @click="handleAddNewEmployee"
+          class="btn rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
+        >
+          Add Employee
+        </button>
       </template>
     </DataTable>
 
@@ -294,7 +305,7 @@ const employeeTableColumns = [
     <FormModal
       :isOpen="isFormModalOpen"
       :inert="showConfirmModal"
-      title="Add New Employee"
+      title="ADD NEW EMPLOYEE"
       :form="addForm"
       :fields="formFields"
       submitText="Add Employee"

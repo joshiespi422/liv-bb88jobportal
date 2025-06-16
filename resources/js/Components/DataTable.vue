@@ -74,9 +74,9 @@ const availablePageSizes = [10, 25, 50, 100];
     class="overflow-x-auto rounded-3xl border-3 border-green-primary-1 bg-base-100 p-5 shadow-xl"
   >
     <div
-      class="flex flex-col sm:flex-row justify-between items-center gap-2 p-2"
+      class="flex flex-col sm:flex-row sm:items-center justify-between items-start gap-2 p-2"
     >
-      <div class="w-full sm:w-auto">
+      <div class="w-auto">
         <select
           :value="table.getState().pagination.pageSize"
           @change="table.setPageSize(Number($event.target.value))"
@@ -99,7 +99,7 @@ const availablePageSizes = [10, 25, 50, 100];
       </div>
     </div>
 
-    <table class="table">
+    <table class="table text-center font-semibold my-5">
       <thead>
         <tr
           v-for="headerGroup in table.getHeaderGroups()"
@@ -132,7 +132,7 @@ const availablePageSizes = [10, 25, 50, 100];
         <tr
           v-for="row in table.getRowModel().rows"
           :key="row.id"
-          class="hover:bg-base-300"
+          class="hover:bg-base-200"
         >
           <td v-for="cell in row.getVisibleCells()" :key="cell.id">
             <FlexRender
@@ -147,7 +147,7 @@ const availablePageSizes = [10, 25, 50, 100];
     <div
       class="flex flex-col sm:flex-row justify-between items-center gap-2 p-2"
     >
-      <div class="text-sm text-gray-700">
+      <div class="text-xs font-semibold">
         Page
         <strong>{{ table.getState().pagination.pageIndex + 1 }}</strong> of
         <strong>{{ table.getPageCount() }}</strong>
@@ -156,34 +156,34 @@ const availablePageSizes = [10, 25, 50, 100];
           {{ table.getPrePaginationRowModel().rows.length }} total rows
         </span>
       </div>
-      <div class="flex items-center space-x-1">
+      <div class="flex items-center space-x-2">
         <button
           @click="table.setPageIndex(0)"
           :disabled="!table.getCanPreviousPage()"
-          class="px-2 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+          class="btn btn-circle border-2 border-base-content bg-green-primary-1 shadow-md hover:bg-green-primary-3 not-disabled:text-white"
         >
-          First
+          <i class="pi pi-angle-double-left text-xl"></i>
         </button>
         <button
           @click="table.previousPage()"
           :disabled="!table.getCanPreviousPage()"
-          class="px-2 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+          class="btn btn-circle border-2 border-base-content bg-green-primary-1 shadow-md hover:bg-green-primary-3 not-disabled:text-white"
         >
-          Previous
+          <i class="pi pi-angle-left text-xl"></i>
         </button>
         <button
           @click="table.nextPage()"
           :disabled="!table.getCanNextPage()"
-          class="px-2 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+          class="btn btn-circle border-2 border-base-content bg-green-primary-1 shadow-md hover:bg-green-primary-3 not-disabled:text-white"
         >
-          Next
+          <i class="pi pi-angle-right text-xl"></i>
         </button>
         <button
           @click="table.setPageIndex(table.getPageCount() - 1)"
           :disabled="!table.getCanNextPage()"
-          class="px-2 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+          class="btn btn-circle border-2 border-base-content bg-green-primary-1 shadow-md hover:bg-green-primary-3 not-disabled:text-white"
         >
-          Last
+          <i class="pi pi-angle-double-right text-xl"></i>
         </button>
       </div>
     </div>

@@ -259,9 +259,6 @@ const activeStates = computed(() => {
     message="Are you sure you want to logout?"
     confirm-text="Logout"
     icon-name="pi pi-sign-out"
-    icon-color="text-red-600"
-    icon-bg-color="bg-red-100"
-    confirm-button-bg="bg-red-600 hover:bg-red-700"
     @confirm="handleLogout"
     @cancel="showLogoutModal = false"
   />
