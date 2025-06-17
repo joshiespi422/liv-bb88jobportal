@@ -96,7 +96,7 @@ const focusElement = ref(null);
                 <div class="mt-10 flex items-center justify-end gap-x-1">
                   <button
                     type="button"
-                    class="btn btn-ghost text-lg rounded-full hover:bg-green-primary-1 hover:text-white"
+                    class="btn btn-ghost text-lg rounded-full text-green-primary-1 border-2"
                     @click="$emit('close')"
                   >
                     Cancel
@@ -104,7 +104,7 @@ const focusElement = ref(null);
                   <button
                     type="submit"
                     :disabled="form.processing"
-                    class="btn btn-soft btn-success rounded-full"
+                    class="btn btn-soft text-lg px-7 rounded-full text-white bg-green-primary-1 hover:bg-green-primary-3 border-2 border-base-content shadow-md"
                   >
                     {{ submitText }}
                   </button>

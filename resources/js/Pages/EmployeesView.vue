@@ -185,6 +185,7 @@ const departmentOptions = computed(() => {
 const isDetailsModalOpen = ref(false);
 const selectedDetails = ref(null);
 const isDetailsLoading = ref(false);
+const isDetailsError = ref(false);
 
 // Formatting function for date fields
 const formatDate = (dateString) => {
@@ -213,6 +214,7 @@ const fetchEmployeeDetails = async (employeeId) => {
   isDetailsLoading.value = true;
   isDetailsModalOpen.value = true;
   selectedDetails.value = null;
+  isDetailsError.value = false;
 
   try {
     const response = await axios.get(`/teams/employees/${employeeId}`);
@@ -220,10 +222,9 @@ const fetchEmployeeDetails = async (employeeId) => {
   } catch (error) {
     console.error("Error fetching employee details:", error);
     selectedDetails.value = null;
-    // Consider adding user-friendly error feedback
-    // alert("Failed to fetch employee details. Please try again.");
+    isDetailsError.value = true;
   } finally {
-    await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for 1 second
+    await new Promise((resolve) => setTimeout(resolve, 3000)); // Wait for 1 second
     isDetailsLoading.value = false;
   }
 };
@@ -237,6 +238,7 @@ const closeDetailsModal = () => {
 };
 const afterDetailsClose = () => {
   selectedDetails.value = null;
+  isDetailsError.value = false;
 };
 
 // Tanstack Table columns definition
@@ -308,7 +310,7 @@ const employeeTableColumns = [
       title="ADD NEW EMPLOYEE"
       :form="addForm"
       :fields="formFields"
-      submitText="Add Employee"
+      submitText="Add"
       @close="closeFormModal"
       @submit="handleFormSubmit"
     />
@@ -317,7 +319,11 @@ const employeeTableColumns = [
     <ConfirmModal
       :show="showConfirmModal"
       title="Confirm Employee Creation"
-      :message="`Are you sure you want to add an employee?`"
+      message="`Are you sure you want to add an employee?`"
+      iconName="pi pi-user-plus"
+      iconColor="text-blue-600"
+      iconBgColor="bg-blue-100"
+      confirmButtonBg="bg-blue-600 hover:bg-blue-700"
       confirmText="Yes, Add Employee"
       @confirm="submitAddForm"
       @cancel="closeConfirmModal"
@@ -328,7 +334,8 @@ const employeeTableColumns = [
       :isOpen="isDetailsModalOpen"
       :item="selectedDetails"
       :loading="isDetailsLoading"
-      title="Employee Details"
+      :error="isDetailsError"
+      title="EMPLOYEE DETAILS"
       :fields="employeeDetailFields"
       @close="closeDetailsModal"
       @after-leave="afterDetailsClose"

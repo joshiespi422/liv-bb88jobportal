@@ -21,6 +21,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  error: {
+    type: Boolean,
+    default: false,
+  },
   title: {
     type: String,
     default: "Details",
@@ -100,25 +104,25 @@ const skeletonFieldCount = computed(() => {
             <DialogPanel
               class="bg-base-100 w-full max-w-md transform overflow-hidden rounded-2xl p-6 text-left align-middle shadow-xl transition-all"
             >
-              <DialogTitle as="h3" class="text-lg font-medium leading-6 mb-4">
+              <DialogTitle as="h3" class="text-2xl font-semibold">
                 {{ title }}
               </DialogTitle>
 
               <!-- Skeleton loader -->
-              <div v-if="loading" class="space-y-4">
+              <div v-if="loading" class="space-y-4 my-6 mx-3">
                 <div class="grid grid-cols-1 gap-4">
                   <div
                     v-for="i in skeletonFieldCount"
                     :key="`skeleton-field-${i}`"
                   >
-                    <div class="skeleton h-4 w-16 mb-1"></div>
-                    <div class="skeleton h-4 w-3/4"></div>
+                    <div class="skeleton h-5 w-[40%] mb-1"></div>
+                    <div class="skeleton h-5 w-full"></div>
                   </div>
                 </div>
               </div>
 
               <!-- item details -->
-              <div v-else-if="item && fields.length > 0" class="space-y-4">
+              <div v-else-if="item && fields.length > 0" class="space-y-4 my-5">
                 <div class="grid grid-cols-1 gap-4">
                   <div v-for="field in fields" :key="field.key">
                     <label class="block text-sm font-medium">{{
@@ -130,16 +134,30 @@ const skeletonFieldCount = computed(() => {
                   </div>
                 </div>
               </div>
-              <div v-else-if="!item && !loading">
-                <p class="text-sm text-gray-500">
-                  No details available to display.
+              <div
+                v-else-if="error && !loading"
+                role="alert"
+                class="alert alert-soft alert-error my-10"
+              >
+                <i class="pi pi-times-circle text-2xl"></i>
+                <p class="text-sm font-semibold">Something went wrong</p>
+              </div>
+
+              <div
+                v-else-if="!item && !loading"
+                role="alert"
+                class="alert alert-soft alert-warning my-10"
+              >
+                <i class="pi pi-exclamation-triangle text-2xl"></i>
+                <p class="text-sm font-semibold">
+                  No details available to display
                 </p>
               </div>
 
               <div class="mt-6 flex justify-end">
                 <button
                   type="button"
-                  class="inline-flex justify-center rounded-md border border-transparent bg-indigo-100 px-4 py-2 text-sm font-medium text-indigo-900 hover:bg-indigo-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                  class="btn btn-soft rounded-full"
                   @click="requestDialogClose"
                 >
                   Close

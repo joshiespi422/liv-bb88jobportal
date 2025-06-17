@@ -123,7 +123,7 @@ const availablePageSizes = [10, 25, 50, 100];
               :props="header.getContext()"
             />
             <span v-if="header.column.getIsSorted()">
-              {{ header.column.getIsSorted() === "asc" ? "🔼" : "🔽" }}
+              {{ header.column.getIsSorted() === "asc" ? " 🡩" : " 🡫" }}
             </span>
           </th>
         </tr>
@@ -139,6 +139,16 @@ const availablePageSizes = [10, 25, 50, 100];
               :render="cell.column.columnDef.cell"
               :props="cell.getContext()"
             />
+          </td>
+        </tr>
+        <tr v-if="table.getRowModel().rows.length === 0">
+          <td :colspan="table.getHeaderGroups()[0].headers.length">
+            <div role="alert" class="alert alert-soft alert-info">
+              <i class="pi pi-info-circle text-xl"></i>
+              <p class="text-sm font-semibold">
+                No data available in the table
+              </p>
+            </div>
           </td>
         </tr>
       </tbody>

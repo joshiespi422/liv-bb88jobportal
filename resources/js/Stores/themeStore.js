@@ -1,7 +1,7 @@
 import { ref, onMounted } from "vue";
 
 export const useThemeStore = () => {
-  const theme = ref(localStorage.getItem("theme") || "nord");
+  const theme = ref(localStorage.getItem("theme") || "fantasy");
 
   const setTheme = (newTheme) => {
     theme.value = newTheme;
@@ -10,7 +10,7 @@ export const useThemeStore = () => {
   };
 
   const toggleTheme = () => {
-    const newTheme = theme.value === "nord" ? "dracula" : "nord";
+    const newTheme = theme.value === "fantasy" ? "dracula" : "fantasy";
     setTheme(newTheme);
   };
 
@@ -27,7 +27,7 @@ export const useThemeStore = () => {
       if (prefersDark) {
         setTheme("dracula");
       } else {
-        setTheme("nord");
+        setTheme("fantasy");
       }
     }
   });

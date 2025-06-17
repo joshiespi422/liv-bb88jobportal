@@ -59,19 +59,23 @@ const formFields = computed(() => {
       key: "email",
       label: "Email Address",
       component: TextInput,
-      attrs: { type: "email", required: true },
+      attrs: {
+        type: "email",
+        required: true,
+        placeholder: "h1D2y@example.com",
+      },
     },
     {
       key: "name",
       label: "Name",
       component: TextInput,
-      attrs: { required: true },
+      attrs: { required: true, placeholder: "John Doe" },
     },
     {
       key: "school",
       label: "School",
       component: TextInput,
-      attrs: { required: true },
+      attrs: { required: true, placeholder: "Example School" },
     },
     {
       key: "position",
@@ -91,6 +95,7 @@ const formFields = computed(() => {
                 value: d.id,
                 label: d.dept_name,
               })),
+              placeholder: "Select a department",
             }
           : {
               readonly: true,
@@ -101,7 +106,7 @@ const formFields = computed(() => {
       key: "password",
       label: "Password",
       component: PasswordInput,
-      attrs: { required: true },
+      attrs: { required: true, placeholder: "Enter password" },
     },
   ];
 });
@@ -163,6 +168,7 @@ const departmentOptions = computed(() => {
 const isDetailsModalOpen = ref(false);
 const selectedDetails = ref(null);
 const isDetailsLoading = ref(false);
+const isDetailsError = ref(false);
 
 // Formatting function for date fields
 const formatDate = (dateString) => {
@@ -191,6 +197,7 @@ const fetchInternDetails = async (internId) => {
   isDetailsLoading.value = true;
   isDetailsModalOpen.value = true;
   selectedDetails.value = null;
+  isDetailsError.value = false;
 
   try {
     const response = await axios.get(`/teams/interns/${internId}`);
@@ -198,8 +205,7 @@ const fetchInternDetails = async (internId) => {
   } catch (error) {
     console.error("Error fetching intern details:", error);
     selectedDetails.value = null;
-    // Consider adding user-friendly error feedback
-    // alert("Failed to fetch intern details. Please try again.");
+    isDetailsError.value = true;
   } finally {
     await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for 1 second
     isDetailsLoading.value = false;
@@ -215,6 +221,7 @@ const closeDetailsModal = () => {
 };
 const afterDetailsClose = () => {
   selectedDetails.value = null;
+  isDetailsError.value = false;
 };
 
 // Tanstack Table columns definition
@@ -240,7 +247,7 @@ const internTableColumns = [
         {
           onClick: () => handleViewDetails(row.original),
           class:
-            "px-3 py-1 bg-indigo-600 text-white text-sm rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors",
+            "btn rounded-full bg-green-primary-1 text-white hover:bg-green-primary-3",
         },
         "View Details"
       ),
@@ -270,7 +277,12 @@ const internTableColumns = [
     <!-- Intern Table -->
     <DataTable :data="props.interns" :columns="internTableColumns">
       <template #custom-actions>
-        <button @click="handleAddNewIntern" class="btn">Add New</button>
+        <button
+          @click="handleAddNewIntern"
+          class="btn rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
+        >
+          Add Intern
+        </button>
       </template>
     </DataTable>
 
@@ -278,10 +290,10 @@ const internTableColumns = [
     <FormModal
       :isOpen="isFormModalOpen"
       :inert="showConfirmModal"
-      title="Add New Intern"
+      title="ADD NEW INTERN"
       :form="addForm"
       :fields="formFields"
-      submitText="Add Intern"
+      submitText="Add"
       @close="closeFormModal"
       @submit="handleFormSubmit"
     />
@@ -290,7 +302,11 @@ const internTableColumns = [
     <ConfirmModal
       :show="showConfirmModal"
       title="Confirm Intern Creation"
-      :message="`Are you sure you want to add an intern?`"
+      message="`Are you sure you want to add an intern?`"
+      iconName="pi pi-user-plus"
+      iconColor="text-blue-600"
+      iconBgColor="bg-blue-100"
+      confirmButtonBg="bg-blue-600 hover:bg-blue-700"
       confirmText="Yes, Add Intern"
       @confirm="submitAddForm"
       @cancel="closeConfirmModal"
@@ -301,7 +317,8 @@ const internTableColumns = [
       :isOpen="isDetailsModalOpen"
       :item="selectedDetails"
       :loading="isDetailsLoading"
-      title="Intern Details"
+      :error="isDetailsError"
+      title="INTERN DETAILS"
       :fields="internDetailFields"
       @close="closeDetailsModal"
       @after-leave="afterDetailsClose"
