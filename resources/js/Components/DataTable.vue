@@ -71,7 +71,7 @@ const availablePageSizes = [10, 25, 50, 100];
 
 <template>
   <div
-    class="overflow-x-auto rounded-3xl border-3 border-green-primary-1 bg-base-100 p-5 shadow-xl"
+    class="overflow-x-auto rounded-3xl border-4 border-green-primary-1 bg-base-100 p-5 shadow-xl"
   >
     <div
       class="flex flex-col sm:flex-row sm:items-center justify-between items-start gap-2 p-2"
@@ -92,7 +92,7 @@ const availablePageSizes = [10, 25, 50, 100];
           type="text"
           v-model="globalFilter"
           placeholder="Search"
-          class="block w-52 sm:w-64 px-3 py-1 border-2 text-sm border-base-content rounded-xl shadow-md focus:outline-none focus:ring-green-primary-1 focus:border-green-primary-1"
+          class="block w-52 sm:w-64 px-3 py-2 border-2 text-sm border-base-content rounded-xl shadow-md focus:outline-none focus:ring-green-primary-1 focus:border-green-primary-1"
         />
         <!-- custom actions here -->
         <slot name="custom-actions"></slot>

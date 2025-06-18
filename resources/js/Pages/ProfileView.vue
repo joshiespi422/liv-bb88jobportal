@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive } from "vue";
+import { ref, reactive, computed } from "vue";
 import { useForm } from "@inertiajs/vue3";
 import PictureModal from "../Components/PictureModal.vue";
 import ConfirmModal from "../Components/ConfirmModal.vue";
@@ -12,6 +12,29 @@ import SelectInput from "../Components/forms/SelectInput.vue";
 const props = defineProps({
   profile: Object,
 });
+
+// Fields to be displayed in the profile view
+const profileFields = [
+  { key: "name", label: "Full Name" },
+  { key: "position", label: "Position" },
+  { key: "department", label: "Department" },
+  { key: "qr_code", label: "QR Code" },
+  { key: "hierarchy", label: "Hierarchy" },
+  { key: "school", label: "School" },
+  { key: "address", label: "Address" },
+  { key: "bday", label: "Birthday" },
+  { key: "gender", label: "Gender" },
+];
+// Filter fields to only those present in profile data
+const visibleFields = computed(() => {
+  return profileFields.filter((field) =>
+    props.profile.hasOwnProperty(field.key)
+  );
+});
+// Format values with fallback
+const displayValue = (value) => {
+  return value || "N/A";
+};
 
 // State for modals
 const isPictureModalOpen = ref(false);
@@ -32,14 +55,15 @@ const passwordForm = useForm({
 });
 
 const detailsForm = useForm({
-  name: props.profile.name,
-  position: props.profile.position,
+  name: props.profile.name || "",
+  position: props.profile.position || "",
   department: props.profile.department || "",
   hierarchy: props.profile.hierarchy || "",
   school: props.profile.school || "",
-  address: props.profile.address,
-  bday: props.profile.bday,
-  gender: props.profile.gender,
+  qr_code: props.profile.qr_code || "",
+  address: props.profile.address || "",
+  bday: props.profile.bday || "",
+  gender: props.profile.gender || "",
 });
 
 // Holds the properties for the confirmation modal
@@ -57,19 +81,19 @@ const passwordFields = [
     key: "current_password",
     label: "Current Password",
     component: PasswordInput,
-    attrs: { placeholder: "Enter current password" },
+    attrs: { required: true, placeholder: "Enter current password" },
   },
   {
     key: "password",
     label: "New Password",
     component: PasswordInput,
-    attrs: { placeholder: "Enter new password" },
+    attrs: { required: true, placeholder: "Enter new password" },
   },
   {
     key: "password_confirmation",
     label: "Confirm New Password",
     component: PasswordInput,
-    attrs: { placeholder: "Confirm new password" },
+    attrs: { required: true, placeholder: "Confirm new password" },
   },
 ];
 
@@ -85,7 +109,7 @@ const detailsFields = [
     key: "position",
     label: "Position",
     component: TextInput,
-    attrs: { disabled: true },
+    attrs: { disabled: true, value: props.profile.position || "N/A" },
   },
   ...(props.profile.department
     ? [
@@ -118,16 +142,22 @@ const detailsFields = [
       ]
     : []),
   {
+    key: "qr_code",
+    label: "QR Code",
+    component: TextInput,
+    attrs: { disabled: true, value: props.profile.qr_code || "N/A" },
+  },
+  {
     key: "address",
     label: "Address",
     component: TextInput,
-    attrs: { placeholder: "Enter your address" },
+    attrs: { placeholder: "Enter your address", required: true },
   },
   {
     key: "bday",
     label: "Birthday",
     component: TextInput,
-    attrs: { type: "date" },
+    attrs: { type: "date", required: true },
   },
   {
     key: "gender",
@@ -141,6 +171,7 @@ const detailsFields = [
         { value: "Prefer not to say", label: "Prefer not to say" },
       ],
       placeholder: "Select your gender",
+      required: true,
     },
   },
 ];
@@ -265,43 +296,64 @@ const executeConfirm = () => {
 </script>
 
 <template>
-  <div class="p-4">
-    <h2 class="text-2xl font-semibold mb-4">Profile</h2>
-
-    <div class="flex flex-col items-center">
+  <div class="p-4 md:p-8 lg:p-12 xl:p-16">
+    <div
+      class="border-4 border-green-primary-1 max-w-6xl mx-auto rounded-3xl shadow-xl/20"
+    >
+      <div
+        class="h-20 bg-gradient-to-b from-green-primary-1 to-green-secondary rounded-t-2xl"
+      />
       <!-- Clickable profile picture -->
-      <div class="relative group cursor-pointer" @click="openPictureModal">
-        <img
-          :src="profile.picture || '/profile-images/default.png'"
-          class="w-32 h-32 rounded-full object-cover border-2 border-gray-300 shadow-md"
-        />
-        <div
-          class="absolute inset-0 bg-black/30 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
-        >
-          <span class="text-white font-medium">Edit</span>
+      <div
+        class="flex flex-col items-center md:flex-row md:justify-between p-6 mx-6"
+      >
+        <div class="flex items-center gap-4">
+          <div class="relative group cursor-pointer" @click="openPictureModal">
+            <img
+              :src="profile.picture || '/profile-images/default.png'"
+              class="w-28 h-28 rounded-full object-cover shadow-xl/20"
+            />
+            <div
+              class="absolute inset-0 bg-black/30 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+            >
+              <span class="text-white font-medium">Edit</span>
+            </div>
+          </div>
+          <div>
+            <h3 class="text-2xl font-bold">{{ profile.name }}</h3>
+            <p class="text-gray-500 font-semibold">{{ profile.email }}</p>
+          </div>
         </div>
+
+        <button
+          @click="openDetailsModal"
+          class="btn rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
+        >
+          <i class="pi pi-pen-to-square mr-2" />
+          Edit
+        </button>
       </div>
 
       <!-- User information -->
-      <div class="mt-4 text-center">
-        <h3 class="text-xl font-bold">{{ profile.name }}</h3>
-        <p class="text-gray-600">{{ profile.position }}</p>
-        <p class="text-gray-500">{{ profile.department }}</p>
+      <div class="grid md:grid-cols-2 gap-4 p-6 mx-6">
+        <div v-for="field in visibleFields" :key="field.key" class="w-full">
+          <p class="text-sm font-semibold ms-5">{{ field.label }}</p>
+          <input
+            :value="displayValue(profile[field.key])"
+            type="text"
+            class="input font-bold w-[95%] rounded-full px-5"
+            disabled
+          />
+        </div>
       </div>
+
       <div class="mt-6">
         <button
           @click="openPasswordModal"
-          class="w-full sm:w-auto px-4 py-2 btn btn-primary rounded-md transition-colors"
+          class="btn rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
         >
+          <i class="pi pi-lock mr-2" />
           Change Password
-        </button>
-      </div>
-      <div class="mt-6">
-        <button
-          @click="openDetailsModal"
-          class="w-full sm:w-auto px-4 py-2 btn btn-primary rounded-md transition-colors"
-        >
-          Update Profile Details
         </button>
       </div>
     </div>
@@ -323,7 +375,7 @@ const executeConfirm = () => {
       title="Change Password"
       :form="passwordForm"
       :fields="passwordFields"
-      submitText="Change Password"
+      submitText="Submit"
       @close="closeAllModals"
       @submit="handlePasswordChange"
     />
@@ -335,7 +387,7 @@ const executeConfirm = () => {
       title="Edit Profile Details"
       :form="detailsForm"
       :fields="detailsFields"
-      submitText="Save Changes"
+      submitText="Save"
       @close="closeAllModals"
       @submit="handleDetailsEdit"
     />

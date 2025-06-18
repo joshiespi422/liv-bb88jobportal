@@ -19,38 +19,48 @@ class ProfileController extends Controller
         /** @var \App\Models\User $user */ 
         $user = Auth::user();
 
-        // Load only what's needed based on user type
+        // Always load userType
         $user->load('userType');
         $role = $user->userType->type_name;
 
-        if ($role === 'employee') {
-            $user->load('employeeDetails.department');
-        } elseif ($role === 'intern') {
-            $user->load('internDetails.department');
-        }
+        // Conditionally load relationships
+        $relations = [
+            'employee' => 'employeeDetails.department',
+            'intern' => 'internDetails.department'
+        ];
 
-        $pictureUrl = $user->picture
-            ? Storage::url($user->picture)  // Generates full URL for stored image
-            : Storage::url('profile-images/default.png');  // Fallback to default image
+        if ($relation = ($relations[$role] ?? null)) {
+            $user->load($relation);
+        }
 
         // Base data common to all users
         $profileData = [
-            'id' => $user->id,
             'name' => $user->name,
+            'email' => $user->email,
+            'qr_code' => $user->qr_code,
             'position' => $user->position,
             'address' => $user->address,
             'bday' => $user->bday,
             'gender' => $user->gender,
-            'picture' => $pictureUrl
+            'picture' => $user->picture
+                ? Storage::url($user->picture)  // Generates full URL for stored image
+                : Storage::url('profile-images/default.png')  // Fallback to default image
         ];
 
-        // Add role-specific data
-        if ($role === 'employee' && $user->employeeDetails) {
-            $profileData['department'] = $user->employeeDetails->department->dept_name ?? null;
-            $profileData['hierarchy'] = $user->employeeDetails->hierarchy;
-        } elseif ($role === 'intern' && $user->internDetails) {
-            $profileData['department'] = $user->internDetails->department->dept_name ?? null;
-            $profileData['school'] = $user->internDetails->school;
+        // Dynamically add role-specific data
+        $roleDetails = [
+            'employee' => fn() => [
+                'department' => $user->employeeDetails->department->dept_name ?? null,
+                'hierarchy' => $user->employeeDetails->hierarchy ?? null
+            ],
+            'intern' => fn() => [
+                'department' => $user->internDetails->department->dept_name ?? null,
+                'school' => $user->internDetails->school ?? null
+            ]
+        ];
+
+        if ($detailsHandler = ($roleDetails[$role] ?? null)) {
+            $profileData = array_merge($profileData, $detailsHandler());
         }
 
         return Inertia::render('ProfileView', [
