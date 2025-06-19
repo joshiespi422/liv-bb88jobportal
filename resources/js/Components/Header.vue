@@ -31,7 +31,7 @@ const themeStore = useThemeStore();
         <i
           :class="[
             'pi p-2 text-xl text-white-primary',
-            themeStore.theme.value === 'nord' ? 'pi-moon' : 'pi-sun',
+            themeStore.theme.value === 'fantasy' ? 'pi-moon' : 'pi-sun',
           ]"
         ></i>
       </button>

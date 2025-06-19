@@ -103,13 +103,10 @@ const focusElement = ref(null);
             leave-to="opacity-0 scale-95"
           >
             <DialogPanel
-              class="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all"
+              class="w-full max-w-md transform overflow-hidden rounded-2xl bg-base-100 p-6 text-left align-middle shadow-xl transition-all"
             >
-              <DialogTitle
-                as="h3"
-                class="text-lg font-medium leading-6 text-gray-900"
-              >
-                {{ selectedImage ? "Adjust Picture" : "Profile Picture" }}
+              <DialogTitle as="h3" class="text-2xl font-semibold">
+                {{ selectedImage ? "ADJUST PICTURE" : "PROFILE PICTURE" }}
               </DialogTitle>
 
               <div class="mt-4 flex justify-center">
@@ -126,7 +123,7 @@ const focusElement = ref(null);
                 <img
                   v-else
                   :src="pictureUrl || '/profile-images/default.png'"
-                  class="w-48 h-48 rounded-full object-cover border-2 border-gray-200"
+                  class="w-52 h-52 rounded-full object-cover my-5 shadow-xl/20"
                 />
               </div>
 
@@ -138,11 +135,11 @@ const focusElement = ref(null);
                 @change="handleFileSelect"
               />
 
-              <div class="mt-6 flex justify-center space-x-4">
+              <div class="mt-10 flex justify-end space-x-3">
                 <template v-if="selectedImage">
                   <button
                     type="button"
-                    class="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none"
+                    class="btn btn-soft btn-info shadow-lg rounded-full"
                     @click="saveCrop"
                   >
                     Save Changes
@@ -150,7 +147,7 @@ const focusElement = ref(null);
 
                   <button
                     type="button"
-                    class="inline-flex justify-center rounded-md border border-transparent bg-red-100 px-4 py-2 text-sm font-medium text-red-900 hover:bg-red-200 focus:outline-none"
+                    class="btn btn-soft btn-error shadow-lg rounded-full"
                     @click="selectedImage = null"
                   >
                     Cancel
@@ -159,7 +156,7 @@ const focusElement = ref(null);
                 <template v-else>
                   <button
                     type="button"
-                    class="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none"
+                    class="btn btn-soft btn-success shadow-lg rounded-full"
                     @click="triggerFileInput"
                   >
                     Change
@@ -167,7 +164,7 @@ const focusElement = ref(null);
 
                   <button
                     type="button"
-                    class="inline-flex justify-center rounded-md border border-transparent bg-red-100 px-4 py-2 text-sm font-medium text-red-900 hover:bg-red-200 focus:outline-none"
+                    class="btn btn-soft btn-error shadow-lg rounded-full"
                     @click="requestDelete"
                   >
                     Delete

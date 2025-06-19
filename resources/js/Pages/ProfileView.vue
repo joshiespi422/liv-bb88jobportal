@@ -335,7 +335,7 @@ const executeConfirm = () => {
       </div>
 
       <!-- User information -->
-      <div class="grid md:grid-cols-2 gap-4 p-6 mx-6">
+      <div class="grid md:grid-cols-2 gap-4 mx-6">
         <div v-for="field in visibleFields" :key="field.key" class="w-full">
           <p class="text-sm font-semibold ms-5">{{ field.label }}</p>
           <input
@@ -347,14 +347,34 @@ const executeConfirm = () => {
         </div>
       </div>
 
-      <div class="mt-6">
-        <button
-          @click="openPasswordModal"
-          class="btn rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
-        >
-          <i class="pi pi-lock mr-2" />
-          Change Password
-        </button>
+      <div class="grid md:grid-cols-2 gap-4 p-6 mx-6">
+        <div>
+          <h3 class="text-lg font-semibold mb-1">My Email Address</h3>
+          <div class="flex items-center gap-2">
+            <i
+              class="pi pi-envelope rounded-full p-2.5 text-lg text-white-primary bg-green-primary-1"
+            ></i>
+            <p class="font-semibold">{{ profile.email }}</p>
+          </div>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold mb-1">Change Password</h3>
+          <div class="flex items-center gap-2">
+            <input
+              value="**********"
+              type="text"
+              class="input font-bold rounded-full px-5"
+              disabled
+            />
+            <button
+              @click="openPasswordModal"
+              class="btn rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
+            >
+              <i class="pi pi-lock mr-2" />
+              Change
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -372,7 +392,7 @@ const executeConfirm = () => {
     <FormModal
       :isOpen="isPasswordModalOpen"
       :inert="isConfirmModalOpen"
-      title="Change Password"
+      title="CHANGE PASSWORD"
       :form="passwordForm"
       :fields="passwordFields"
       submitText="Submit"
@@ -384,7 +404,7 @@ const executeConfirm = () => {
     <FormModal
       :isOpen="isDetailsModalOpen"
       :inert="isConfirmModalOpen"
-      title="Edit Profile Details"
+      title="EDIT PROFILE DETAILS"
       :form="detailsForm"
       :fields="detailsFields"
       submitText="Save"
