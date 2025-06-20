@@ -71,7 +71,7 @@ class ProfileController extends Controller
     public function updatePicture(Request $request)
     {
         $request->validate([
-            'picture' => 'required|image|mimes:jpeg,png,jpg|max:2048'
+            'picture' => 'required|image|mimes:jpeg,png,jpg|max:20'
         ]);
 
         /** @var \App\Models\User $user */
@@ -117,6 +117,22 @@ class ProfileController extends Controller
         $user->save();
 
         return back()->with('success', 'Password updated successfully.');
+    }
+
+    public function updateDetails(Request $request)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        $validated = $request->validate([
+            'address' => 'required|string|max:255',
+            'bday' => 'required|date',
+            'gender' => 'required|in:Male,Female,Other,Prefer not to say',
+        ]);
+
+        $user->update($validated);
+
+        return back()->with('success', 'Profile details updated successfully!');
     }
 
     /**

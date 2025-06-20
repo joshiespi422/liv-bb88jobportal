@@ -55,12 +55,6 @@ const passwordForm = useForm({
 });
 
 const detailsForm = useForm({
-  name: props.profile.name || "",
-  position: props.profile.position || "",
-  department: props.profile.department || "",
-  hierarchy: props.profile.hierarchy || "",
-  school: props.profile.school || "",
-  qr_code: props.profile.qr_code || "",
   address: props.profile.address || "",
   bday: props.profile.bday || "",
   gender: props.profile.gender || "",
@@ -103,7 +97,7 @@ const detailsFields = [
     key: "name",
     label: "Name",
     component: TextInput,
-    attrs: { disabled: true },
+    attrs: { disabled: true, value: props.profile.name || "N/A" },
   },
   {
     key: "position",
@@ -117,7 +111,7 @@ const detailsFields = [
           key: "department",
           label: "Department",
           component: TextInput,
-          attrs: { disabled: true },
+          attrs: { disabled: true, value: props.profile.department || "N/A" },
         },
       ]
     : []),
@@ -127,7 +121,7 @@ const detailsFields = [
           key: "hierarchy",
           label: "Hierarchy",
           component: TextInput,
-          attrs: { disabled: true },
+          attrs: { disabled: true, value: props.profile.hierarchy || "N/A" },
         },
       ]
     : []),
@@ -137,7 +131,7 @@ const detailsFields = [
           key: "school",
           label: "School",
           component: TextInput,
-          attrs: { disabled: true },
+          attrs: { disabled: true, value: props.profile.school || "N/A" },
         },
       ]
     : []),
@@ -197,8 +191,16 @@ const closeAllModals = () => {
   isConfirmModalOpen.value = false;
   isPasswordModalOpen.value = false;
   isDetailsModalOpen.value = false;
+};
+
+const resetPasswordForm = () => {
   passwordForm.reset();
   passwordForm.errors = {};
+};
+
+const cancelCropper = () => {
+  pictureForm.reset();
+  pictureForm.errors = {};
 };
 
 // --- Change Picture Flow ---
@@ -218,6 +220,7 @@ const handleChangePicture = (imageBlob) => {
   pendingAction.value = () =>
     pictureForm.post(route("profile.picture.update"), {
       onSuccess: () => closeAllModals(),
+      onError: () => (isConfirmModalOpen.value = false),
     });
 
   isConfirmModalOpen.value = true;
@@ -259,6 +262,7 @@ const handlePasswordChange = () => {
   pendingAction.value = () => {
     passwordForm.post(route("profile.password.update"), {
       onSuccess: () => closeAllModals(),
+      onError: () => (isConfirmModalOpen.value = false),
     });
   };
 
@@ -279,9 +283,8 @@ const handleDetailsEdit = () => {
 
   pendingAction.value = () => {
     detailsForm.post(route("profile.details.update"), {
-      onSuccess: () => {
-        closeAllModals();
-      },
+      onSuccess: () => closeAllModals(),
+      onError: () => (isConfirmModalOpen.value = false),
     });
   };
 
@@ -383,7 +386,9 @@ const executeConfirm = () => {
       :isOpen="isPictureModalOpen"
       :pictureUrl="profile.picture"
       :inert="isConfirmModalOpen"
-      @close="closeAllModals"
+      :error="pictureForm.errors.picture"
+      @cancel="cancelCropper"
+      @close="closeAllModals(), cancelCropper()"
       @change="handleChangePicture"
       @delete="handleDeletePicture"
     />
@@ -396,7 +401,7 @@ const executeConfirm = () => {
       :form="passwordForm"
       :fields="passwordFields"
       submitText="Submit"
-      @close="closeAllModals"
+      @close="closeAllModals(), resetPasswordForm()"
       @submit="handlePasswordChange"
     />
 

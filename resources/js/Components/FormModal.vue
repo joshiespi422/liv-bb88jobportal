@@ -60,7 +60,7 @@ const focusElement = ref(null);
             >
               <form @submit.prevent="$emit('submit')">
                 <div>
-                  <DialogTitle as="h3" class="text-2xl font-semibold">
+                  <DialogTitle as="h3" class="text-2xl font-bold">
                     {{ title }}
                   </DialogTitle>
 
@@ -68,7 +68,7 @@ const focusElement = ref(null);
                     <div v-for="field in fields" :key="field.key">
                       <label
                         :for="field.key"
-                        class="block text-sm font-medium ms-3"
+                        class="block text-sm font-bold ms-3"
                       >
                         {{ field.label }}
                       </label>
@@ -77,10 +77,13 @@ const focusElement = ref(null);
                         :id="field.key"
                         v-bind="field.attrs"
                         v-model="form[field.key]"
-                        :class="{
-                          'ring-error': form.errors[field.key],
-                          'focus:ring-indigo-600': !form.errors[field.key],
-                        }"
+                        :class="[
+                          'disabled:cursor-not-allowed disabled:bg-base-200 disabled:ring-0',
+                          {
+                            'ring-error': form.errors[field.key],
+                            'focus:ring-indigo-600': !form.errors[field.key],
+                          },
+                        ]"
                         @change="form.clearErrors(field.key)"
                       />
                       <p

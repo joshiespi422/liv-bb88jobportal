@@ -12,7 +12,7 @@ defineEmits(["update:modelValue"]);
   <select
     :value="modelValue"
     @change="$emit('update:modelValue', $event.target.value)"
-    class="block w-full select rounded-full shadow-md text-sm ring focus:outline-none focus:ring-2 border-0"
+    class="block w-full select rounded-full shadow-md text-sm font-semibold ring focus:outline-none focus:ring-2 border-0"
   >
     <option v-if="placeholder" disabled value="">{{ placeholder }}</option>
     <option v-for="option in options" :key="option.value" :value="option.value">

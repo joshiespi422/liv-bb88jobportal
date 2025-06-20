@@ -14,9 +14,10 @@ const props = defineProps({
   isOpen: Boolean,
   pictureUrl: String,
   inert: Boolean,
+  error: String,
 });
 
-const emit = defineEmits(["close", "change", "delete"]);
+const emit = defineEmits(["close", "cancel", "change", "delete"]);
 
 const cropper = ref(null);
 const fileInput = ref(null);
@@ -65,6 +66,11 @@ const requestDelete = () => {
   emit("delete");
 };
 
+const cancelCrop = () => {
+  selectedImage.value = null;
+  emit("cancel");
+};
+
 const focusElement = ref(null);
 </script>
 
@@ -105,7 +111,7 @@ const focusElement = ref(null);
             <DialogPanel
               class="w-full max-w-md transform overflow-hidden rounded-2xl bg-base-100 p-6 text-left align-middle shadow-xl transition-all"
             >
-              <DialogTitle as="h3" class="text-2xl font-semibold">
+              <DialogTitle as="h3" class="text-2xl font-bold">
                 {{ selectedImage ? "ADJUST PICTURE" : "PROFILE PICTURE" }}
               </DialogTitle>
 
@@ -125,6 +131,15 @@ const focusElement = ref(null);
                   :src="pictureUrl || '/profile-images/default.png'"
                   class="w-52 h-52 rounded-full object-cover my-5 shadow-xl/20"
                 />
+              </div>
+
+              <div
+                v-if="error && selectedImage"
+                role="alert"
+                class="alert alert-error"
+              >
+                <i class="pi pi-times-circle text-2xl"></i>
+                <p class="text-sm font-semibold">{{ error }}</p>
               </div>
 
               <input
@@ -148,7 +163,7 @@ const focusElement = ref(null);
                   <button
                     type="button"
                     class="btn btn-soft btn-error shadow-lg rounded-full"
-                    @click="selectedImage = null"
+                    @click="cancelCrop"
                   >
                     Cancel
                   </button>

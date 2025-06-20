@@ -53,6 +53,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/profile/picture', [ProfileController::class, 'updatePicture'])->name('profile.picture.update');
     Route::delete('/profile/picture', [ProfileController::class, 'deletePicture'])->name('profile.picture.delete');
     Route::post('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
+    Route::post('/profile/details', [ProfileController::class, 'updateDetails'])->name('profile.details.update');
 
     Route::prefix('leave')->name('leave.')->group(function () {
         Route::get('/regular', function () {
