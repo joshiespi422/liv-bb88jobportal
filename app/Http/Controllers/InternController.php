@@ -9,6 +9,7 @@ use App\Models\UserType;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class InternController extends Controller
 {
@@ -132,17 +133,21 @@ class InternController extends Controller
                 'internDetails.department:id,dept_name'
             ])
             ->whereHas('internDetails')
-            ->select('id', 'name', 'position', 'address', 'gender', 'bday')
+            ->select('id', 'name', 'email', 'position', 'picture', 'address', 'gender', 'bday')
             ->findOrFail($id);
 
         $internDetails = [
             'id' => $intern->id,
             'name' => $intern->name,
+            'email' => $intern->email,
             'position' => $intern->position,
+            'picture' => $intern->picture
+                ? Storage::url($intern->picture)  // Generates full URL for stored image
+                : Storage::url('profile-images/default.png'),  // Fallback to default image
             'address' => $intern->address,
             'gender' => $intern->gender,
             'bday' => $intern->bday,
-            'dept_name' => $intern->internDetails && $intern->internDetails->department
+            'deptName' => $intern->internDetails && $intern->internDetails->department
                             ? $intern->internDetails->department->dept_name
                             : null,
             'school' => $intern->internDetails

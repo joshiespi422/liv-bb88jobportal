@@ -1,6 +1,7 @@
 <script setup>
 import { ref, reactive, computed } from "vue";
 import { useForm } from "@inertiajs/vue3";
+import { formatDate } from "../Composables/useDateFormatter";
 import PictureModal from "../Components/PictureModal.vue";
 import ConfirmModal from "../Components/ConfirmModal.vue";
 import FormModal from "../Components/FormModal.vue";
@@ -22,7 +23,7 @@ const profileFields = [
   { key: "hierarchy", label: "Hierarchy" },
   { key: "school", label: "School" },
   { key: "address", label: "Address" },
-  { key: "bday", label: "Birthday" },
+  { key: "bday", label: "Birthday", formatter: formatDate },
   { key: "gender", label: "Gender" },
 ];
 // Filter fields to only those present in profile data
@@ -32,8 +33,11 @@ const visibleFields = computed(() => {
   );
 });
 // Format values with fallback
-const displayValue = (value) => {
-  return value || "N/A";
+const displayValue = (field, value) => {
+  if (value === null || value === undefined || value === "") {
+    return "N/A";
+  }
+  return field.formatter ? field.formatter(value) : value;
 };
 
 // State for modals
@@ -342,7 +346,7 @@ const executeConfirm = () => {
         <div v-for="field in visibleFields" :key="field.key" class="w-full">
           <p class="text-sm font-semibold ms-5">{{ field.label }}</p>
           <input
-            :value="displayValue(profile[field.key])"
+            :value="displayValue(field, profile[field.key])"
             type="text"
             class="input font-bold w-[95%] rounded-full px-5"
             disabled
@@ -356,7 +360,7 @@ const executeConfirm = () => {
           <div class="flex items-center gap-2">
             <i
               class="pi pi-envelope rounded-full p-2.5 text-lg text-white-primary bg-green-primary-1"
-            ></i>
+            />
             <p class="font-semibold">{{ profile.email }}</p>
           </div>
         </div>

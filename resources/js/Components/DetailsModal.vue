@@ -33,6 +33,18 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  panelClass: {
+    type: String,
+    default: "w-full max-w-md", // Default size
+  },
+  customSkeleton: {
+    type: Boolean,
+    default: false,
+  },
+  customContent: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits(["close", "afterLeave"]);
@@ -102,38 +114,57 @@ const skeletonFieldCount = computed(() => {
             leave-to="opacity-0"
           >
             <DialogPanel
-              class="bg-base-100 w-full max-w-md transform overflow-hidden rounded-2xl p-6 text-left align-middle shadow-xl transition-all"
+              :class="[
+                'bg-base-100 transform overflow-hidden rounded-2xl p-6 text-left align-middle shadow-xl transition-all',
+                panelClass,
+              ]"
             >
-              <DialogTitle as="h3" class="text-2xl font-semibold">
+              <DialogTitle as="h3" class="text-2xl font-bold">
                 {{ title }}
               </DialogTitle>
 
-              <!-- Skeleton loader -->
-              <div v-if="loading" class="space-y-4 my-6 mx-3">
-                <div class="grid grid-cols-1 gap-4">
-                  <div
-                    v-for="i in skeletonFieldCount"
-                    :key="`skeleton-field-${i}`"
-                  >
-                    <div class="skeleton h-5 w-[40%] mb-1"></div>
-                    <div class="skeleton h-5 w-full"></div>
+              <!-- Skeleton Slot -->
+              <div v-if="loading">
+                <slot name="skeleton" :skeletonFieldCount="skeletonFieldCount">
+                  <!-- Default Skeleton -->
+                  <div v-if="!customSkeleton" class="space-y-4 my-6 mx-3">
+                    <div class="grid grid-cols-1 gap-4">
+                      <div
+                        v-for="i in skeletonFieldCount"
+                        :key="`skeleton-field-${i}`"
+                      >
+                        <div class="skeleton h-5 w-[40%] mb-1"></div>
+                        <div class="skeleton h-5 w-full"></div>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                </slot>
               </div>
 
-              <!-- item details -->
-              <div v-else-if="item && fields.length > 0" class="space-y-4 my-5">
-                <div class="grid grid-cols-1 gap-4">
-                  <div v-for="field in fields" :key="field.key">
-                    <label class="block text-sm font-medium">{{
-                      field.label
-                    }}</label>
-                    <p class="mt-1 text-sm">
-                      {{ getFieldValue(item, field) }}
-                    </p>
+              <!-- Content Slot -->
+              <div v-else-if="item && fields.length > 0">
+                <slot
+                  name="content"
+                  :item="item"
+                  :getFieldValue="getFieldValue"
+                >
+                  <!-- Default Content -->
+                  <div v-if="!customContent" class="space-y-4 my-5">
+                    <div class="grid grid-cols-1 gap-4">
+                      <div v-for="field in fields" :key="field.key">
+                        <label class="block text-sm font-medium">
+                          {{ field.label }}
+                        </label>
+                        <p class="mt-1 text-sm">
+                          {{ getFieldValue(item, field) }}
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                </slot>
               </div>
+
+              <!-- Error Slot -->
               <div
                 v-else-if="error && !loading"
                 role="alert"
@@ -143,6 +174,7 @@ const skeletonFieldCount = computed(() => {
                 <p class="text-sm font-semibold">Something went wrong</p>
               </div>
 
+              <!-- No Data Slot -->
               <div
                 v-else-if="!item && !loading"
                 role="alert"

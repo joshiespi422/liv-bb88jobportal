@@ -10,6 +10,7 @@ use App\Models\UserType;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class EmployeeController extends Controller
 {
@@ -134,17 +135,21 @@ class EmployeeController extends Controller
                 'employeeDetails.department:id,dept_name'
             ])
             ->whereHas('employeeDetails')
-            ->select('id', 'name', 'position', 'address', 'gender', 'bday')
+            ->select('id', 'name', 'email', 'position', 'picture', 'address', 'gender', 'bday')
             ->findOrFail($id);
 
         $employeeDetails = [
             'id' => $employee->id,
             'name' => $employee->name,
+            'email' => $employee->email,
             'position' => $employee->position,
+            'picture' => $employee->picture
+                ? Storage::url($employee->picture)  // Generates full URL for stored image
+                : Storage::url('profile-images/default.png'),  // Fallback to default image
             'address' => $employee->address,
             'gender' => $employee->gender,
             'bday' => $employee->bday,
-            'dept_name' => $employee->employeeDetails && $employee->employeeDetails->department
+            'deptName' => $employee->employeeDetails && $employee->employeeDetails->department
                             ? $employee->employeeDetails->department->dept_name
                             : null,
             'hierarchy' => $employee->employeeDetails

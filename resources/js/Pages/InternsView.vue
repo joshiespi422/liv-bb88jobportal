@@ -1,6 +1,7 @@
 <script setup>
 import { ref, h, computed } from "vue";
 import { useForm, usePage, router } from "@inertiajs/vue3";
+import { formatDate } from "../Composables/useDateFormatter";
 import DataTable from "../Components/DataTable.vue";
 import DetailsModal from "../Components/DetailsModal.vue";
 import FormModal from "../Components/FormModal.vue";
@@ -170,20 +171,11 @@ const selectedDetails = ref(null);
 const isDetailsLoading = ref(false);
 const isDetailsError = ref(false);
 
-// Formatting function for date fields
-const formatDate = (dateString) => {
-  if (!dateString) return "N/A";
-  return new Date(dateString).toLocaleDateString("en-US", {
-    // Example formatting
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-};
-
 // the fields to be displayed in the details modal for an intern
 const internDetailFields = ref([
   { key: "name", label: "Full Name" },
+  { key: "email", label: "Email" },
+  { key: "picture", label: "Picture" },
   { key: "position", label: "Position" },
   { key: "deptName", label: "Department" },
   { key: "school", label: "School" },
@@ -200,7 +192,7 @@ const fetchInternDetails = async (internId) => {
   isDetailsError.value = false;
 
   try {
-    const response = await axios.get(`/teams/interns/${internId}`);
+    const response = await axios.get(`/team/interns/${internId}`);
     selectedDetails.value = response.data;
   } catch (error) {
     console.error("Error fetching intern details:", error);
@@ -223,6 +215,17 @@ const afterDetailsClose = () => {
   selectedDetails.value = null;
   isDetailsError.value = false;
 };
+
+// computed property for custom details field separation
+const customDetails = computed(() => {
+  const fields = internDetailFields.value;
+  return {
+    name: fields.find((f) => f.key === "name"),
+    email: fields.find((f) => f.key === "email"),
+    picture: fields.find((f) => f.key === "picture"),
+    others: fields.filter((f) => !["name", "email", "picture"].includes(f.key)),
+  };
+});
 
 // Tanstack Table columns definition
 const internTableColumns = [
@@ -320,8 +323,68 @@ const internTableColumns = [
       :error="isDetailsError"
       title="INTERN DETAILS"
       :fields="internDetailFields"
+      :panel-class="'w-full max-w-lg'"
+      custom-skeleton
+      custom-content
       @close="closeDetailsModal"
       @after-leave="afterDetailsClose"
-    />
+    >
+      <!-- Custom Skeleton -->
+      <template #skeleton="{ skeletonFieldCount }">
+        <div class="space-y-6 mx-4 my-8">
+          <div class="flex items-center gap-4">
+            <div class="skeleton w-28 h-28 rounded-full"></div>
+            <div class="flex-1 space-y-2">
+              <div class="skeleton h-6 w-3/4"></div>
+              <div class="skeleton h-4 w-full"></div>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div
+              v-for="i in skeletonFieldCount - 3"
+              :key="`custom-skel-${i}`"
+              class="space-y-2"
+            >
+              <div class="skeleton h-4 w-1/3"></div>
+              <div class="skeleton h-6 w-full"></div>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- Custom Content Layout -->
+      <template #content="{ item, getFieldValue }">
+        <div class="space-y-6 mx-4 my-8">
+          <div class="flex items-center gap-4">
+            <img
+              :src="
+                getFieldValue(item, customDetails.picture) ||
+                '/profile-images/default.png'
+              "
+              class="w-28 h-28 rounded-full object-cover shadow-xl/20"
+            />
+            <div>
+              <h3 class="text-2xl font-bold">
+                {{ getFieldValue(item, customDetails.name) }}
+              </h3>
+              <p class="text-gray-500 font-semibold">
+                {{ getFieldValue(item, customDetails.email) }}
+              </p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4 mx-6">
+            <div v-for="field in customDetails.others" :key="field.key">
+              <label class="block text-sm text-neutral-500 opacity-50">
+                {{ field.label }}
+              </label>
+              <p class="font-semibold text-shadow-md">
+                {{ getFieldValue(item, field) }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </template>
+    </DetailsModal>
   </div>
 </template>
