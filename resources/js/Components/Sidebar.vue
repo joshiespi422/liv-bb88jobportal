@@ -9,6 +9,9 @@ const sidebarStore = useSidebarStore();
 const page = usePage();
 const showLogoutModal = ref(false);
 
+// logged in user data
+const userType = computed(() => page.props.auth.user?.userType || "");
+
 const promptLogout = () => {
   showLogoutModal.value = true;
 };
@@ -22,6 +25,40 @@ const activeSubmenu = ref(null);
 const activeNestedSubmenu = ref(null);
 const submenuTopPosition = ref(null);
 const allMenuItems = ref(menuItems);
+
+// Recursive filtering for menu items
+const filterMenuItems = (items, parentPermissions = []) => {
+  return items.reduce((result, item) => {
+    // Determine effective permissions
+    const effectivePermissions = item.userType || parentPermissions;
+
+    // Skip if user doesn't have permission
+    if (!effectivePermissions.includes(userType.value)) {
+      return result;
+    }
+
+    // Process submenus
+    let newItem = { ...item };
+    if (item.hasSubmenu && item.submenu) {
+      const filteredSubmenu = filterMenuItems(
+        item.submenu,
+        effectivePermissions // Pass down permissions
+      );
+
+      // Skip if no visible subitems
+      if (filteredSubmenu.length === 0) return result;
+
+      newItem.submenu = filteredSubmenu;
+    }
+
+    result.push(newItem);
+    return result;
+  }, []);
+};
+
+const filteredMenuItems = computed(() => {
+  return filterMenuItems(menuItems); // Use imported menuItems
+});
 
 // Inertia event listener for route changes
 let removeInertiaListener;
@@ -75,6 +112,7 @@ const setMenuItemRef = (el, itemName) => {
 
 const activeStates = computed(() => {
   const states = {};
+  const items = filteredMenuItems.value;
 
   const checkActive = (item) => {
     if (item.routeName) {
@@ -86,7 +124,7 @@ const activeStates = computed(() => {
     return false;
   };
 
-  allMenuItems.value.forEach((item) => {
+  items.forEach((item) => {
     states[item.name] = checkActive(item);
   });
 
@@ -110,9 +148,9 @@ const activeStates = computed(() => {
       <nav class="ml-3 mt-3">
         <ul>
           <li
-            v-for="item in allMenuItems"
+            v-for="item in filteredMenuItems"
             :key="item.name"
-            class="text-white mb-1"
+            class="text-white font-medium mb-1"
           >
             <!-- Menu item -->
             <component
@@ -243,7 +281,7 @@ const activeStates = computed(() => {
     <!-- Logout section at bottom -->
     <div class="mb-2 ml-3">
       <div
-        class="p-2 text-white cursor-pointer flex items-center hover:bg-[#f9f6f630] rounded-l-3xl"
+        class="p-2 text-white font-medium cursor-pointer flex items-center hover:bg-[#f9f6f630] rounded-l-3xl"
         @click="promptLogout"
       >
         <i class="pi pi-sign-out p-2"></i>
