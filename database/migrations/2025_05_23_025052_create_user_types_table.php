@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('type_name')->unique();
         });
 
-            DB::table('user_types')->insert([
+        DB::table('user_types')->insert([
             ['id' => 1, 'type_name' => 'super_admin'], 
             ['id' => 2, 'type_name' => 'employee'],
             ['id' => 3, 'type_name' => 'intern'],

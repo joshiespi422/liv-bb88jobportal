@@ -12,9 +12,15 @@ class UserType extends Model
 
     // protected $fillable = ['type_name'];
 
-    // realationship to users
+    // relationship to users, one user type can have many users
     public function users(): HasMany
     {
         return $this->hasMany(User::class);
+    }
+
+    // relationship to tasks, one user type can have many tasks
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(Task::class);
     }
 }

@@ -5,6 +5,8 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -65,7 +67,7 @@ class User extends Authenticatable
     /**
      * Defines a one-to-one relationship with users and user_employees
      */
-    public function employeeDetails()
+    public function employeeDetails() : HasOne
     {
         return $this->hasOne(UserEmployee::class);
     }
@@ -73,9 +75,17 @@ class User extends Authenticatable
     /**
      * Defines a one-to-one relationship with users and user_interns
      */
-    public function internDetails()
+    public function internDetails() : HasOne
     {
         return $this->hasOne(UserIntern::class);
+    }
+
+     /**
+     * Defines a many-to-many relationship with users and tasks (pivot table)
+     */
+    public function tasks() : BelongsToMany
+    {
+        return $this->BelongsToMany(Task::class);
     }
 
     /**
