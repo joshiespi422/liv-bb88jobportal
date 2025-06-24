@@ -112,11 +112,11 @@ const setMenuItemRef = (el, itemName) => {
 
 const activeStates = computed(() => {
   const states = {};
-  const items = filteredMenuItems.value;
+  const currentRoute = page.props.ziggy;
 
   const checkActive = (item) => {
     if (item.routeName) {
-      return page.props.ziggy.current === item.routeName;
+      return currentRoute.current === item.routeName;
     }
     if (item.submenu) {
       return item.submenu.some((subItem) => checkActive(subItem));
@@ -124,12 +124,19 @@ const activeStates = computed(() => {
     return false;
   };
 
-  items.forEach((item) => {
+  filteredMenuItems.value.forEach((item) => {
     states[item.name] = checkActive(item);
   });
 
   return states;
 });
+
+const generateRoute = (item) => {
+  if (item.routeQuery) {
+    return route(item.routeName, item.routeQuery);
+  }
+  return route(item.routeName);
+};
 </script>
 
 <template>
@@ -156,7 +163,7 @@ const activeStates = computed(() => {
             <component
               :is="item.hasSubmenu ? 'div' : Link"
               :ref="(el) => setMenuItemRef(el, item.name)"
-              :href="item.hasSubmenu ? undefined : route(item.routeName)"
+              :href="item.hasSubmenu ? undefined : generateRoute(item)"
               :class="[
                 'relative p-2 rounded-l-3xl flex items-center cursor-pointer',
                 {
@@ -213,9 +220,7 @@ const activeStates = computed(() => {
                     <component
                       :is="subItem.hasSubmenu ? 'div' : Link"
                       :href="
-                        !subItem.hasSubmenu
-                          ? route(subItem.routeName)
-                          : undefined
+                        !subItem.hasSubmenu ? generateRoute(subItem) : undefined
                       "
                       class="p-2 pl-5 flex items-center cursor-pointer hover:bg-[#f9f6f630] rounded-l-3xl"
                       @click="
@@ -259,7 +264,7 @@ const activeStates = computed(() => {
                             class="p-2 pl-4 text-white text-xs cursor-pointer hover:bg-[#f9f6f630] rounded-l-3xl"
                           >
                             <Link
-                              :href="route(nestedItem.routeName)"
+                              :href="generateRoute(nestedItem)"
                               class="block"
                             >
                               <i :class="`${nestedItem.icon} mr-2`"></i>

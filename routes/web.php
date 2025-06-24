@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\InternController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\TaskController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -49,6 +50,8 @@ Route::middleware('auth')->group(function () {
         });
     });
     
+    Route::get('/task', [TaskController::class, 'index'])->name('task');
+
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
     Route::post('/profile/picture', [ProfileController::class, 'updatePicture'])->name('profile.picture.update');
     Route::delete('/profile/picture', [ProfileController::class, 'deletePicture'])->name('profile.picture.delete');
