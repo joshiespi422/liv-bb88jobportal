@@ -28,7 +28,7 @@ class InternController extends Controller
         // For super_admins: use session-stored or request-selected department
         elseif ($user->hasRole('super_admin')) {
             // Get from request or session
-            $currentDepartmentId = $request->input('department_id', session('current_department_id'));
+            $currentDepartmentId = $request->input('dept', session('current_department_id'));
             
             // Default to first department if none set
             if (!$currentDepartmentId) {

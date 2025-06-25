@@ -150,7 +150,7 @@ const selectedDepartment = computed({
     if (authUser.value.userType === "super_admin" && newDeptId) {
       router.get(
         route("team.interns"),
-        { department_id: newDeptId },
+        { dept: newDeptId },
         {
           preserveState: true, // Keeps Vue component state
           preserveScroll: true, // Keeps scroll position
