@@ -10,7 +10,9 @@ const page = usePage();
 const showLogoutModal = ref(false);
 
 // logged in user data
-const userType = computed(() => page.props.auth.user?.userType || "");
+const userAuth = computed(() => page.props.auth.user || {});
+const userType = computed(() => userAuth.value.userType || "");
+const hierarchy = computed(() => userAuth.value.hierarchy || "");
 
 const promptLogout = () => {
   showLogoutModal.value = true;
@@ -24,28 +26,46 @@ const menuItemRefs = ref(new Map());
 const activeSubmenu = ref(null);
 const activeNestedSubmenu = ref(null);
 const submenuTopPosition = ref(null);
-const allMenuItems = ref(menuItems);
+
+const showLeaderItem = (item) => {
+  if (!item.isLeader) return true;
+  return (
+    userType.value === "super_admin" ||
+    (userType.value === "employee" && hierarchy.value === "Leader")
+  );
+};
+
+const showMemberItem = (item) => {
+  if (!item.isMember) return true;
+  return !(userType.value === "employee" && hierarchy.value === "Leader");
+};
+
+const userTypePermission = (item, parentPermissions) => {
+  const effectivePermissions = item.userType || parentPermissions;
+  return effectivePermissions.includes(userType.value);
+};
 
 // Recursive filtering for menu items
 const filterMenuItems = (items, parentPermissions = []) => {
   return items.reduce((result, item) => {
-    // Determine effective permissions
-    const effectivePermissions = item.userType || parentPermissions;
-
-    // Skip if user doesn't have permission
-    if (!effectivePermissions.includes(userType.value)) {
+    // Check user type permission first
+    if (!userTypePermission(item, parentPermissions)) {
       return result;
     }
 
-    // Process submenus
+    // Apply visibility rules
+    if (!showLeaderItem(item) || !showMemberItem(item)) {
+      return result;
+    }
+
+    // Process submenus recursively
     let newItem = { ...item };
     if (item.hasSubmenu && item.submenu) {
       const filteredSubmenu = filterMenuItems(
         item.submenu,
-        effectivePermissions // Pass down permissions
+        item.userType || parentPermissions
       );
 
-      // Skip if no visible subitems
       if (filteredSubmenu.length === 0) return result;
 
       newItem.submenu = filteredSubmenu;

@@ -13,12 +13,12 @@ export const menuItems = [
     submenu: [
       {
         name: "TODAY", // Inherits parent permission
-        icon: "pi pi-users",
+        icon: "pi pi-book",
         routeName: "attendance.today",
       },
       {
         name: "TIME LOGS", // Inherits parent permission
-        icon: "pi pi-users",
+        icon: "pi pi-book",
         routeName: "attendance.timelogs",
       },
     ],
@@ -26,17 +26,18 @@ export const menuItems = [
   {
     name: "USERS",
     icon: "pi pi-users",
-    userType: ["super_admin"],
+    userType: ["employee", "super_admin"],
+    isLeader: true,
     hasSubmenu: true,
     submenu: [
       {
         name: "EMPLOYEES",
-        icon: "pi pi-users",
+        icon: "pi pi-user",
         routeName: "team.employees",
       },
       {
         name: "INTERNS",
-        icon: "pi pi-users",
+        icon: "pi pi-user",
         routeName: "team.interns",
       },
     ],
@@ -45,6 +46,7 @@ export const menuItems = [
     name: "EMPLOYEES",
     icon: "pi pi-users",
     userType: ["employee"],
+    isMember: true,
     routeName: "team.employees",
   },
   {
@@ -57,23 +59,25 @@ export const menuItems = [
     name: "TASKS",
     icon: "pi pi-clipboard",
     userType: ["employee", "intern"],
+    isMember: true,
     routeName: "task",
   },
   {
     name: "TASKS",
     icon: "pi pi-clipboard",
-    userType: ["super_admin"],
+    userType: ["employee", "super_admin"],
+    isLeader: true,
     hasSubmenu: true,
     submenu: [
       {
         name: "EMPLOYEE TASKS",
-        icon: "pi pi-clipboard",
+        icon: "pi pi-check-square",
         routeName: "task",
         routeQuery: { type: "employee" },
       },
       {
         name: "INTERN TASKS",
-        icon: "pi pi-clipboard",
+        icon: "pi pi-check-square",
         routeName: "task",
         routeQuery: { type: "intern" },
       },
@@ -87,7 +91,7 @@ export const menuItems = [
     submenu: [
       {
         name: "PROFILE", // Inherits parent permission
-        icon: "pi pi-user",
+        icon: "pi pi-credit-card",
         routeName: "profile",
       },
       {
@@ -110,17 +114,4 @@ export const menuItems = [
       },
     ],
   },
-  // {
-  //   name: "INTERNSHIP",
-  //   icon: "pi pi-graduation-cap",
-  //   userType: ["super_admin", "employee"],
-  //   hasSubmenu: true,
-  //   submenu: [
-  //     {
-  //       name: "STUDENTS", // Inherits parent permission
-  //       icon: "pi pi-users",
-  //       routeName: "team.interns",
-  //     },
-  //   ],
-  // },
 ];
