@@ -249,6 +249,7 @@ const employeeTableColumns = [
   {
     accessorKey: "name",
     header: "NAME",
+    size: 200,
   },
   {
     accessorKey: "deptName",
@@ -371,7 +372,7 @@ const employeeTableColumns = [
 
       <!-- Custom Content Layout -->
       <template #content="{ item, getFieldValue }">
-        <div class="space-y-6 mx-4 my-8">
+        <div class="space-y-6 mx-4 my-8 truncate">
           <div class="flex items-center gap-4">
             <img
               :src="

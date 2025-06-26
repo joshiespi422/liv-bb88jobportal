@@ -50,6 +50,10 @@ const table = useVueTable({
       return globalFilter.value;
     },
   },
+
+  enableColumnResizing: true,
+  columnResizeMode: "onChange",
+
   // Handlers for state changes
   onSortingChange: (updater) => {
     sorting.value =
@@ -99,7 +103,10 @@ const availablePageSizes = [10, 25, 50, 100];
       </div>
     </div>
 
-    <table class="table text-center font-semibold my-5">
+    <table
+      class="table text-center font-semibold my-5"
+      style="table-layout: fixed"
+    >
       <thead>
         <tr
           v-for="headerGroup in table.getHeaderGroups()"
@@ -109,6 +116,7 @@ const availablePageSizes = [10, 25, 50, 100];
             v-for="header in headerGroup.headers"
             :key="header.id"
             scope="col"
+            :style="{ width: `${header.getSize()}px` }"
             :class="{
               'cursor-pointer select-none': header.column.getCanSort(),
             }"
@@ -134,7 +142,12 @@ const availablePageSizes = [10, 25, 50, 100];
           :key="row.id"
           class="hover:bg-base-200"
         >
-          <td v-for="cell in row.getVisibleCells()" :key="cell.id">
+          <td
+            v-for="cell in row.getVisibleCells()"
+            :key="cell.id"
+            :style="{ width: `${cell.column.getSize()}px` }"
+            class="max-w-full truncate"
+          >
             <FlexRender
               :render="cell.column.columnDef.cell"
               :props="cell.getContext()"
