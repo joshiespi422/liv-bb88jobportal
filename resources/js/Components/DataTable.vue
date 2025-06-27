@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, toRefs } from "vue";
+import { ref, computed, toRefs, onMounted, onUpdated } from "vue";
 import {
   useVueTable,
   FlexRender,
@@ -8,6 +8,8 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
 } from "@tanstack/vue-table";
+import tippy from "tippy.js";
+import "tippy.js/dist/tippy.css";
 
 const props = defineProps({
   data: {
@@ -69,12 +71,46 @@ const table = useVueTable({
   getPaginationRowModel: getPaginationRowModel(),
   // add more table options here, potentially passed via props
 });
-
 const availablePageSizes = [10, 25, 50, 100];
+
+// Initialize tooltips for dynamic content
+const tableRef = ref(null);
+function initTooltips() {
+  tippy(
+    "[data-tip]",
+    {
+      content: (reference) => reference.getAttribute("data-tip"),
+      appendTo: () => document.body,
+      theme: "light",
+      arrow: true,
+      placement: "top",
+    },
+    {
+      // Only initialize new tooltips
+      defaultProps: {
+        allowHTML: true,
+        animation: "fade",
+        duration: [200, 150],
+        ignoreAttributes: true,
+      },
+      // Only target elements within the table
+      target: tableRef.value,
+    }
+  );
+}
+
+onMounted(() => {
+  initTooltips();
+});
+
+onUpdated(() => {
+  initTooltips();
+});
 </script>
 
 <template>
   <div
+    ref="tableRef"
     class="overflow-x-auto rounded-3xl border-4 border-green-primary-1 bg-base-100 p-5 shadow-xl"
   >
     <div

@@ -7,6 +7,7 @@ use App\Models\Task;
 use App\Models\UserType;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Storage;
 
 class TaskController extends Controller
 {
@@ -58,7 +59,7 @@ class TaskController extends Controller
         $userTypeId = UserType::where('type_name', $taskType)->value('id');
 
         // Fetch tasks
-        $tasks = Task::with(['users:id,name','status:id,status_name'])
+        $tasks = Task::with(['users:id,name,picture','status:id,status_name'])
             ->select('id', 'title', 'created_at', 'priority', 'status_id')
             ->where('department_id', $currentDepartmentId)
             ->where('user_type_id', $userTypeId)
@@ -70,10 +71,17 @@ class TaskController extends Controller
                     'created_at' => $task->created_at,
                     'priority' => $task->priority,
                     'status' => $task->status->status_name,
-                    'assignees' => $task->users->pluck('name'),                 
+                    'assignees' => $task->users->map(function ($user) {
+                        return [
+                            'id' => $user->id,
+                            'name' => $user->name,
+                            'picture' => $user->picture
+                                ? Storage::url($user->picture)  // Generates full URL for stored image
+                                : Storage::url('profile-images/default.png'),  // Fallback to default image
+                        ];
+                    })->toArray(),
                 ];
             });
-            
 
         return Inertia::render('TaskView', [
             'tasks' => $tasks,

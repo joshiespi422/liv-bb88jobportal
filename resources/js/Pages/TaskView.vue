@@ -1,6 +1,7 @@
 <script setup>
 import { ref, h, computed } from "vue";
 import { useForm, usePage, router } from "@inertiajs/vue3";
+import { longDate } from "../Composables/useDateFormatter";
 import DataTable from "../Components/DataTable.vue";
 import ListBox from "../Components/ListBox.vue";
 
@@ -60,36 +61,75 @@ const taskTableColumns = [
     header: "TITLE",
   },
   {
-    id: "assignees", // Unique ID for the column
-    accessorFn: (row) => row.assignees.join(", "), // For filtering
+    id: "assignees",
+    accessorFn: (row) => row.assignees.map((a) => a.name).join(", "),
     header: "ASSIGNEES",
     cell: ({ row }) => {
-      const assignees = row.original.assignees;
+      let assignees = [...row.original.assignees];
 
-      // Handle empty assignees
       if (!assignees || assignees.length === 0) {
         return h("span", { class: "text-gray-400 italic" }, "Unassigned");
       }
 
+      // Move the current user to the top of the list
+      const currentUserIndex = assignees.findIndex(
+        (a) => a.id === authUser.value.id
+      );
+      if (currentUserIndex > -1) {
+        const currentUser = assignees.splice(currentUserIndex, 1)[0];
+        assignees.unshift(currentUser);
+      }
+
+      const visibleAssignees = assignees.slice(0, 3);
+      const hiddenAssigneesCount = assignees.length - visibleAssignees.length;
+
       return h(
         "div",
-        { class: "flex flex-wrap gap-1 justify-center" },
-        assignees.map((name) =>
-          h(
-            "span",
-            {
-              class:
-                "badge bg-neutral-content text-neutral text-sm px-3.5 py-3.5",
-            },
-            name
-          )
-        )
+        { class: "avatar-group -space-x-6 rtl:space-x-reverse" },
+        [
+          ...visibleAssignees.map((assignee) =>
+            h(
+              "div",
+              {
+                class: "tooltip",
+                "data-tip": assignee.name,
+              },
+              [
+                h("div", { class: "avatar" }, [
+                  h("div", { class: "w-12" }, [
+                    h("img", {
+                      src: assignee.picture || "/profile-images/default.png",
+                      alt: assignee.name,
+                    }),
+                  ]),
+                ]),
+              ]
+            )
+          ),
+          hiddenAssigneesCount > 0
+            ? h(
+                "div",
+                {
+                  class: "avatar placeholder tooltip",
+                  "data-tip": `${hiddenAssigneesCount} more`,
+                },
+                [
+                  h("div", { class: "w-12 bg-neutral text-neutral-content" }, [
+                    `+${hiddenAssigneesCount}`,
+                  ]),
+                ]
+              )
+            : null,
+        ]
       );
     },
   },
   {
-    accessorKey: "created_at",
     header: "STARTED",
+    cell: ({ row }) => {
+      const started = longDate(row.original.created_at);
+      return h("span", {}, started);
+    },
   },
   {
     header: "STATUS",
