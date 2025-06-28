@@ -83,45 +83,43 @@ const taskTableColumns = [
       const visibleAssignees = assignees.slice(0, 3);
       const hiddenAssigneesCount = assignees.length - visibleAssignees.length;
 
-      return h(
-        "div",
-        { class: "avatar-group -space-x-6 rtl:space-x-reverse" },
-        [
-          ...visibleAssignees.map((assignee) =>
-            h(
+      return h("div", { class: "avatar-group p-1 -space-x-4" }, [
+        ...visibleAssignees.map((assignee) =>
+          h(
+            "div",
+            {
+              class: "cursor-pointer hover:z-10 hover:scale-110",
+              "data-tippy-content": assignee.name,
+              key: assignee.id,
+            },
+            [
+              h("div", { class: "avatar" }, [
+                h("div", { class: "w-12" }, [
+                  h("img", {
+                    src: assignee.picture || "/profile-images/default.png",
+                    alt: assignee.name,
+                  }),
+                ]),
+              ]),
+            ]
+          )
+        ),
+        hiddenAssigneesCount > 0
+          ? h(
               "div",
               {
-                class: "tooltip",
-                "data-tip": assignee.name,
+                class:
+                  "avatar cursor-pointer hover:z-10 hover:scale-110 avatar-placeholder",
+                "data-tippy-content": `${hiddenAssigneesCount} more`,
               },
               [
-                h("div", { class: "avatar" }, [
-                  h("div", { class: "w-12" }, [
-                    h("img", {
-                      src: assignee.picture || "/profile-images/default.png",
-                      alt: assignee.name,
-                    }),
-                  ]),
+                h("div", { class: "w-12 bg-neutral text-neutral-content" }, [
+                  `+${hiddenAssigneesCount}`,
                 ]),
               ]
             )
-          ),
-          hiddenAssigneesCount > 0
-            ? h(
-                "div",
-                {
-                  class: "avatar placeholder tooltip",
-                  "data-tip": `${hiddenAssigneesCount} more`,
-                },
-                [
-                  h("div", { class: "w-12 bg-neutral text-neutral-content" }, [
-                    `+${hiddenAssigneesCount}`,
-                  ]),
-                ]
-              )
-            : null,
-        ]
-      );
+          : null,
+      ]);
     },
   },
   {
@@ -182,7 +180,7 @@ const taskTableColumns = [
     </div>
 
     <!-- Task Table -->
-    <DataTable :data="props.tasks" :columns="taskTableColumns">
+    <DataTable :data="props.tasks" :columns="taskTableColumns" enable-tooltips>
       <!-- <template #custom-actions>
         <button
           @click="handleAddNewEmployee"

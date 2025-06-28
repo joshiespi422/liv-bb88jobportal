@@ -1,5 +1,13 @@
 <script setup>
-import { ref, computed, toRefs, onMounted, onUpdated } from "vue";
+import {
+  ref,
+  computed,
+  toRefs,
+  onMounted,
+  onUpdated,
+  onBeforeUnmount,
+  shallowRef,
+} from "vue";
 import {
   useVueTable,
   FlexRender,
@@ -8,8 +16,6 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
 } from "@tanstack/vue-table";
-import tippy from "tippy.js";
-import "tippy.js/dist/tippy.css";
 
 const props = defineProps({
   data: {
@@ -21,6 +27,10 @@ const props = defineProps({
     type: Array,
     required: true,
     default: () => [],
+  },
+  enableTooltips: {
+    type: Boolean,
+    default: false,
   },
   // add more props here for other table features
 });
@@ -75,36 +85,66 @@ const availablePageSizes = [10, 25, 50, 100];
 
 // Initialize tooltips for dynamic content
 const tableRef = ref(null);
-function initTooltips() {
-  tippy(
-    "[data-tip]",
-    {
-      content: (reference) => reference.getAttribute("data-tip"),
-      appendTo: () => document.body,
-      theme: "light",
-      arrow: true,
-      placement: "top",
-    },
-    {
-      // Only initialize new tooltips
-      defaultProps: {
-        allowHTML: true,
-        animation: "fade",
-        duration: [200, 150],
-        ignoreAttributes: true,
-      },
-      // Only target elements within the table
-      target: tableRef.value,
+const tippy = shallowRef(null); // Tippy module reference
+const tooltipInstances = ref([]); // Store individual tooltip instances
+
+const initTooltips = async () => {
+  if (!props.enableTooltips || !tableRef.value) return;
+
+  try {
+    if (!tippy.value) {
+      const tippyModule = await import("tippy.js");
+      tippy.value = tippyModule.default;
+      await import("tippy.js/dist/tippy.css");
     }
-  );
-}
 
-onMounted(() => {
-  initTooltips();
-});
+    const elements = tableRef.value.querySelectorAll(
+      "[data-tippy-content]:not([data-tippy-initialized])"
+    );
 
-onUpdated(() => {
-  initTooltips();
+    elements.forEach((el) => {
+      const instance = tippy.value(el, {
+        content: el.getAttribute("data-tippy-content"),
+        theme: "light-border",
+        arrow: true,
+        placement: "bottom",
+        appendTo: () => document.body,
+        allowHTML: true,
+        interactive: false,
+        moveTransition: "transform 0.2s ease-out",
+      });
+
+      el.setAttribute("data-tippy-initialized", "true");
+      tooltipInstances.value.push(instance); // Store instance
+    });
+  } catch (error) {
+    console.error("Tooltip initialization error:", error);
+  }
+};
+
+// Debounced initialization
+let initTimeout = null;
+const debouncedInitTooltips = () => {
+  clearTimeout(initTimeout);
+  initTimeout = setTimeout(initTooltips, 150);
+};
+
+onMounted(() => props.enableTooltips && debouncedInitTooltips());
+onUpdated(() => props.enableTooltips && debouncedInitTooltips());
+
+// Proper cleanup
+onBeforeUnmount(() => {
+  clearTimeout(initTimeout);
+
+  // Destroy all tooltip instances
+  tooltipInstances.value.forEach((instance) => {
+    try {
+      instance.destroy();
+    } catch (e) {
+      console.warn("Tooltip destroy error:", e);
+    }
+  });
+  tooltipInstances.value = [];
 });
 </script>
 
