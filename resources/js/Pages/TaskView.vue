@@ -20,8 +20,9 @@ const props = defineProps({
   },
   currentType: {
     type: String,
-    default: null,
+    default: "employee",
   },
+  activeTab: String,
 });
 
 // logged in user data
@@ -38,8 +39,8 @@ const selectedDepartment = computed({
   set(newDeptId) {
     if (authUser.value.userType === "super_admin" && newDeptId) {
       router.get(
-        route("team.employees"),
-        { dept: newDeptId },
+        route("task"),
+        { dept: newDeptId, type: props.currentType },
         {
           preserveState: true, // Keeps Vue component state
           preserveScroll: true, // Keeps scroll position
@@ -53,6 +54,36 @@ const selectedDepartment = computed({
 const departmentOptions = computed(() => {
   return props.departments.map((d) => ({ value: d.id, label: d.dept_name }));
 });
+
+// tab handling navigation
+const tabs = computed(() => {
+  const items = [
+    { id: "active_tasks", label: "Active Tasks" },
+    { id: "archived", label: "Archived" },
+  ];
+
+  if (authUser.value.userType !== "super_admin") {
+    items.unshift({ id: "your_tasks", label: "Your Tasks" });
+  }
+
+  return items;
+});
+// handle tab navigation
+function setTab(tabId) {
+  if (tabId === props.activeTab) return;
+  router.get(
+    route("task"),
+    {
+      ...route().params,
+      tab: tabId,
+    },
+    {
+      preserveState: true,
+      preserveScroll: true,
+      replace: true,
+    }
+  );
+}
 
 // Tanstack Table columns definition
 const taskTableColumns = [
@@ -83,54 +114,62 @@ const taskTableColumns = [
       const visibleAssignees = assignees.slice(0, 3);
       const hiddenAssigneesCount = assignees.length - visibleAssignees.length;
 
-      return h("div", { class: "avatar-group p-1 -space-x-4" }, [
-        ...visibleAssignees.map((assignee) =>
-          h(
-            "div",
-            {
-              class: "cursor-pointer hover:z-10 hover:scale-110",
-              "data-tippy-content": assignee.name,
-              key: assignee.id,
-            },
-            [
-              h("div", { class: "avatar" }, [
-                h("div", { class: "w-12" }, [
-                  h("img", {
-                    src: assignee.picture || "/profile-images/default.png",
-                    alt: assignee.name,
-                  }),
-                ]),
-              ]),
-            ]
-          )
-        ),
-        hiddenAssigneesCount > 0
-          ? h(
+      return h(
+        "div",
+        {
+          class: "avatar-group p-1 -space-x-4 flex justify-center",
+        },
+        [
+          ...visibleAssignees.map((assignee) =>
+            h(
               "div",
               {
-                class:
-                  "avatar cursor-pointer hover:z-10 hover:scale-110 avatar-placeholder",
-                "data-tippy-content": `${hiddenAssigneesCount} more`,
+                class: "cursor-pointer hover:z-10 hover:scale-110",
+                "data-tippy-content": assignee.name,
+                key: assignee.id,
               },
               [
-                h("div", { class: "w-12 bg-neutral text-neutral-content" }, [
-                  `+${hiddenAssigneesCount}`,
+                h("div", { class: "avatar" }, [
+                  h("div", { class: "w-12" }, [
+                    h("img", {
+                      src: assignee.picture || "/profile-images/default.png",
+                      alt: assignee.name,
+                    }),
+                  ]),
                 ]),
               ]
             )
-          : null,
-      ]);
+          ),
+          hiddenAssigneesCount > 0
+            ? h(
+                "div",
+                {
+                  class:
+                    "avatar cursor-pointer hover:z-10 hover:scale-110 avatar-placeholder",
+                  "data-tippy-content": `${hiddenAssigneesCount} more`,
+                },
+                [
+                  h("div", { class: "w-12 bg-neutral text-neutral-content" }, [
+                    `+${hiddenAssigneesCount}`,
+                  ]),
+                ]
+              )
+            : null,
+        ]
+      );
     },
   },
   {
     header: "STARTED",
-    cell: ({ row }) => {
-      const started = longDate(row.original.created_at);
-      return h("span", {}, started);
+    accessorFn: (row) => longDate(row.created_at),
+    id: "started-date",
+    cell: ({ cell }) => {
+      return h("span", {}, cell.getValue());
     },
   },
   {
     header: "STATUS",
+    accessorKey: "status",
     cell: ({ row }) => {
       const status = row.original.status;
 
@@ -159,6 +198,11 @@ const taskTableColumns = [
   //   enableSorting: false,
   // },
 ];
+
+const capitalizedType = computed(() => {
+  if (!props.currentType) return "";
+  return props.currentType.charAt(0).toUpperCase() + props.currentType.slice(1);
+});
 </script>
 
 <template>
@@ -166,7 +210,7 @@ const taskTableColumns = [
     <div
       class="flex flex-col items-center gap-2 sm:flex-row sm:justify-between sm:gap-0 mx-4 mb-5"
     >
-      <h1 class="text-2xl lg:text-3xl font-bold">Task Management</h1>
+      <h1 class="text-2xl lg:text-3xl font-bold">{{ capitalizedType }} Task</h1>
       <div
         v-if="authUser?.userType === 'super_admin'"
         class="w-52 md:w-60 lg:w-72"
@@ -177,6 +221,20 @@ const taskTableColumns = [
           placeholder="Select a department"
         />
       </div>
+    </div>
+
+    <div class="tabs tabs-box my-3">
+      <a
+        v-for="tab in tabs"
+        :key="tab.id"
+        @click.prevent="setTab(tab.id)"
+        :class="[
+          'tab',
+          activeTab === tab.id ? 'tab-active font-bold' : 'hover:bg-base-300',
+        ]"
+      >
+        {{ tab.label }}
+      </a>
     </div>
 
     <!-- Task Table -->

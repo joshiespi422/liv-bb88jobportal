@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Department;
 use App\Models\Task;
 use App\Models\UserType;
+use App\Models\Status;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
@@ -55,17 +56,54 @@ class TaskController extends Controller
                 : $user->internDetails->department_id;
         }
 
+        // Determine active tab
+        $defaultTab = in_array($userType, ['employee', 'intern']) ? 'your_tasks' : 'active_tasks';
+        $activeTab = in_array($request->tab, ['your_tasks', 'active_tasks', 'archived']) 
+            ? $request->tab 
+            : $defaultTab;
+
+        // Get status IDs for filtering
+        $statuses = Status::whereIn('status_name', [
+            'in progress', 
+            'for approval',
+            'done'
+        ])->pluck('id', 'status_name');
+
         // Get user type ID for query
         $userTypeId = UserType::where('type_name', $taskType)->value('id');
 
-        // Fetch tasks
-        $tasks = Task::with(['users:id,name,picture','status:id,status_name'])
+         // Build base query
+        $tasksQuery = Task::with(['users:id,name,picture','status:id,status_name'])
             ->select('id', 'title', 'created_at', 'priority', 'status_id')
             ->where('department_id', $currentDepartmentId)
-            ->where('user_type_id', $userTypeId)
-            ->get()
-            ->map(function ($task) {
-                return [
+            ->where('user_type_id', $userTypeId);
+
+        // Apply tab-specific filters
+        switch ($activeTab) {
+            case 'your_tasks':
+                $tasksQuery->whereHas('users', function($q) use ($user) {
+                        $q->where('user_id', $user->id);
+                    })
+                    ->whereIn('status_id', [
+                        $statuses['in progress'],
+                        $statuses['for approval']
+                    ]);
+                break;
+                
+            case 'active_tasks':
+                $tasksQuery->whereIn('status_id', [
+                    $statuses['in progress'],
+                    $statuses['for approval']
+                ]);
+                break;
+                
+            case 'archived':
+                $tasksQuery->where('status_id', $statuses['done']);
+                break;
+        }
+
+        $tasks = $tasksQuery->get()->map(function ($task) {
+           return [
                     'id' => $task->id,
                     'title' => $task->title,
                     'created_at' => $task->created_at,
@@ -81,7 +119,7 @@ class TaskController extends Controller
                         ];
                     })->toArray(),
                 ];
-            });
+        });
 
         return Inertia::render('TaskView', [
             'tasks' => $tasks,
@@ -90,6 +128,7 @@ class TaskController extends Controller
                 : [],
             'currentDepartmentId' => (int)$currentDepartmentId,
             'currentType' => $taskType,
+            'activeTab' => $activeTab,
         ]);
     }
 
