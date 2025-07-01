@@ -187,6 +187,8 @@ const skeletonFieldCount = computed(() => {
               </div>
 
               <div class="mt-6 flex justify-end">
+                <!-- custom buttons here -->
+                <slot name="custom-buttons"></slot>
                 <button
                   type="button"
                   class="btn btn-soft rounded-full"

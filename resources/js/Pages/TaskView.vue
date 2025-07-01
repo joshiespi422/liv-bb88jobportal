@@ -4,6 +4,12 @@ import { useForm, usePage, router } from "@inertiajs/vue3";
 import { longDate } from "../Composables/useDateFormatter";
 import DataTable from "../Components/DataTable.vue";
 import ListBox from "../Components/ListBox.vue";
+import DetailsModal from "../Components/DetailsModal.vue";
+import FormModal from "../Components/FormModal.vue";
+import ConfirmModal from "../Components/ConfirmModal.vue";
+import TextInput from "../Components/forms/TextInput.vue";
+import SelectInput from "../Components/forms/SelectInput.vue";
+import FileInput from "../Components/forms/FileInput.vue";
 
 const props = defineProps({
   tasks: {
@@ -28,6 +34,129 @@ const props = defineProps({
 // logged in user data
 const page = usePage();
 const authUser = computed(() => page.props.auth.user);
+
+// For updating task
+const isFormModalOpen = ref(false);
+// confirmation before updating
+const showConfirmModal = ref(false);
+
+// update form state
+const updateTaskForm = useForm({
+  title: "",
+  description: "",
+  link: "",
+  attachment: null,
+  status: "",
+});
+
+// Form field configuration for adding new employee
+const updateFormFields = computed(() => {
+  return [
+    {
+      key: "title",
+      label: "Accomplish Name",
+      component: TextInput,
+      attrs: {
+        required: true,
+        placeholder: "Example Accomplishment",
+      },
+    },
+    {
+      key: "status",
+      label: "Status",
+      component: SelectInput,
+      attrs: {
+        required: true,
+        placeholder: "Select a status",
+        options: [
+          { value: "for approval", label: "For Approval" },
+          { value: "done", label: "Completed" },
+        ],
+      },
+    },
+    {
+      key: "description",
+      label: "Description",
+      component: TextInput,
+      attrs: { required: true, placeholder: "Example Description" },
+    },
+    {
+      key: "link",
+      label: "Reference Link (optional)",
+      component: TextInput,
+      attrs: { placeholder: "https://example.com" },
+    },
+    {
+      key: "attachment",
+      label: "Attachment (optional)",
+      component: FileInput,
+    },
+  ];
+});
+
+// update task modal state
+const handleUpdateTask = () => {
+  isFormModalOpen.value = true;
+  isDetailsModalOpen.value = false;
+  console.log(selectedDetails.value);
+};
+const closeFormModal = () => {
+  isFormModalOpen.value = false;
+  showConfirmModal.value = false;
+};
+const handleFormSubmit = () => {
+  showConfirmModal.value = true;
+};
+
+// Details Modal state
+const isDetailsModalOpen = ref(false);
+const selectedDetails = ref(null);
+const isDetailsLoading = ref(false);
+const isDetailsError = ref(false);
+
+// the fields to be displayed in the details modal for an task
+const taskDetailFields = ref([
+  { key: "title", label: "Task Name" },
+  { key: "description", label: "Description" },
+  { key: "assignees", label: "Assignees" },
+  { key: "collateral", label: "Collaterals" },
+  { key: "created_at", label: "Started", formatter: longDate },
+  { key: "deadline", label: "Deadline", formatter: longDate },
+  { key: "priority", label: "Priority" },
+  { key: "status", label: "Status" },
+]);
+
+// // Function to fetch task details
+const fetchTaskDetails = async (taskId) => {
+  isDetailsLoading.value = true;
+  isDetailsModalOpen.value = true;
+  selectedDetails.value = null;
+  isDetailsError.value = false;
+
+  try {
+    const response = await axios.get(`/task/${taskId}`);
+    selectedDetails.value = response.data;
+  } catch (error) {
+    console.error("Error fetching task details:", error);
+    selectedDetails.value = null;
+    isDetailsError.value = true;
+  } finally {
+    await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for 1 second
+    isDetailsLoading.value = false;
+  }
+};
+
+// // Handler for viewing task details and details modal function
+const handleViewDetails = (task) => {
+  fetchTaskDetails(task.id);
+};
+const closeDetailsModal = () => {
+  isDetailsModalOpen.value = false;
+};
+const afterDetailsClose = () => {
+  selectedDetails.value = null;
+  isDetailsError.value = false;
+};
 
 // core logic for the super_admin filter
 const selectedDepartment = computed({
@@ -93,6 +222,7 @@ const taskTableColumns = [
   },
   {
     id: "assignees",
+    size: 220,
     accessorFn: (row) => row.assignees.map((a) => a.name).join(", "),
     header: "ASSIGNEES",
     cell: ({ row }) => {
@@ -172,32 +302,38 @@ const taskTableColumns = [
     accessorKey: "status",
     cell: ({ row }) => {
       const status = row.original.status;
-
+      const badgeClass = statusColor[status] || "badge-primary";
       return h(
         "span",
         {
-          class: "badge bg-neutral-content text-neutral text-sm px-3.5 py-3.5",
+          class: `badge badge-soft ${badgeClass} text-sm px-3.5 py-3.5`,
         },
         status
       );
     },
   },
-  // {
-  //   id: "details",
-  //   header: "DETAILS",
-  //   cell: ({ row }) =>
-  //     h(
-  //       "button",
-  //       {
-  //         onClick: () => handleViewDetails(row.original),
-  //         class:
-  //           "btn rounded-full bg-green-primary-1 text-white hover:bg-green-primary-3",
-  //       },
-  //       "View Details"
-  //     ),
-  //   enableSorting: false,
-  // },
+  {
+    id: "details",
+    header: "DETAILS",
+    cell: ({ row }) =>
+      h(
+        "button",
+        {
+          onClick: () => handleViewDetails(row.original),
+          class:
+            "btn rounded-full bg-green-primary-1 text-white hover:bg-green-primary-3",
+        },
+        "View Details"
+      ),
+    enableSorting: false,
+  },
 ];
+
+const statusColor = {
+  "in progress": "badge-accent",
+  "for approval": "badge-info",
+  done: "badge-success",
+};
 
 const capitalizedType = computed(() => {
   if (!props.currentType) return "";
@@ -223,6 +359,7 @@ const capitalizedType = computed(() => {
       </div>
     </div>
 
+    <!-- Tabs -->
     <div class="tabs tabs-box my-3">
       <a
         v-for="tab in tabs"
@@ -248,5 +385,38 @@ const capitalizedType = computed(() => {
         </button>
       </template> -->
     </DataTable>
+
+    <!-- Update Task Modal -->
+    <FormModal
+      :isOpen="isFormModalOpen"
+      :inert="showConfirmModal"
+      title="UPDATE TASK"
+      :form="updateTaskForm"
+      :fields="updateFormFields"
+      submitText="Add"
+      @close="closeFormModal"
+      @submit="handleFormSubmit"
+    />
+
+    <!-- Task Details Modal -->
+    <DetailsModal
+      :isOpen="isDetailsModalOpen"
+      :item="selectedDetails"
+      :loading="isDetailsLoading"
+      :error="isDetailsError"
+      title="TASK DETAILS"
+      :fields="taskDetailFields"
+      @close="closeDetailsModal"
+      @after-leave="afterDetailsClose"
+    >
+      <template #custom-buttons v-if="authUser?.userType !== 'super_admin'">
+        <button
+          @click="handleUpdateTask"
+          class="btn rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3 me-2"
+        >
+          Update
+        </button>
+      </template>
+    </DetailsModal>
   </div>
 </template>

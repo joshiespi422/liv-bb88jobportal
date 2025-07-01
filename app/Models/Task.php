@@ -38,4 +38,10 @@ class Task extends Model
     {
         return $this->belongsToMany(User::class);
     }
+
+    // relationship to accomplishment, many task has many accomplishment
+    public function accomplishments() : BelongsToMany
+    {
+        return $this->belongsToMany(Accomplishment::class);
+    }
 }

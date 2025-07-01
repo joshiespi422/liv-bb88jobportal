@@ -6,9 +6,13 @@ use App\Models\Department;
 use App\Models\Task;
 use App\Models\UserType;
 use App\Models\Status;
+use App\Models\Accomplishment;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 
 class TaskController extends Controller
 {
@@ -132,6 +136,47 @@ class TaskController extends Controller
         ]);
     }
 
+    public function updateTask(Request $request, Task $task)
+    {
+        // 1. Authorization
+        if (!$task->users->contains($request->user())) {
+            abort(403, 'not authorized to');
+        }
+
+        // 2. Validation
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'link' => 'nullable|url',
+            'attachment' => 'nullable|file|mimes:jpg,png,pdf,docx|max:2048', 
+            'status' => 'required|in:for approval,done',
+        ]);
+
+        
+        DB::transaction(function () use ($request, $task) {
+            // Create accomplishment
+            $accomplishment = Accomplishment::create([
+                'user_id' =>$request->user()->id,
+                'title' => $request->accomplishment_title,
+                'description' => $request->description,
+                'link' => $request->link,
+                'attachment' => $request->file('attachment') ? 
+                    $request->file('attachment')->store('accomplishments', 'public') : null
+            ]);
+
+            // Associate accomplishment with task
+            $task->accomplishments()->attach($accomplishment->id);
+
+            // Update task status
+            $status = Status::where('status_name', $request->status)->first();
+            $task->status_id = $status->id;
+            $task->save();
+        });
+
+        return back()->with('success', 'Task updated successfully!');
+    }
+
+
     /**
      * Show the form for creating a new resource.
      */
@@ -153,7 +198,24 @@ class TaskController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $task = Task::with([
+                'users:id,name,picture',
+                'status:id,status_name'
+            ])
+            ->findOrFail($id);
+
+        $taskDetails = [
+            'id' => $task->id,
+            'title' => $task->title,
+            'description' => $task->description,
+            'collateral' => $task->collateral,
+            'created_at' => $task->created_at,
+            'deadline' => $task->deadline,
+            'priority' => $task->priority,
+            'status' => $task->status->status_name,
+            'assignees' => $task->users->pluck('name'),
+        ];
+        return response()->json($taskDetails);
     }
 
     /**
