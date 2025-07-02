@@ -12,7 +12,11 @@ class Accomplishment extends Model
     use HasFactory;
 
     protected $fillable = [
-        //
+        'title',
+        'description',
+        'link',
+        'attachment',
+        'user_id',
     ];
 
     // Define a many-to-many relationship with users and tasks (pivot table)

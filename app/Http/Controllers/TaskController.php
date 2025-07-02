@@ -138,9 +138,10 @@ class TaskController extends Controller
 
     public function updateTask(Request $request, Task $task)
     {
+        dd($request->all(), $task);
         // 1. Authorization
         if (!$task->users->contains($request->user())) {
-            abort(403, 'not authorized to');
+            abort(403, 'not authorized');
         }
 
         // 2. Validation
@@ -148,8 +149,8 @@ class TaskController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'link' => 'nullable|url',
-            'attachment' => 'nullable|file|mimes:jpg,png,pdf,docx|max:2048', 
-            'status' => 'required|in:for approval,done',
+            'attachment' => 'nullable|file|mimes:jpg,jpeg,png,pdf,docx,doc|max:5120', 
+            'status' => 'required|in:in progress,for approval',
         ]);
 
         
@@ -167,10 +168,18 @@ class TaskController extends Controller
             // Associate accomplishment with task
             $task->accomplishments()->attach($accomplishment->id);
 
-            // Update task status
-            $status = Status::where('status_name', $request->status)->first();
-            $task->status_id = $status->id;
-            $task->save();
+            // Update task status only if it changed
+            $newStatusName = $request->status;
+            $currentStatusName = $task->status->status_name;
+            
+            if ($newStatusName !== $currentStatusName) {
+                $status = Status::where('status_name', $newStatusName)->first();
+                
+                if ($status) {
+                    $task->status_id = $status->id;
+                    $task->save();
+                }
+            }
         });
 
         return back()->with('success', 'Task updated successfully!');

@@ -17,9 +17,17 @@ const props = defineProps({
     type: String,
     default: "Submit",
   },
+  showBackButton: {
+    type: Boolean,
+    default: false,
+  },
+  disabledButton: {
+    type: Boolean,
+    default: false,
+  },
 });
 
-const emit = defineEmits(["close", "submit"]);
+const emit = defineEmits(["close", "submit", "back"]);
 const focusElement = ref(null);
 </script>
 
@@ -77,13 +85,10 @@ const focusElement = ref(null);
                         :id="field.key"
                         v-bind="field.attrs"
                         v-model="form[field.key]"
-                        :class="[
-                          'disabled:cursor-not-allowed disabled:bg-base-200 disabled:ring-0',
-                          {
-                            'ring-error': form.errors[field.key],
-                            'focus:ring-indigo-600': !form.errors[field.key],
-                          },
-                        ]"
+                        :class="{
+                          'ring-error': form.errors[field.key],
+                          'focus:ring-indigo-600': !form.errors[field.key],
+                        }"
                         @change="form.clearErrors(field.key)"
                       />
                       <p
@@ -98,16 +103,26 @@ const focusElement = ref(null);
 
                 <div class="mt-10 flex items-center justify-end gap-x-1">
                   <button
+                    v-if="showBackButton"
                     type="button"
-                    class="btn btn-ghost text-lg rounded-full text-green-primary-1 border-2"
+                    class="btn btn-ghost font-bold rounded-full text-green-primary-1 border-2"
+                    @click="$emit('back')"
+                  >
+                    <i class="pi pi-arrow-left me-1" /> Back
+                  </button>
+                  <button
+                    v-if="!disabledButton"
+                    type="button"
+                    class="btn btn-ghost rounded-full text-green-primary-1 border-2"
                     @click="$emit('close')"
                   >
                     Cancel
                   </button>
                   <button
+                    ref="focusElement"
                     type="submit"
                     :disabled="form.processing"
-                    class="btn btn-soft text-lg px-7 rounded-full text-white bg-green-primary-1 hover:bg-green-primary-3 border-2 border-base-content shadow-md"
+                    class="btn btn-soft px-7 rounded-full text-white bg-green-primary-1 hover:bg-green-primary-3 border-2 border-base-content shadow-md"
                   >
                     {{ submitText }}
                   </button>

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, h, computed } from "vue";
+import { ref, h, computed, reactive } from "vue";
 import { useForm, usePage, router } from "@inertiajs/vue3";
 import { longDate } from "../Composables/useDateFormatter";
 import DataTable from "../Components/DataTable.vue";
@@ -35,10 +35,32 @@ const props = defineProps({
 const page = usePage();
 const authUser = computed(() => page.props.auth.user);
 
-// For updating task
-const isFormModalOpen = ref(false);
+// State for modals for forms
+const isUpdateModalOpen = ref(false);
+//const isValidateModalOpen = ref(false);
+// Holds the action to be executed on confirmation
+const pendingAction = ref(null);
 // confirmation before updating
-const showConfirmModal = ref(false);
+const isConfirmModalOpen = ref(false);
+
+// Holds the properties for the confirmation modal
+const confirmModalProps = reactive({
+  title: "",
+  message: "",
+  confirmText: "",
+  confirmButtonBg: "",
+  iconName: "",
+});
+// Closes the confirmation modal
+const closeConfirmModal = () => {
+  isConfirmModalOpen.value = false;
+};
+// Executes the action on confirmation
+const executeConfirm = () => {
+  if (pendingAction.value) {
+    pendingAction.value();
+  }
+};
 
 // update form state
 const updateTaskForm = useForm({
@@ -52,6 +74,15 @@ const updateTaskForm = useForm({
 // Form field configuration for adding new employee
 const updateFormFields = computed(() => {
   return [
+    {
+      key: "task_title",
+      label: "Task Selected",
+      component: TextInput,
+      attrs: {
+        disabled: true,
+        value: selectedDetails.value?.title || "N/A",
+      },
+    },
     {
       key: "title",
       label: "Accomplish Name",
@@ -68,10 +99,7 @@ const updateFormFields = computed(() => {
       attrs: {
         required: true,
         placeholder: "Select a status",
-        options: [
-          { value: "for approval", label: "For Approval" },
-          { value: "done", label: "Completed" },
-        ],
+        options: statusOptions.value,
       },
     },
     {
@@ -90,22 +118,77 @@ const updateFormFields = computed(() => {
       key: "attachment",
       label: "Attachment (optional)",
       component: FileInput,
+      attrs: {
+        accept: ".pdf,.doc,.docx,.jpg,.jpeg,.png",
+      },
     },
   ];
+});
+// dynamic status options
+const statusOptions = computed(() => {
+  if (!selectedDetails.value) return [];
+
+  const currentStatus = selectedDetails.value.status;
+
+  if (currentStatus === "in progress") {
+    return [
+      { value: "in progress", label: "Still In Progress" },
+      { value: "for approval", label: "For Approval" },
+    ];
+  } else if (currentStatus === "for approval") {
+    return [{ value: "for approval", label: "Still For Approval" }];
+  }
+  return [];
 });
 
 // update task modal state
 const handleUpdateTask = () => {
-  isFormModalOpen.value = true;
+  if (!selectedDetails.value) return;
+  isUpdateModalOpen.value = true;
   isDetailsModalOpen.value = false;
-  console.log(selectedDetails.value);
 };
-const closeFormModal = () => {
-  isFormModalOpen.value = false;
-  showConfirmModal.value = false;
+const closeAllModal = () => {
+  isUpdateModalOpen.value = false;
+  isConfirmModalOpen.value = false;
+  afterDetailsClose();
 };
-const handleFormSubmit = () => {
-  showConfirmModal.value = true;
+
+// control back button visibility
+const showBackButtonInUpdate = computed(() => {
+  return isUpdateModalOpen.value && selectedDetails.value !== null;
+});
+// handle back navigation
+const handleBackFromUpdate = () => {
+  isUpdateModalOpen.value = false;
+  isDetailsModalOpen.value = true;
+};
+
+// -- Update Task Flow --
+const handleUpdateSubmit = () => {
+  Object.assign(confirmModalProps, {
+    title: "Update Task",
+    message: "Are you sure you want to update this task?",
+    confirmText: "Update",
+    confirmButtonBg: "bg-blue-600 hover:bg-blue-700",
+    iconName: "pi pi-check-square",
+    iconColor: "text-blue-600",
+    iconBgColor: "bg-blue-100",
+  });
+
+  pendingAction.value = () =>
+    updateTaskForm.put(
+      route("task.update", { task: selectedDetails.value.id }),
+      {
+        preserveScroll: true,
+        onSuccess: () => {
+          closeAllModal();
+          // Refresh task details
+          // fetchTaskDetails(selectedDetails.value.id);
+        },
+      }
+    );
+
+  isConfirmModalOpen.value = true;
 };
 
 // Details Modal state
@@ -388,14 +471,17 @@ const capitalizedType = computed(() => {
 
     <!-- Update Task Modal -->
     <FormModal
-      :isOpen="isFormModalOpen"
-      :inert="showConfirmModal"
+      :isOpen="isUpdateModalOpen"
+      :inert="isConfirmModalOpen"
+      :showBackButton="showBackButtonInUpdate"
       title="UPDATE TASK"
       :form="updateTaskForm"
       :fields="updateFormFields"
       submitText="Add"
-      @close="closeFormModal"
-      @submit="handleFormSubmit"
+      disabledButton
+      @close="closeAllModal"
+      @back="handleBackFromUpdate"
+      @submit="handleUpdateSubmit"
     />
 
     <!-- Task Details Modal -->
@@ -409,7 +495,10 @@ const capitalizedType = computed(() => {
       @close="closeDetailsModal"
       @after-leave="afterDetailsClose"
     >
-      <template #custom-buttons v-if="authUser?.userType !== 'super_admin'">
+      <template
+        #custom-buttons
+        v-if="authUser?.userType === 'super_admin' && selectedDetails"
+      >
         <button
           @click="handleUpdateTask"
           class="btn rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3 me-2"
@@ -418,5 +507,13 @@ const capitalizedType = computed(() => {
         </button>
       </template>
     </DetailsModal>
+
+    <!-- Confirmation Modal -->
+    <ConfirmModal
+      :show="isConfirmModalOpen"
+      v-bind="confirmModalProps"
+      @cancel="closeConfirmModal"
+      @confirm="executeConfirm"
+    />
   </div>
 </template>

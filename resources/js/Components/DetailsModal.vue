@@ -170,7 +170,7 @@ const skeletonFieldCount = computed(() => {
                 role="alert"
                 class="alert alert-soft alert-error my-10"
               >
-                <i class="pi pi-times-circle text-2xl"></i>
+                <i class="pi pi-times-circle text-2xl" />
                 <p class="text-sm font-semibold">Something went wrong</p>
               </div>
 
@@ -180,7 +180,7 @@ const skeletonFieldCount = computed(() => {
                 role="alert"
                 class="alert alert-soft alert-warning my-10"
               >
-                <i class="pi pi-exclamation-triangle text-2xl"></i>
+                <i class="pi pi-exclamation-triangle text-2xl" />
                 <p class="text-sm font-semibold">
                   No details available to display
                 </p>
@@ -188,7 +188,7 @@ const skeletonFieldCount = computed(() => {
 
               <div class="mt-6 flex justify-end">
                 <!-- custom buttons here -->
-                <slot name="custom-buttons"></slot>
+                <slot name="custom-buttons" />
                 <button
                   type="button"
                   class="btn btn-soft rounded-full"
