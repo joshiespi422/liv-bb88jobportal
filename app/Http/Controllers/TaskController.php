@@ -138,7 +138,6 @@ class TaskController extends Controller
 
     public function updateTask(Request $request, Task $task)
     {
-        dd($request->all(), $task);
         // 1. Authorization
         if (!$task->users->contains($request->user())) {
             abort(403, 'not authorized');
@@ -158,11 +157,11 @@ class TaskController extends Controller
             // Create accomplishment
             $accomplishment = Accomplishment::create([
                 'user_id' =>$request->user()->id,
-                'title' => $request->accomplishment_title,
+                'title' => $request->title,
                 'description' => $request->description,
                 'link' => $request->link,
                 'attachment' => $request->file('attachment') ? 
-                    $request->file('attachment')->store('accomplishments', 'public') : null
+                    $request->file('attachment')->store('accomplishment-files', 'public') : null
             ]);
 
             // Associate accomplishment with task
@@ -222,7 +221,12 @@ class TaskController extends Controller
             'deadline' => $task->deadline,
             'priority' => $task->priority,
             'status' => $task->status->status_name,
-            'assignees' => $task->users->pluck('name'),
+            'assignees' => $task->users->map(function ($user) {
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                ];
+            })->toArray(),
         ];
         return response()->json($taskDetails);
     }

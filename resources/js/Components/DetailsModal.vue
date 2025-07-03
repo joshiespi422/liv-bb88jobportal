@@ -47,14 +47,10 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(["close", "afterLeave"]);
+const emit = defineEmits(["close"]);
 
 const requestDialogClose = () => {
   emit("close");
-};
-
-const handleAfterLeave = () => {
-  emit("afterLeave");
 };
 
 // Helper function to get the value for a field and apply formatting
@@ -82,12 +78,7 @@ const skeletonFieldCount = computed(() => {
 
 <template>
   <TransitionRoot appear :show="isOpen" as="template">
-    <Dialog
-      as="div"
-      @close="requestDialogClose"
-      @after-leave="handleAfterLeave"
-      class="relative z-10"
-    >
+    <Dialog as="div" @close="requestDialogClose" class="relative z-10">
       <TransitionChild
         as="template"
         enter="duration-300 ease-out"
@@ -127,15 +118,14 @@ const skeletonFieldCount = computed(() => {
               <div v-if="loading">
                 <slot name="skeleton" :skeletonFieldCount="skeletonFieldCount">
                   <!-- Default Skeleton -->
-                  <div v-if="!customSkeleton" class="space-y-4 my-6 mx-3">
-                    <div class="grid grid-cols-1 gap-4">
-                      <div
-                        v-for="i in skeletonFieldCount"
-                        :key="`skeleton-field-${i}`"
-                      >
-                        <div class="skeleton h-5 w-[40%] mb-1"></div>
-                        <div class="skeleton h-5 w-full"></div>
-                      </div>
+                  <div v-if="!customSkeleton" class="space-y-4 my-5">
+                    <div
+                      v-for="i in skeletonFieldCount"
+                      :key="`skeleton-field-${i}`"
+                      class="grid grid-cols-[1fr_3fr] gap-2 items-center"
+                    >
+                      <div class="skeleton h-7 w-full"></div>
+                      <div class="skeleton h-7 w-full"></div>
                     </div>
                   </div>
                 </slot>
@@ -150,15 +140,19 @@ const skeletonFieldCount = computed(() => {
                 >
                   <!-- Default Content -->
                   <div v-if="!customContent" class="space-y-4 my-5">
-                    <div class="grid grid-cols-1 gap-4">
-                      <div v-for="field in fields" :key="field.key">
-                        <label class="block text-sm font-medium">
-                          {{ field.label }}
-                        </label>
-                        <p class="mt-1 text-sm">
-                          {{ getFieldValue(item, field) }}
-                        </p>
-                      </div>
+                    <div
+                      v-for="field in fields"
+                      :key="field.key"
+                      class="grid grid-cols-[1fr_4fr] gap-4 items-center"
+                    >
+                      <label class="block text-sm font-bold">
+                        {{ field.label }}:
+                      </label>
+                      <p
+                        class="text-sm bg-base-200 rounded-xl px-3 py-2 font-medium"
+                      >
+                        {{ getFieldValue(item, field) }}
+                      </p>
                     </div>
                   </div>
                 </slot>

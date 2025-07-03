@@ -150,7 +150,6 @@ const handleUpdateTask = () => {
 const closeAllModal = () => {
   isUpdateModalOpen.value = false;
   isConfirmModalOpen.value = false;
-  afterDetailsClose();
 };
 
 // control back button visibility
@@ -182,9 +181,9 @@ const handleUpdateSubmit = () => {
         preserveScroll: true,
         onSuccess: () => {
           closeAllModal();
-          // Refresh task details
-          // fetchTaskDetails(selectedDetails.value.id);
+          updateTaskForm.reset();
         },
+        onError: () => closeConfirmModal(),
       }
     );
 
@@ -235,10 +234,6 @@ const handleViewDetails = (task) => {
 };
 const closeDetailsModal = () => {
   isDetailsModalOpen.value = false;
-};
-const afterDetailsClose = () => {
-  selectedDetails.value = null;
-  isDetailsError.value = false;
 };
 
 // core logic for the super_admin filter
@@ -422,6 +417,24 @@ const capitalizedType = computed(() => {
   if (!props.currentType) return "";
   return props.currentType.charAt(0).toUpperCase() + props.currentType.slice(1);
 });
+
+const shouldShowUpdateButton = computed(() => {
+  // 1. Must not be super admin
+  if (authUser.value?.userType === "super_admin") return false;
+
+  // 2. Must have selected task details
+  if (!selectedDetails.value) return false;
+
+  // 3. Must be in "your_tasks" tab
+  if (props.activeTab !== "your_tasks") return false;
+
+  // 4. Current user must be in assignees
+  const isAssignee = selectedDetails.value.assignees.some(
+    (assignee) => assignee.id === authUser.value.id
+  );
+
+  return isAssignee;
+});
 </script>
 
 <template>
@@ -493,13 +506,10 @@ const capitalizedType = computed(() => {
       title="TASK DETAILS"
       :fields="taskDetailFields"
       @close="closeDetailsModal"
-      @after-leave="afterDetailsClose"
     >
-      <template
-        #custom-buttons
-        v-if="authUser?.userType === 'super_admin' && selectedDetails"
-      >
+      <template #custom-buttons>
         <button
+          v-if="shouldShowUpdateButton"
           @click="handleUpdateTask"
           class="btn rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3 me-2"
         >

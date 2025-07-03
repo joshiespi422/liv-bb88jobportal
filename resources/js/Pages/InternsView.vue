@@ -211,10 +211,6 @@ const handleViewDetails = (intern) => {
 const closeDetailsModal = () => {
   isDetailsModalOpen.value = false;
 };
-const afterDetailsClose = () => {
-  selectedDetails.value = null;
-  isDetailsError.value = false;
-};
 
 // computed property for custom details field separation
 const customDetails = computed(() => {
@@ -328,7 +324,6 @@ const internTableColumns = [
       custom-skeleton
       custom-content
       @close="closeDetailsModal"
-      @after-leave="afterDetailsClose"
     >
       <!-- Custom Skeleton -->
       <template #skeleton="{ skeletonFieldCount }">
