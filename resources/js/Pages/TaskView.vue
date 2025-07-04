@@ -175,7 +175,7 @@ const handleUpdateSubmit = () => {
   });
 
   pendingAction.value = () =>
-    updateTaskForm.put(
+    updateTaskForm.post(
       route("task.update", { task: selectedDetails.value.id }),
       {
         preserveScroll: true,

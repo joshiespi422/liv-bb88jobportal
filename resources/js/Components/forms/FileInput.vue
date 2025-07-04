@@ -45,7 +45,13 @@ const formattedAcceptTypes = computed(() => {
     .join(", ");
 });
 
-defineEmits(["update:modelValue"]);
+const emit = defineEmits(["update:modelValue", "change"]);
+function handleFileChange(event) {
+  // update the v-model value
+  emit("update:modelValue", event.target.files[0]);
+  // emit the 'change' event for the parent component
+  emit("change");
+}
 </script>
 
 <template>
@@ -53,7 +59,7 @@ defineEmits(["update:modelValue"]);
     type="file"
     v-bind="inputAttrs"
     :accept="accept"
-    @change="$emit('update:modelValue', $event.target.files[0])"
+    @change="handleFileChange"
     class="file-input file-input-neutral block w-full shadow-md rounded-xl text-sm font-semibold border-0 ring focus:outline-none focus:ring-2"
   />
   <small class="font-semibold text-gray-500 ms-3">

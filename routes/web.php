@@ -52,7 +52,7 @@ Route::middleware('auth')->group(function () {
     
     Route::get('/task', [TaskController::class, 'index'])->name('task');
     Route::get('/task/{id}', [TaskController::class, 'show'])->name('task.show');
-    Route::put('/task/{task}/update', [TaskController::class, 'updateTask'])->name('task.update');
+    Route::post('/task/{task}/update', [TaskController::class, 'updateTask'])->name('task.update');
 
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
     Route::post('/profile/picture', [ProfileController::class, 'updatePicture'])->name('profile.picture.update');
