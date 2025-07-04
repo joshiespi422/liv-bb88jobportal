@@ -37,7 +37,7 @@ const authUser = computed(() => page.props.auth.user);
 
 // State for modals for forms
 const isUpdateModalOpen = ref(false);
-//const isValidateModalOpen = ref(false);
+const isValidateModalOpen = ref(false);
 // Holds the action to be executed on confirmation
 const pendingAction = ref(null);
 // confirmation before updating
@@ -69,6 +69,11 @@ const updateTaskForm = useForm({
   link: "",
   attachment: null,
   status: "",
+});
+// validate form state
+const validateTaskForm = useForm({
+  status: "",
+  revise_reason: "",
 });
 
 // Form field configuration for adding new employee
@@ -141,24 +146,83 @@ const statusOptions = computed(() => {
   return [];
 });
 
+// Form field configuration for adding new employee
+const validateFormFields = computed(() => {
+  const fields = [
+    {
+      key: "task_title",
+      label: "Task Selected",
+      component: TextInput,
+      attrs: {
+        disabled: true,
+        value: selectedDetails.value?.title || "N/A",
+      },
+    },
+    {
+      key: "status",
+      label: "Status",
+      component: SelectInput,
+      attrs: {
+        required: true,
+        placeholder: "Select a status",
+        options: [
+          { value: "done", label: "Mark as Done" },
+          { value: "revision", label: "For Revision" },
+        ],
+      },
+    },
+  ];
+
+  // If the selected status is 'revision', add the reason text input
+  if (validateTaskForm.status === "revision") {
+    fields.push({
+      key: "revise_reason",
+      label: "Reason for Revision",
+      component: TextInput,
+      attrs: {
+        required: true,
+        placeholder: "Please provide a reason",
+      },
+    });
+  }
+
+  return fields;
+});
+
 // update task modal state
 const handleUpdateTask = () => {
   if (!selectedDetails.value) return;
   isUpdateModalOpen.value = true;
   isDetailsModalOpen.value = false;
 };
+// validate task modal state
+const handleValidateTask = () => {
+  if (!selectedDetails.value) return;
+  isValidateModalOpen.value = true;
+  isDetailsModalOpen.value = false;
+};
 const closeAllModal = () => {
   isUpdateModalOpen.value = false;
+  isValidateModalOpen.value = false;
   isConfirmModalOpen.value = false;
 };
 
-// control back button visibility
+// control update back button visibility
 const showBackButtonInUpdate = computed(() => {
   return isUpdateModalOpen.value && selectedDetails.value !== null;
 });
-// handle back navigation
+// handle update back navigation
 const handleBackFromUpdate = () => {
   isUpdateModalOpen.value = false;
+  isDetailsModalOpen.value = true;
+};
+// control validate back button visibility
+const showBackButtonInValidate = computed(() => {
+  return isValidateModalOpen.value && selectedDetails.value !== null;
+});
+// handle validate back navigation
+const handleBackFromValidate = () => {
+  isValidateModalOpen.value = false;
   isDetailsModalOpen.value = true;
 };
 
@@ -182,6 +246,33 @@ const handleUpdateSubmit = () => {
         onSuccess: () => {
           closeAllModal();
           updateTaskForm.reset();
+        },
+        onError: () => closeConfirmModal(),
+      }
+    );
+
+  isConfirmModalOpen.value = true;
+};
+// -- Validate Task Flow --
+const handleValidateSubmit = () => {
+  Object.assign(confirmModalProps, {
+    title: "Validate Task",
+    message: "Are you sure you want to change the status of this task?",
+    confirmText: "Validate",
+    confirmButtonBg: "bg-blue-600 hover:bg-blue-700",
+    iconName: "pi pi-check-square",
+    iconColor: "text-blue-600",
+    iconBgColor: "bg-blue-100",
+  });
+
+  pendingAction.value = () =>
+    validateTaskForm.post(
+      route("task.validate", { task: selectedDetails.value.id }),
+      {
+        preserveScroll: true,
+        onSuccess: () => {
+          closeAllModal();
+          validateTaskForm.reset();
         },
         onError: () => closeConfirmModal(),
       }
@@ -411,6 +502,7 @@ const statusColor = {
   "in progress": "badge-accent",
   "for approval": "badge-info",
   done: "badge-success",
+  revision: "badge-error",
 };
 
 const capitalizedType = computed(() => {
@@ -418,7 +510,7 @@ const capitalizedType = computed(() => {
   return props.currentType.charAt(0).toUpperCase() + props.currentType.slice(1);
 });
 
-const shouldShowUpdateButton = computed(() => {
+const showUpdateButton = computed(() => {
   // 1. Must not be super admin
   if (authUser.value?.userType === "super_admin") return false;
 
@@ -434,6 +526,34 @@ const shouldShowUpdateButton = computed(() => {
   );
 
   return isAssignee;
+});
+
+const showValidateButton = computed(() => {
+  const isSuperAdmin = authUser.value?.userType === "super_admin";
+  const isLeader = authUser.value?.hierarchy === "Leader";
+  const selectedStatus = selectedDetails.value?.status;
+
+  // 1. Must be super admin or leader
+  if (!isSuperAdmin && !isLeader) {
+    return false;
+  }
+
+  // 2. Must have selected task details
+  if (!selectedDetails.value) {
+    return false;
+  }
+
+  // 3. Must be in "active_tasks" tab
+  if (props.activeTab !== "active_tasks") {
+    return false;
+  }
+
+  // 4. Must be in "for approval" status
+  if (selectedStatus !== "for approval") {
+    return false;
+  }
+
+  return true;
 });
 </script>
 
@@ -497,6 +617,21 @@ const shouldShowUpdateButton = computed(() => {
       @submit="handleUpdateSubmit"
     />
 
+    <!-- Validate Task Modal -->
+    <FormModal
+      :isOpen="isValidateModalOpen"
+      :inert="isConfirmModalOpen"
+      :showBackButton="showBackButtonInValidate"
+      title="VALIDATE TASK"
+      :form="validateTaskForm"
+      :fields="validateFormFields"
+      submitText="Submit"
+      disabledButton
+      @close="closeAllModal"
+      @back="handleBackFromValidate"
+      @submit="handleValidateSubmit"
+    />
+
     <!-- Task Details Modal -->
     <DetailsModal
       :isOpen="isDetailsModalOpen"
@@ -509,11 +644,18 @@ const shouldShowUpdateButton = computed(() => {
     >
       <template #custom-buttons>
         <button
-          v-if="shouldShowUpdateButton"
+          v-if="showUpdateButton"
           @click="handleUpdateTask"
           class="btn rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3 me-2"
         >
           Update
+        </button>
+        <button
+          v-if="showValidateButton"
+          @click="handleValidateTask"
+          class="btn rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3 me-2"
+        >
+          Validate
         </button>
       </template>
     </DetailsModal>

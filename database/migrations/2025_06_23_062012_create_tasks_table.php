@@ -21,7 +21,7 @@ return new class extends Migration
             $table->date('deadline');
             $table->string('collateral');
             $table->enum('priority', ['high', 'medium', 'low'])->default('low');
-            $table->string('revise_reason')->nullable();
+            $table->text('revise_reason')->nullable();
             $table->timestamps();
         });
     }

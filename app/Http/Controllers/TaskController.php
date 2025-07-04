@@ -70,7 +70,8 @@ class TaskController extends Controller
         $statuses = Status::whereIn('status_name', [
             'in progress', 
             'for approval',
-            'done'
+            'done',
+            'revision'
         ])->pluck('id', 'status_name');
 
         // Get user type ID for query
@@ -90,14 +91,16 @@ class TaskController extends Controller
                     })
                     ->whereIn('status_id', [
                         $statuses['in progress'],
-                        $statuses['for approval']
+                        $statuses['for approval'],
+                        $statuses['revision']
                     ]);
                 break;
                 
             case 'active_tasks':
                 $tasksQuery->whereIn('status_id', [
                     $statuses['in progress'],
-                    $statuses['for approval']
+                    $statuses['for approval'],
+                    $statuses['revision']
                 ]);
                 break;
                 
@@ -181,9 +184,43 @@ class TaskController extends Controller
             }
         });
 
-        return back()->with('success', 'Task updated successfully!');
+        return back()->with('success', 'Task has been updated successfully!');
     }
 
+    public function validateTask(Request $request, Task $task)
+    {
+        // Authorization
+        $user = $request->user();
+        $isLeader = $user->userType->type_name === 'employee' && 
+                    $user->employeeDetails->hierarchy === 'Leader';
+        
+        if (!$isLeader && $user->userType->type_name !== 'super_admin') {
+            abort(403, 'Unauthorized action.');
+        }
+
+        // Validation
+        $request->validate([
+            'status' => 'required|in:done,revision',
+            'revise_reason' => 'required_if:status,revision|string|max:1000',
+        ]);
+
+        // Logic
+        DB::transaction(function () use ($request, $task) {
+            $newStatus = Status::where('status_name', $request->status)->firstOrFail();
+            $task->status_id = $newStatus->id;
+
+            // If status is 'revision', save the reason. Otherwise, clear it.
+            if ($request->status === 'revision') {
+                $task->revise_reason = $request->revise_reason;
+            } else {
+                $task->revise_reason = null; // Clear reason if marked as done
+            }
+
+            $task->save();
+        });
+
+        return back()->with('success', 'Task has been validated successfully!');
+    }
 
     /**
      * Show the form for creating a new resource.
