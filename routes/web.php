@@ -5,6 +5,7 @@ use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\InternController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TaskController;
+use App\Http\Controllers\AccomplishmentController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -54,6 +55,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/task/{id}', [TaskController::class, 'show'])->name('task.show');
     Route::post('/task/{task}/update', [TaskController::class, 'updateTask'])->name('task.update');
     Route::post('/task/{task}/validate', [TaskController::class, 'validateTask'])->name('task.validate');
+
+    Route::get('/accomplishment/{id}', [AccomplishmentController::class, 'show']);
 
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
     Route::post('/profile/picture', [ProfileController::class, 'updatePicture'])->name('profile.picture.update');

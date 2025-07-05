@@ -287,11 +287,16 @@ const selectedDetails = ref(null);
 const isDetailsLoading = ref(false);
 const isDetailsError = ref(false);
 
+// formatter for assignees
+const formatAssignees = (assignees) => {
+  if (!assignees || !Array.isArray(assignees)) return "N/A";
+  return assignees.map((user) => user.name).join(", ");
+};
 // the fields to be displayed in the details modal for an task
 const taskDetailFields = ref([
   { key: "title", label: "Task Name" },
   { key: "description", label: "Description" },
-  { key: "assignees", label: "Assignees" },
+  { key: "assignees", label: "Assignees", formatter: formatAssignees },
   { key: "collateral", label: "Collaterals" },
   { key: "created_at", label: "Started", formatter: longDate },
   { key: "deadline", label: "Deadline", formatter: longDate },
@@ -325,6 +330,71 @@ const handleViewDetails = (task) => {
 };
 const closeDetailsModal = () => {
   isDetailsModalOpen.value = false;
+};
+
+// Accomplishment Details state
+const isAccomplishModalOpen = ref(false);
+const selectedAccomplish = ref(null);
+const isAccomplishLoading = ref(false);
+const isAccomplishError = ref(false);
+// Function to fetch accomplishment details
+const fetchAccomplishDetails = async (accomplishmentId) => {
+  isAccomplishLoading.value = true;
+  isAccomplishModalOpen.value = true;
+  selectedAccomplish.value = null;
+  isAccomplishError.value = false;
+
+  try {
+    const response = await axios.get(`/accomplishment/${accomplishmentId}`);
+    selectedAccomplish.value = response.data;
+  } catch (error) {
+    console.error("Error fetching accomplishment details:", error);
+    isAccomplishError.value = true;
+  } finally {
+    await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for 1 second
+    isAccomplishLoading.value = false;
+  }
+};
+// Handle back navigation from accomplishment modal
+const handleBackFromAccomplish = () => {
+  isAccomplishModalOpen.value = false;
+  isDetailsModalOpen.value = true;
+};
+// Show back button in accomplishment modal
+const showBackButtonInAccomplish = computed(() => {
+  return isAccomplishModalOpen.value && selectedDetails.value !== null;
+});
+// Fields for accomplishment details modal
+const accomplishDetailFields = ref([
+  { key: "task_title", label: "Task" },
+  { key: "title", label: "Title" },
+  { key: "description", label: "Description" },
+  {
+    key: "link",
+    label: "Link",
+    formatter: (value) =>
+      value
+        ? `<a href="${value}" target="_blank" class="text-blue-500 hover:underline">${value}</a>`
+        : "N/A",
+    html: true,
+  },
+  {
+    key: "attachment",
+    label: "Attachment",
+    formatter: (value) =>
+      value
+        ? `<a href="${value}" target="_blank" class="text-blue-500 hover:underline">Download</a>`
+        : "N/A",
+    html: true,
+  },
+  { key: "created_at", label: "Date Accomplished", formatter: longDate },
+]);
+const handleViewAccomplish = (accomplishmentId) => {
+  isDetailsModalOpen.value = false;
+  fetchAccomplishDetails(accomplishmentId);
+};
+const closeAccomplishModal = () => {
+  isAccomplishModalOpen.value = false;
 };
 
 // core logic for the super_admin filter
@@ -640,8 +710,141 @@ const showValidateButton = computed(() => {
       :error="isDetailsError"
       title="TASK DETAILS"
       :fields="taskDetailFields"
+      :panel-class="'w-full max-w-3xl'"
+      custom-content
       @close="closeDetailsModal"
     >
+      <!-- Custom Skeleton -->
+      <template #skeleton="{ skeletonFieldCount }">
+        <div class="grid grid-cols-[2fr_1.5fr] gap-4 py-6 px-3">
+          <div class="space-y-3">
+            <div
+              v-for="i in skeletonFieldCount"
+              :key="`custom-skel-${i}`"
+              class="grid grid-cols-[1fr_3fr] gap-2 items-center"
+            >
+              <div class="skeleton h-8 w-full" />
+              <div class="skeleton h-8 w-full" />
+            </div>
+          </div>
+          <div class="rounded-xl bg-base-200 p-3">
+            <div
+              class="collapse collapse-plus bg-base-100 border border-base-300"
+            >
+              <input type="radio" name="my-accordion-1" checked="checked" />
+              <div class="collapse-title text-sm font-medium">
+                <div class="skeleton h-8 w-full" />
+              </div>
+              <div class="collapse-content space-y-1">
+                <div class="skeleton h-8 w-full" />
+                <div class="skeleton h-8 w-full" />
+              </div>
+            </div>
+            <div
+              class="collapse collapse-plus bg-base-100 border border-base-300"
+            >
+              <input type="radio" name="my-accordion-2" checked="checked" />
+              <div class="collapse-title text-sm font-medium">
+                <div class="skeleton h-8 w-full" />
+              </div>
+              <div class="collapse-content space-y-1">
+                <div class="skeleton h-8 w-full" />
+                <div class="skeleton h-8 w-full" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- Custom Content Layout -->
+      <template #content="{ item, getFieldValue }">
+        <div class="grid grid-cols-[2fr_1.5fr] gap-4 py-6 px-3">
+          <div class="space-y-3">
+            <div
+              v-for="field in taskDetailFields"
+              :key="field.key"
+              class="grid grid-cols-[1fr_4fr] gap-2 items-center"
+            >
+              <label class="block text-sm font-bold">
+                {{ field.label }}
+              </label>
+
+              <p class="text-sm bg-base-200 rounded-xl px-3 py-2 font-medium">
+                {{ getFieldValue(item, field) }}
+              </p>
+            </div>
+          </div>
+          <div class="rounded-xl bg-base-200 p-3">
+            <div
+              class="collapse collapse-plus bg-base-100 border border-base-300"
+            >
+              <input type="radio" name="my-accordion-3" checked="checked" />
+              <div class="collapse-title font-semibold">History Updates</div>
+              <div class="collapse-content text-sm">
+                <ul
+                  class="list bg-base-200 rounded-box shadow-md overflow-y-auto max-h-60 list-scroll"
+                  v-if="item.accomplishments && item.accomplishments.length"
+                >
+                  <li
+                    v-for="accomplishment in item.accomplishments"
+                    :key="accomplishment.id"
+                    class="list-row hover:bg-base-300 hover:cursor-pointer"
+                    @click="handleViewAccomplish(accomplishment.id)"
+                  >
+                    <div>
+                      <div class="font-semibold">
+                        {{ accomplishment.user_name }}
+                      </div>
+                      <div
+                        class="text-xs uppercase font-semibold opacity-60 truncate"
+                      >
+                        {{ accomplishment.title }}
+                      </div>
+                    </div>
+                  </li>
+                </ul>
+                <div
+                  v-else
+                  role="alert"
+                  class="alert alert-warning alert-soft font-semibold"
+                >
+                  <span>No accomplishment found</span>
+                </div>
+              </div>
+            </div>
+            <div
+              class="collapse collapse-plus bg-base-100 border border-base-300 mt-1"
+            >
+              <input type="radio" name="my-accordion-3" />
+              <div class="collapse-title font-semibold">Comments</div>
+              <div class="collapse-content text-sm">
+                <ul
+                  class="list bg-base-200 rounded-box shadow-md overflow-y-auto max-h-60"
+                >
+                  <li class="list-row">
+                    <div>
+                      <div>Dio Lupa</div>
+                      <div class="text-xs uppercase font-semibold opacity-60">
+                        Remaining Reason
+                      </div>
+                    </div>
+                  </li>
+
+                  <li class="list-row">
+                    <div>
+                      <div>Ellie Beilish</div>
+                      <div class="text-xs uppercase font-semibold opacity-60">
+                        Bears of a fever
+                      </div>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+
       <template #custom-buttons>
         <button
           v-if="showUpdateButton"
@@ -660,6 +863,27 @@ const showValidateButton = computed(() => {
       </template>
     </DetailsModal>
 
+    <!-- Accomplishment Details Modal -->
+    <DetailsModal
+      :isOpen="isAccomplishModalOpen"
+      :item="selectedAccomplish"
+      :loading="isAccomplishLoading"
+      :error="isAccomplishError"
+      title="ACCOMPLISHMENT DETAILS"
+      :fields="accomplishDetailFields"
+      @close="closeAccomplishModal"
+    >
+      <template #custom-buttons>
+        <button
+          v-if="showBackButtonInAccomplish"
+          class="btn btn-soft rounded-full me-2"
+          @click="handleBackFromAccomplish"
+        >
+          <i class="pi pi-arrow-left me-1" /> Back
+        </button>
+      </template>
+    </DetailsModal>
+
     <!-- Confirmation Modal -->
     <ConfirmModal
       :show="isConfirmModalOpen"
@@ -669,3 +893,17 @@ const showValidateButton = computed(() => {
     />
   </div>
 </template>
+
+<style scoped>
+.list-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.list-scroll::-webkit-scrollbar-thumb {
+  border-radius: 3px;
+  background-color: var(--color-green-primary-1);
+}
+.list-scroll::-webkit-scrollbar-track {
+  margin: 6px;
+  background-color: transparent;
+}
+</style>

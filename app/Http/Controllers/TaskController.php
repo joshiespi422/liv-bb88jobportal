@@ -10,9 +10,7 @@ use App\Models\Accomplishment;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Auth;
 
 class TaskController extends Controller
 {
@@ -244,8 +242,9 @@ class TaskController extends Controller
     public function show(string $id)
     {
         $task = Task::with([
-                'users:id,name,picture',
-                'status:id,status_name'
+                'users:id,name',
+                'status:id,status_name',
+                'accomplishments.user:id,name'
             ])
             ->findOrFail($id);
 
@@ -258,12 +257,15 @@ class TaskController extends Controller
             'deadline' => $task->deadline,
             'priority' => $task->priority,
             'status' => $task->status->status_name,
-            'assignees' => $task->users->map(function ($user) {
-                return [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                ];
-            })->toArray(),
+            'assignees' => $task->users->map(fn ($user) => [
+                'id' => $user->id,
+                'name' => $user->name
+            ])->toArray(),
+            'accomplishments' => $task->accomplishments->sortByDesc('created_at')->map(fn ($accomplishment) => [
+                'id' => $accomplishment->id,
+                'title' => $accomplishment->title,
+                'user_name' => $accomplishment->user->name,
+            ])->values()->toArray(),
         ];
         return response()->json($taskDetails);
     }

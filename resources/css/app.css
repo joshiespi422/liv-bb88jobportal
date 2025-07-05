@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @plugin "daisyui" {
     themes: fantasy --default, dracula --prefersdark;
+    exclude: [ "scrollbar"];
 }
 
 @theme {
