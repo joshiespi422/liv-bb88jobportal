@@ -148,8 +148,16 @@ const skeletonFieldCount = computed(() => {
                       <label class="block text-sm font-bold">
                         {{ field.label }}:
                       </label>
+                      <!-- HTML Content -->
+                      <div
+                        v-if="field.html"
+                        class="text-sm bg-base-200 rounded-xl px-3 py-2 font-medium truncate"
+                        v-html="getFieldValue(item, field)"
+                      ></div>
+                      <!-- Regular Content -->
                       <p
-                        class="text-sm bg-base-200 rounded-xl px-3 py-2 font-medium"
+                        v-else
+                        class="text-sm bg-base-200 rounded-xl px-3 py-2 font-medium text-wrap truncate"
                       >
                         {{ getFieldValue(item, field) }}
                       </p>

@@ -51,7 +51,10 @@ class AccomplishmentController extends Controller
             'description' => $accomplishment->description,
             'link' => $accomplishment->link,
             'attachment' => $accomplishment->attachment 
-                ? Storage::url($accomplishment->attachment) 
+                ? [
+                    'url' => Storage::url($accomplishment->attachment),
+                    'name' => basename($accomplishment->attachment)
+                ]
                 : null,
             'created_at' => $accomplishment->created_at,
             'user_name' => $accomplishment->user->name,

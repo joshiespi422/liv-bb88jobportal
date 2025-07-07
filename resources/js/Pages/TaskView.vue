@@ -1,7 +1,7 @@
 <script setup>
 import { ref, h, computed, reactive } from "vue";
 import { useForm, usePage, router } from "@inertiajs/vue3";
-import { longDate } from "../Composables/useDateFormatter";
+import { longDate, longDateTime } from "../Composables/useDateFormatter";
 import DataTable from "../Components/DataTable.vue";
 import ListBox from "../Components/ListBox.vue";
 import DetailsModal from "../Components/DetailsModal.vue";
@@ -381,13 +381,23 @@ const accomplishDetailFields = ref([
   {
     key: "attachment",
     label: "Attachment",
-    formatter: (value) =>
-      value
-        ? `<a href="${value}" target="_blank" class="text-blue-500 hover:underline">Download</a>`
-        : "N/A",
+    formatter: (attachment) => {
+      if (!attachment) return "N/A";
+      return `
+        <div class="flex items-center gap-2">
+          <i class="pi pi-paperclip text-sm"></i>
+          <a href="${attachment.url}" 
+             target="_blank" 
+             class="text-blue-500 hover:underline truncate"
+             download="${attachment.name}">
+            ${attachment.name}
+          </a>
+        </div>
+      `;
+    },
     html: true,
   },
-  { key: "created_at", label: "Date Accomplished", formatter: longDate },
+  { key: "created_at", label: "Submitted", formatter: longDateTime },
 ]);
 const handleViewAccomplish = (accomplishmentId) => {
   isDetailsModalOpen.value = false;
@@ -769,7 +779,9 @@ const showValidateButton = computed(() => {
                 {{ field.label }}
               </label>
 
-              <p class="text-sm bg-base-200 rounded-xl px-3 py-2 font-medium">
+              <p
+                class="text-sm bg-base-200 rounded-xl px-3 py-2 font-medium text-wrap truncate"
+              >
                 {{ getFieldValue(item, field) }}
               </p>
             </div>
@@ -792,7 +804,7 @@ const showValidateButton = computed(() => {
                     @click="handleViewAccomplish(accomplishment.id)"
                   >
                     <div>
-                      <div class="font-semibold">
+                      <div class="font-semibold truncate">
                         {{ accomplishment.user_name }}
                       </div>
                       <div
