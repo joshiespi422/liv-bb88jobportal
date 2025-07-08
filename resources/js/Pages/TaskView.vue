@@ -1,5 +1,5 @@
 <script setup>
-import { ref, h, computed, reactive } from "vue";
+import { ref, h, computed, reactive, watch } from "vue";
 import { useForm, usePage, router } from "@inertiajs/vue3";
 import { longDate, longDateTime } from "../Composables/useDateFormatter";
 import DataTable from "../Components/DataTable.vue";
@@ -10,6 +10,7 @@ import ConfirmModal from "../Components/ConfirmModal.vue";
 import TextInput from "../Components/forms/TextInput.vue";
 import SelectInput from "../Components/forms/SelectInput.vue";
 import FileInput from "../Components/forms/FileInput.vue";
+import ComboBox from "../Components/forms/ComboBox.vue";
 
 const props = defineProps({
   tasks: {
@@ -38,6 +39,7 @@ const authUser = computed(() => page.props.auth.user);
 // State for modals for forms
 const isUpdateModalOpen = ref(false);
 const isValidateModalOpen = ref(false);
+const isNewTaskModalOpen = ref(false);
 // Holds the action to be executed on confirmation
 const pendingAction = ref(null);
 // confirmation before updating
@@ -75,6 +77,135 @@ const validateTaskForm = useForm({
   status: "",
   revise_reason: "",
 });
+// new task form state
+const assigneesList = ref([]);
+const newTaskForm = useForm({
+  title: "",
+  description: "",
+  collateral: "",
+  department_id: getDefaultDepartment(),
+  project: "",
+  assignees: [],
+  deadline: "",
+  priority: "",
+});
+
+// Form field configuration for adding new task
+const newTaskFormFields = computed(() => {
+  return [
+    {
+      key: "title",
+      label: "Task Name",
+      component: TextInput,
+      attrs: { required: true, placeholder: "Example Task" },
+    },
+    {
+      key: "description",
+      label: "Description",
+      component: TextInput,
+      attrs: { required: true, placeholder: "Example Description" },
+    },
+    {
+      key: "collateral",
+      label: "Collateral",
+      component: TextInput,
+      attrs: { required: true, placeholder: "Example Collateral" },
+    },
+    {
+      key: "department_id",
+      label: "Department",
+      component:
+        authUser.value.userType === "super_admin" ? SelectInput : TextInput,
+      attrs:
+        authUser.value.userType === "super_admin"
+          ? {
+              options: props.departments.map((d) => ({
+                value: d.id,
+                label: d.dept_name,
+              })),
+              placeholder: "Select a department",
+              required: true,
+            }
+          : {
+              readonly: true,
+              value: authUser.value.department?.name || "N/A",
+            },
+    },
+    {
+      key: "project",
+      label: "Project",
+      component: TextInput,
+      attrs: { placeholder: "Example Project" },
+    },
+    {
+      key: "assignees",
+      label: "Assignees",
+      component: ComboBox,
+      attrs: {
+        multiple: true,
+        options: assigneesList.value,
+        placeholder: "Select Assignees",
+      },
+    },
+    {
+      key: "deadline",
+      label: "Deadline",
+      component: TextInput,
+      attrs: { type: "date", required: true },
+    },
+    {
+      key: "priorrity",
+      label: "Priority",
+      component: SelectInput,
+      attrs: {
+        required: true,
+        placeholder: "Select Priority",
+        options: [
+          { value: "high", label: "High" },
+          { value: "medium", label: "Medium" },
+          { value: "low", label: "Low" },
+        ],
+      },
+    },
+  ];
+});
+// Set the default department for the "New Task" form based on user role
+function getDefaultDepartment() {
+  if (authUser.value.userType === "super_admin") {
+    return "";
+  }
+  return authUser.value.department?.id || null;
+}
+// fetch assignable users for new task
+const fetchAssigneesList = async (departmentId, type) => {
+  if (!departmentId) {
+    assigneesList.value = [];
+    return;
+  }
+  try {
+    // Use the route() helper from Ziggy
+    const response = await axios.get(
+      route("task.assignees", {
+        department: departmentId,
+        type: type,
+      })
+    );
+    assigneesList.value = response.data;
+  } catch (error) {
+    console.error("Failed to fetch assignable users:", error);
+    assigneesList.value = [];
+  }
+};
+// Watch for changes in department_id to fetch new users
+watch(
+  () => newTaskForm.department_id,
+  async (newDeptId) => {
+    if (authUser.value.userType === "super_admin" && newDeptId) {
+      newTaskForm.assignees = [];
+      await fetchAssigneesList(newDeptId, props.currentType);
+    }
+  }
+);
 
 // Form field configuration for adding new employee
 const updateFormFields = computed(() => {
@@ -201,9 +332,14 @@ const handleValidateTask = () => {
   isValidateModalOpen.value = true;
   isDetailsModalOpen.value = false;
 };
+// handle new task modal state
+const handleNewTask = () => {
+  isNewTaskModalOpen.value = true;
+};
 const closeAllModal = () => {
   isUpdateModalOpen.value = false;
   isValidateModalOpen.value = false;
+  isNewTaskModalOpen.value = false;
   isConfirmModalOpen.value = false;
 };
 
@@ -277,6 +413,30 @@ const handleValidateSubmit = () => {
         onError: () => closeConfirmModal(),
       }
     );
+
+  isConfirmModalOpen.value = true;
+};
+// -- New Task Flow --
+const handleNewTaskSubmit = () => {
+  Object.assign(confirmModalProps, {
+    title: "Create New Task",
+    message: "Are you sure you want to create a new task?",
+    confirmText: "Create",
+    confirmButtonBg: "bg-blue-600 hover:bg-blue-700",
+    iconName: "pi pi-check-square",
+    iconColor: "text-blue-600",
+    iconBgColor: "bg-blue-100",
+  });
+
+  pendingAction.value = () =>
+    newTaskForm.post(route("task.store"), {
+      preserveScroll: true,
+      onSuccess: () => {
+        closeAllModal();
+        newTaskForm.reset();
+      },
+      onError: () => closeConfirmModal(),
+    });
 
   isConfirmModalOpen.value = true;
 };
@@ -672,14 +832,18 @@ const showValidateButton = computed(() => {
 
     <!-- Task Table -->
     <DataTable :data="props.tasks" :columns="taskTableColumns" enable-tooltips>
-      <!-- <template #custom-actions>
+      <template #custom-actions>
         <button
-          @click="handleAddNewEmployee"
+          @click="handleNewTask"
+          v-if="
+            authUser?.userType === 'super_admin' ||
+            authUser?.hierarchy === 'leader'
+          "
           class="btn rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
         >
-          Add Employee
+          New Task
         </button>
-      </template> -->
+      </template>
     </DataTable>
 
     <!-- Update Task Modal -->
@@ -710,6 +874,18 @@ const showValidateButton = computed(() => {
       @close="closeAllModal"
       @back="handleBackFromValidate"
       @submit="handleValidateSubmit"
+    />
+
+    <!-- New Task Modal -->
+    <FormModal
+      :isOpen="isNewTaskModalOpen"
+      :inert="isConfirmModalOpen"
+      title="ADD NEW TASK"
+      :form="newTaskForm"
+      :fields="newTaskFormFields"
+      submitText="Add"
+      @close="closeAllModal"
+      @submit="handleNewTaskSubmit"
     />
 
     <!-- Task Details Modal -->

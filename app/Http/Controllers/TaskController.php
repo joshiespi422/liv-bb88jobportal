@@ -7,10 +7,12 @@ use App\Models\Task;
 use App\Models\UserType;
 use App\Models\Status;
 use App\Models\Accomplishment;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Http\JsonResponse;
 
 class TaskController extends Controller
 {
@@ -135,6 +137,26 @@ class TaskController extends Controller
             'currentType' => $taskType,
             'activeTab' => $activeTab,
         ]);
+    }
+
+    public function fetchAssignees(Request $request, Department $department): JsonResponse
+    {
+        $type = $request->query('type', 'employee'); // Default to 'employee'
+
+        // Ensure the type is valid
+        if (!in_array($type, ['employee', 'intern'])) {
+            return response()->json(['error' => 'Invalid user type specified.'], 400);
+        }
+
+        $query = User::query()
+            ->whereHas($type === 'employee' ? 'employeeDetails' : 'internDetails', function ($q) use ($department) {
+                $q->where('department_id', $department->id);
+            })
+            ->select('id', 'name')
+            ->orderBy('name')
+            ->get();
+
+        return response()->json($query);
     }
 
     public function updateTask(Request $request, Task $task)
