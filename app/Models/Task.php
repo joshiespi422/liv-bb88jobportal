@@ -12,7 +12,15 @@ class Task extends Model
     use HasFactory;
 
     protected $fillable = [
-        //
+        'title',
+        'description',
+        'collateral',
+        'department_id',
+        'project',
+        'deadline',
+        'priority',
+        'user_type_id',
+        'status_id'
     ];
 
     // relationship to user type, many task has one user type

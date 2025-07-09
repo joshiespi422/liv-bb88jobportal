@@ -255,7 +255,35 @@ class TaskController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        // Validate request
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'collateral' => 'required|string|max:255',
+            'department_id' => 'required|exists:departments,id',
+            'project' => 'nullable|string',
+            'assignees' => 'required|array|min:1',
+            'assignees.*' => 'integer|exists:users,id',
+            'deadline' => 'required|date',
+            'priority' => 'required|in:high,medium,low',
+            'type' => 'required|in:employee,intern'
+        ]);
+
+        // Get status and user type
+        $status = Status::firstWhere('status_name', 'in progress');
+        $userType = UserType::firstWhere('type_name', $validated['type']);
+
+        // Create task
+        $task = Task::create([
+            ...$validated,
+            'status_id' => $status->id,
+            'user_type_id' => $userType->id
+        ]);
+
+        // Attach assignees
+        $task->users()->attach($validated['assignees']);
+
+        return redirect()->route('tasks.index')->with('success', 'Task created successfully!');
     }
 
     /**

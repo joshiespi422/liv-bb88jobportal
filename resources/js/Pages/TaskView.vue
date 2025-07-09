@@ -88,6 +88,7 @@ const newTaskForm = useForm({
   assignees: [],
   deadline: "",
   priority: "",
+  type: props.currentType,
 });
 
 // Form field configuration for adding new task
@@ -154,7 +155,7 @@ const newTaskFormFields = computed(() => {
       attrs: { type: "date", required: true },
     },
     {
-      key: "priorrity",
+      key: "priority",
       label: "Priority",
       component: SelectInput,
       attrs: {
@@ -418,6 +419,10 @@ const handleValidateSubmit = () => {
 };
 // -- New Task Flow --
 const handleNewTaskSubmit = () => {
+  const transformedData = {
+    ...newTaskForm.data(),
+    assignees: newTaskForm.assignees.map((a) => a.id),
+  };
   Object.assign(confirmModalProps, {
     title: "Create New Task",
     message: "Are you sure you want to create a new task?",
@@ -429,14 +434,16 @@ const handleNewTaskSubmit = () => {
   });
 
   pendingAction.value = () =>
-    newTaskForm.post(route("task.store"), {
-      preserveScroll: true,
-      onSuccess: () => {
-        closeAllModal();
-        newTaskForm.reset();
-      },
-      onError: () => closeConfirmModal(),
-    });
+    newTaskForm
+      .transform(() => transformedData)
+      .post(route("task.store"), {
+        preserveScroll: true,
+        onSuccess: () => {
+          closeAllModal();
+          newTaskForm.reset();
+        },
+        onError: () => closeConfirmModal(),
+      });
 
   isConfirmModalOpen.value = true;
 };
@@ -837,7 +844,7 @@ const showValidateButton = computed(() => {
           @click="handleNewTask"
           v-if="
             authUser?.userType === 'super_admin' ||
-            authUser?.hierarchy === 'leader'
+            authUser?.hierarchy === 'Leader'
           "
           class="btn rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
         >

@@ -3,11 +3,10 @@ import { computed, ref } from "vue";
 import {
   Combobox,
   ComboboxInput,
-  ComboboxButton,
   ComboboxOptions,
   ComboboxOption,
 } from "@headlessui/vue";
-import { onClickOutside } from "@vueuse/core"; // Correct import from @vueuse/core
+import { onClickOutside } from "@vueuse/core";
 
 const props = defineProps({
   modelValue: [Array, Object],
@@ -24,9 +23,14 @@ const props = defineProps({
     default: false,
   },
   disabled: Boolean,
+  id: String,
+  class: {
+    type: String,
+    default: "",
+  },
 });
 
-const emit = defineEmits(["update:modelValue"]);
+const emit = defineEmits(["update:modelValue", "change"]);
 
 const query = ref("");
 const open = ref(false);
@@ -35,14 +39,18 @@ const open = ref(false);
 const comboboxRoot = ref(null);
 
 // Use the onClickOutside composable
-// It will call closeDropdown() when a click occurs outside the element referenced by comboboxRoot
+// It will close the dropdown when a click occurs outside the element referenced by comboboxRoot
 onClickOutside(comboboxRoot, () => {
   open.value = false;
 });
 
 const selectedValue = computed({
   get: () => props.modelValue,
-  set: (value) => emit("update:modelValue", value),
+  set: (value) => {
+    emit("update:modelValue", value);
+    // Emit change event to clear form errors
+    emit("change", value);
+  },
 });
 
 const filteredOptions = computed(() =>
@@ -78,6 +86,18 @@ const handleSelection = () => {
   // Clear the query after selection to keep the input clean
   query.value = "";
 };
+
+// Compute the wrapper classes with error state
+const wrapperClasses = computed(() => {
+  const baseClasses =
+    "relative block w-full rounded-lg px-2 py-0.5 mt-0.5 shadow-md text-sm font-semibold ring focus-within:outline-none focus-within:ring-2 overflow-hidden";
+  const conditionalClasses = {
+    "bg-base-200 cursor-not-allowed ring-0": props.disabled,
+    "ring-indigo-600": open.value && !props.class.includes("ring-error"),
+  };
+
+  return [baseClasses, conditionalClasses, props.class].filter(Boolean);
+});
 </script>
 
 <template>
@@ -89,37 +109,33 @@ const handleSelection = () => {
     class="relative"
     @update:modelValue="handleSelection"
   >
-    <div
-      :class="[
-        'relative block w-full rounded-full mt-0.5 shadow-md text-sm font-semibold ring focus-within:outline-none focus-within:ring-2 overflow-hidden',
-        {
-          'bg-base-200 cursor-not-allowed ring-0': disabled,
-          'ring-indigo-600': open,
-        },
-      ]"
-    >
-      <div class="flex flex-wrap items-center gap-1 p-1.5 pr-10">
+    <div :class="wrapperClasses">
+      <div class="flex flex-wrap items-center gap-1 p-1.5">
         <template v-if="multiple && selectedValue?.length">
           <span
             v-for="value in selectedValue"
             :key="value.id"
-            class="inline-flex items-center rounded-full bg-indigo-100 px-2 py-1 text-xs font-medium text-indigo-700"
+            class="badge badge-soft badge-secondary"
           >
             {{ value.name }}
             <button
               type="button"
               @click.prevent="removeValue(value)"
-              class="ml-1.5 inline-flex flex-shrink-0 rounded-full p-0.5 text-indigo-400 hover:bg-indigo-200 hover:text-indigo-500"
+              class="inline-flex flex-shrink-0 rounded-full p-1 text-indigo-400 hover:bg-indigo-200 hover:text-indigo-500"
             >
               <span class="sr-only">Remove {{ value.name }}</span>
-              <i class="pi pi-times h-3 w-3" aria-hidden="true"></i>
+              <i
+                class="pi pi-times h-3 w-3 mr-0.5 cursor-pointer"
+                aria-hidden="true"
+              ></i>
             </button>
           </span>
         </template>
 
         <ComboboxInput
+          :id="id"
           :class="[
-            'w-0 flex-1 border-none bg-transparent p-0 text-sm focus:ring-0',
+            'w-0 flex-1 border-0 bg-transparent p-0 text-sm focus:outline-none focus:ring-0',
             { 'cursor-not-allowed': disabled },
           ]"
           :display-value="
@@ -131,16 +147,6 @@ const handleSelection = () => {
           @focus="open = true"
         />
       </div>
-
-      <ComboboxButton
-        @click="open = !open"
-        class="absolute inset-y-0 right-0 flex items-center pr-4"
-      >
-        <i
-          class="pi pi-chevron-down h-5 w-5 mt-1 text-gray-400"
-          aria-hidden="true"
-        />
-      </ComboboxButton>
     </div>
 
     <Transition
@@ -151,13 +157,13 @@ const handleSelection = () => {
       <ComboboxOptions
         v-show="open"
         static
-        class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm"
+        class="absolute z-10 mt-1.5 max-h-60 w-full overflow-auto rounded-md bg-base-100 py-1 shadow-lg ring ring-indigo-600 text-sm"
       >
         <div
-          v-if="filteredOptions.length === 0 && query !== ''"
-          class="relative cursor-default select-none px-4 py-2 text-gray-700"
+          v-if="filteredOptions.length === 0"
+          class="relative cursor-default select-none px-4 py-2 text-error"
         >
-          Nothing found.
+          No data available
         </div>
 
         <ComboboxOption
@@ -169,14 +175,14 @@ const handleSelection = () => {
         >
           <li
             :class="[
-              'relative cursor-default select-none py-2 pl-10 pr-4',
-              active ? 'bg-indigo-600 text-white' : 'text-gray-900',
+              'relative cursor-pointer select-none py-2 pl-10 pr-4',
+              active ? 'bg-indigo-600 text-white' : 'text-base-content',
             ]"
           >
             <span
               :class="[
                 'block truncate',
-                selected ? 'font-medium' : 'font-normal',
+                selected ? 'font-bold' : ' font-normal',
               ]"
             >
               {{ option.name }}
