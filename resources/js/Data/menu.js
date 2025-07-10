@@ -70,15 +70,43 @@ export const menuItems = [
     hasSubmenu: true,
     submenu: [
       {
-        name: "EMPLOYEE TASKS",
+        name: "EMPLOYEE",
         icon: "pi pi-check-square",
         routeName: "task",
         routeQuery: { type: "employee" },
       },
       {
-        name: "INTERN TASKS",
+        name: "INTERN",
         icon: "pi pi-check-square",
         routeName: "task",
+        routeQuery: { type: "intern" },
+      },
+    ],
+  },
+  {
+    name: "ACCOMPLISHMENTS",
+    icon: "pi pi-clipboard",
+    userType: ["employee", "intern"],
+    isMember: true,
+    routeName: "accomplishment",
+  },
+  {
+    name: "ACCOMPLISHMENTS",
+    icon: "pi pi-chart-bar",
+    userType: ["employee", "super_admin"],
+    isLeader: true,
+    hasSubmenu: true,
+    submenu: [
+      {
+        name: "EMPLOYEE",
+        icon: "pi pi-chart-line",
+        routeName: "accomplishment",
+        routeQuery: { type: "employee" },
+      },
+      {
+        name: "INTERN",
+        icon: "pi pi-chart-line",
+        routeName: "accomplishment",
         routeQuery: { type: "intern" },
       },
     ],

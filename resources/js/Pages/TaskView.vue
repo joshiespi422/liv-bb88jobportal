@@ -542,6 +542,7 @@ const showBackButtonInAccomplish = computed(() => {
 // Fields for accomplishment details modal
 const accomplishDetailFields = ref([
   { key: "task_title", label: "Task" },
+  { key: "user_name", label: "From" },
   { key: "title", label: "Title" },
   { key: "description", label: "Description" },
   {

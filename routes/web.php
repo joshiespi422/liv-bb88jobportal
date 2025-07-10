@@ -58,6 +58,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/task', [TaskController::class, 'store'])->name('task.store');
     Route::get('/task/assignees/{department}', [TaskController::class, 'fetchAssignees'])->name('task.assignees');
 
+    Route::get('/accomplishment', [AccomplishmentController::class, 'index'])->name('accomplishment');
     Route::get('/accomplishment/{id}', [AccomplishmentController::class, 'show']);
 
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
