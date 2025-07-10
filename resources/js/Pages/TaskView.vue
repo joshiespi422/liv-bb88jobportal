@@ -913,9 +913,38 @@ const showNewButton = computed(() => {
       :form="newTaskForm"
       :fields="newTaskFormFields"
       submitText="Add"
+      :panel-class="'w-full max-w-3xl'"
       @close="closeAllModal"
       @submit="handleNewTaskSubmit"
-    />
+    >
+      <template #custom-fields="{ fields, form }">
+        <div class="grid grid-cols-2 gap-4">
+          <div v-for="field in fields" :key="field.key">
+            <label :for="field.key" class="block text-sm font-bold ms-3">
+              {{ field.label }}
+            </label>
+            <component
+              :is="field.component"
+              :id="field.key"
+              v-bind="field.attrs"
+              v-model="form[field.key]"
+              :class="{
+                'ring-error': form.errors[field.key],
+                'focus:ring-indigo-600': !form.errors[field.key],
+                'w-full': true,
+              }"
+              @change="form.clearErrors(field.key)"
+            />
+            <p
+              v-if="form.errors[field.key]"
+              class="mt-1 text-sm font-semibold text-error ms-3"
+            >
+              {{ form.errors[field.key] }}
+            </p>
+          </div>
+        </div>
+      </template>
+    </FormModal>
 
     <!-- Task Details Modal -->
     <DetailsModal

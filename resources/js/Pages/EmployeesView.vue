@@ -337,9 +337,7 @@ const employeeTableColumns = [
       :error="isDetailsError"
       title="EMPLOYEE DETAILS"
       :fields="employeeDetailFields"
-      :panel-class="'w-full max-w-lg'"
-      custom-skeleton
-      custom-content
+      :panel-class="'w-full max-w-xl'"
       @close="closeDetailsModal"
     >
       <!-- Custom Skeleton -->
@@ -367,7 +365,7 @@ const employeeTableColumns = [
 
       <!-- Custom Content Layout -->
       <template #content="{ item, getFieldValue }">
-        <div class="space-y-6 mx-4 my-8 truncate">
+        <div class="space-y-6 mx-4 my-8">
           <div class="flex items-center gap-4">
             <img
               :src="
@@ -376,11 +374,11 @@ const employeeTableColumns = [
               "
               class="w-28 h-28 rounded-full object-cover shadow-xl/20"
             />
-            <div>
-              <h3 class="text-2xl font-bold">
+            <div class="truncate">
+              <h3 class="text-2xl font-bold truncate">
                 {{ getFieldValue(item, customDetails.name) }}
               </h3>
-              <p class="text-gray-500 font-semibold">
+              <p class="text-gray-500 font-semibold truncate">
                 {{ getFieldValue(item, customDetails.email) }}
               </p>
             </div>
@@ -391,7 +389,7 @@ const employeeTableColumns = [
               <label class="block text-sm text-neutral-500 opacity-50">
                 {{ field.label }}
               </label>
-              <p class="font-semibold text-shadow-md">
+              <p class="font-semibold text-shadow-md truncate text-wrap">
                 {{ getFieldValue(item, field) }}
               </p>
             </div>

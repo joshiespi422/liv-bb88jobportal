@@ -37,14 +37,6 @@ const props = defineProps({
     type: String,
     default: "w-full max-w-md", // Default size
   },
-  customSkeleton: {
-    type: Boolean,
-    default: false,
-  },
-  customContent: {
-    type: Boolean,
-    default: false,
-  },
 });
 
 const emit = defineEmits(["close"]);
@@ -118,7 +110,7 @@ const skeletonFieldCount = computed(() => {
               <div v-if="loading">
                 <slot name="skeleton" :skeletonFieldCount="skeletonFieldCount">
                   <!-- Default Skeleton -->
-                  <div v-if="!customSkeleton" class="space-y-4 my-5">
+                  <div class="space-y-4 my-5">
                     <div
                       v-for="i in skeletonFieldCount"
                       :key="`skeleton-field-${i}`"
@@ -139,7 +131,7 @@ const skeletonFieldCount = computed(() => {
                   :getFieldValue="getFieldValue"
                 >
                   <!-- Default Content -->
-                  <div v-if="!customContent" class="space-y-4 my-5">
+                  <div class="space-y-4 my-5">
                     <div
                       v-for="field in fields"
                       :key="field.key"

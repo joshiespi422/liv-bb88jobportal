@@ -25,6 +25,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  panelClass: {
+    type: String,
+    default: "w-full max-w-md",
+  },
 });
 
 const emit = defineEmits(["close", "submit", "back"]);
@@ -64,7 +68,10 @@ const focusElement = ref(null);
             leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
           >
             <DialogPanel
-              class="relative transform overflow-hidden bg-base-100 rounded-lg px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6"
+              :class="[
+                'relative transform overflow-hidden bg-base-100 rounded-lg px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:p-6',
+                panelClass,
+              ]"
             >
               <form @submit.prevent="$emit('submit')">
                 <div>
@@ -72,32 +79,37 @@ const focusElement = ref(null);
                     {{ title }}
                   </DialogTitle>
 
+                  <!-- Content Form Fields -->
                   <div class="mt-6 space-y-4">
-                    <div v-for="field in fields" :key="field.key">
-                      <label
-                        :for="field.key"
-                        class="block text-sm font-bold ms-3"
-                      >
-                        {{ field.label }}
-                      </label>
-                      <component
-                        :is="field.component"
-                        :id="field.key"
-                        v-bind="field.attrs"
-                        v-model="form[field.key]"
-                        :class="{
-                          'ring-error': form.errors[field.key],
-                          'focus:ring-indigo-600': !form.errors[field.key],
-                        }"
-                        @change="form.clearErrors(field.key)"
-                      />
-                      <p
-                        v-if="form.errors[field.key]"
-                        class="mt-1 text-sm font-semibold text-error ms-3"
-                      >
-                        {{ form.errors[field.key] }}
-                      </p>
-                    </div>
+                    <!-- Fields Slot if provided by parent -->
+                    <slot name="custom-fields" :fields="fields" :form="form">
+                      <!-- Default field layout -->
+                      <div v-for="field in fields" :key="field.key">
+                        <label
+                          :for="field.key"
+                          class="block text-sm font-bold ms-3"
+                        >
+                          {{ field.label }}
+                        </label>
+                        <component
+                          :is="field.component"
+                          :id="field.key"
+                          v-bind="field.attrs"
+                          v-model="form[field.key]"
+                          :class="{
+                            'ring-error': form.errors[field.key],
+                            'focus:ring-indigo-600': !form.errors[field.key],
+                          }"
+                          @change="form.clearErrors(field.key)"
+                        />
+                        <p
+                          v-if="form.errors[field.key]"
+                          class="mt-1 text-sm font-semibold text-error ms-3"
+                        >
+                          {{ form.errors[field.key] }}
+                        </p>
+                      </div>
+                    </slot>
                   </div>
                 </div>
 
