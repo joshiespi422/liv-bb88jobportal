@@ -157,7 +157,7 @@ const wrapperClasses = computed(() => {
       <ComboboxOptions
         v-show="open"
         static
-        class="absolute z-10 mt-1.5 max-h-60 w-full overflow-auto rounded-md bg-base-100 py-1 shadow-lg ring ring-indigo-600 text-sm"
+        class="absolute z-10 mt-1.5 max-h-40 w-full overflow-auto rounded-md bg-base-100 py-1 shadow-lg ring ring-indigo-600 text-sm list-scroll"
       >
         <div
           v-if="filteredOptions.length === 0"
@@ -202,3 +202,17 @@ const wrapperClasses = computed(() => {
     </Transition>
   </Combobox>
 </template>
+
+<style scoped>
+.list-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.list-scroll::-webkit-scrollbar-thumb {
+  border-radius: 3px;
+  background-color: var(--color-green-primary-1);
+}
+.list-scroll::-webkit-scrollbar-track {
+  margin: 6px;
+  background-color: transparent;
+}
+</style>

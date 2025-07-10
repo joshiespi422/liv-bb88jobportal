@@ -264,7 +264,7 @@ class TaskController extends Controller
             'project' => 'nullable|string',
             'assignees' => 'required|array|min:1',
             'assignees.*' => 'integer|exists:users,id',
-            'deadline' => 'required|date',
+            'deadline' => ['required','date','after_or_equal:today'],
             'priority' => 'required|in:high,medium,low',
             'type' => 'required|in:employee,intern'
         ]);
@@ -283,7 +283,7 @@ class TaskController extends Controller
         // Attach assignees
         $task->users()->attach($validated['assignees']);
 
-        return redirect()->route('tasks.index')->with('success', 'Task created successfully!');
+        return back()->with('success', 'Task created successfully!');
     }
 
     /**

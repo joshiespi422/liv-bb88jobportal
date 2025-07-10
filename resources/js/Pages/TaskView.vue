@@ -152,7 +152,7 @@ const newTaskFormFields = computed(() => {
       key: "deadline",
       label: "Deadline",
       component: TextInput,
-      attrs: { type: "date", required: true },
+      attrs: { type: "date", required: true, min: today.value },
     },
     {
       key: "priority",
@@ -177,6 +177,14 @@ function getDefaultDepartment() {
   }
   return authUser.value.department?.id || null;
 }
+// for min attribute deadline
+const today = computed(() => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+});
 // fetch assignable users for new task
 const fetchAssigneesList = async (departmentId, type) => {
   if (!departmentId) {
@@ -802,6 +810,23 @@ const showValidateButton = computed(() => {
 
   return true;
 });
+
+const showNewButton = computed(() => {
+  const isSuperAdmin = authUser.value?.userType === "super_admin";
+  const isLeader = authUser.value?.hierarchy === "Leader";
+
+  // 1. Must be super admin or leader
+  if (!isSuperAdmin && !isLeader) {
+    return false;
+  }
+
+  // 2. Must be not in "archived" tab
+  if (props.activeTab === "archived") {
+    return false;
+  }
+
+  return true;
+});
 </script>
 
 <template>
@@ -842,10 +867,7 @@ const showValidateButton = computed(() => {
       <template #custom-actions>
         <button
           @click="handleNewTask"
-          v-if="
-            authUser?.userType === 'super_admin' ||
-            authUser?.hierarchy === 'Leader'
-          "
+          v-if="showNewButton"
           class="btn rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
         >
           New Task

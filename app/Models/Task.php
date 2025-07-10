@@ -16,7 +16,6 @@ class Task extends Model
         'description',
         'collateral',
         'department_id',
-        'project',
         'deadline',
         'priority',
         'user_type_id',
