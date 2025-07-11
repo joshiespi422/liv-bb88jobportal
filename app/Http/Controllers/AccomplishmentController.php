@@ -7,6 +7,7 @@ use App\Models\Department;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
 
 class AccomplishmentController extends Controller
 {
@@ -143,7 +144,10 @@ class AccomplishmentController extends Controller
                 ]
                 : null,
             'created_at' => $accomplishment->created_at,
-            'user_name' => $accomplishment->user->name,
+            'user' => [
+                    'id' => $accomplishment->user->id,
+                    'name' => $accomplishment->user->name
+                ],
             'task_title' => $accomplishment->tasks->first()->title, 
         ]);
         
@@ -160,9 +164,50 @@ class AccomplishmentController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, Accomplishment $accomplishment)
     {
-        //
+        // 1. Authorization - User must own the accomplishment
+        if ($accomplishment->user_id !== $request->user()->id) {
+            abort(403, 'not authorized');
+        }
+
+        // 2. Validate edit timeframe (same day only)
+        $createdDate = $accomplishment->created_at->format('Y-m-d');
+        $today = Carbon::now()->format('Y-m-d');
+        
+        if ($createdDate !== $today) {
+            abort(403, 'editable only on the same day');
+        }
+
+        // 3. Validate input
+        $request->validate([
+            'description' => 'required|string',
+            'link' => 'nullable|url',
+            'attachment' => 'nullable|file|mimes:jpg,jpeg,png,pdf,docx,doc|max:5120',
+        ]);
+
+        // 4. Handle attachment update
+        $attachmentPath = $accomplishment->attachment;
+        
+        if ($request->hasFile('attachment')) {
+            // Delete old attachment if exists
+            if ($attachmentPath && Storage::disk('public')->exists($attachmentPath)) {
+                Storage::disk('public')->delete($attachmentPath);
+            }
+            
+            // Store new attachment
+            $attachmentPath = $request->file('attachment')
+                ->store('accomplishment-files', 'public');
+        }
+
+        // 5. Update accomplishment
+        $accomplishment->update([
+            'description' => $request->description,
+            'link' => $request->link,
+            'attachment' => $attachmentPath,
+        ]);
+
+        return back()->with('success', 'Accomplishment updated successfully');
     }
 
     /**

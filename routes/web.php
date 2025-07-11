@@ -60,6 +60,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/accomplishment', [AccomplishmentController::class, 'index'])->name('accomplishment');
     Route::get('/accomplishment/{id}', [AccomplishmentController::class, 'show']);
+    Route::put('/accomplishment/{accomplishment}', [AccomplishmentController::class, 'update'])->name('accomplishment.update');
 
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
     Route::post('/profile/picture', [ProfileController::class, 'updatePicture'])->name('profile.picture.update');

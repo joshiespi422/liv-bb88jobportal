@@ -216,7 +216,7 @@ watch(
   }
 );
 
-// Form field configuration for adding new employee
+// Form field configuration for updating task
 const updateFormFields = computed(() => {
   return [
     {
@@ -286,7 +286,7 @@ const statusOptions = computed(() => {
   return [];
 });
 
-// Form field configuration for adding new employee
+// Form field configuration for validating task
 const validateFormFields = computed(() => {
   const fields = [
     {
@@ -542,7 +542,7 @@ const showBackButtonInAccomplish = computed(() => {
 // Fields for accomplishment details modal
 const accomplishDetailFields = ref([
   { key: "task_title", label: "Task" },
-  { key: "user_name", label: "From" },
+  { key: "user", label: "From", formatter: (user) => user.name },
   { key: "title", label: "Title" },
   { key: "description", label: "Description" },
   {
@@ -956,7 +956,6 @@ const showNewButton = computed(() => {
       title="TASK DETAILS"
       :fields="taskDetailFields"
       :panel-class="'w-full max-w-3xl'"
-      custom-content
       @close="closeDetailsModal"
     >
       <!-- Custom Skeleton -->

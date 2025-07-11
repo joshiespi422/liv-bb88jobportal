@@ -85,7 +85,7 @@ export const menuItems = [
   },
   {
     name: "ACCOMPLISHMENTS",
-    icon: "pi pi-clipboard",
+    icon: "pi pi-chart-bar",
     userType: ["employee", "intern"],
     isMember: true,
     routeName: "accomplishment",

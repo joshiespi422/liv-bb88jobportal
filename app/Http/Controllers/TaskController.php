@@ -215,7 +215,7 @@ class TaskController extends Controller
                     $user->employeeDetails->hierarchy === 'Leader';
         
         if (!$isLeader && $user->userType->type_name !== 'super_admin') {
-            abort(403, 'Unauthorized action.');
+            abort(403, 'not authorized');
         }
 
         // Validation
