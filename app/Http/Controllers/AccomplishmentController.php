@@ -56,7 +56,13 @@ class AccomplishmentController extends Controller
         }
 
         // Determine active tab
-        $defaultTab = in_array($userType, ['employee', 'intern']) ? 'your_accomplishments' : 'all_accomplishments';
+        if ($userType === 'employee' && $user->employeeDetails->hierarchy === 'Leader' && $accomplishmentType === 'intern') {
+            $defaultTab = 'all_accomplishments';
+        } else {
+            $defaultTab = in_array($userType, ['employee', 'intern']) 
+                ? 'your_accomplishments' 
+                : 'all_accomplishments';
+        }
         $activeTab = in_array($request->tab, ['your_accomplishments', 'all_accomplishments']) 
             ? $request->tab 
             : $defaultTab;
@@ -67,7 +73,7 @@ class AccomplishmentController extends Controller
         ]);
 
         // Apply tab-specific filters
-        if ($activeTab === 'your_accomplishments') {
+        if ($activeTab === 'your_accomplishments' && $userType === $accomplishmentType) {
             // Show only current user's accomplishments
             $accomplishmentsQuery->where('user_id', $user->id);
         } else {

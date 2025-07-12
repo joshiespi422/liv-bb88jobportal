@@ -201,8 +201,8 @@ const accomplishDetailFields = ref([
       return `
         <div class="flex items-center gap-2">
           <i class="pi pi-paperclip text-sm"></i>
-          <a href="${attachment.url}" 
-             target="_blank" 
+          <a href="${attachment.url}"
+             target="_blank"
              class="text-blue-500 hover:underline truncate"
              download="${attachment.name}">
             ${attachment.name}
@@ -215,7 +215,7 @@ const accomplishDetailFields = ref([
   { key: "created_at", label: "Submitted", formatter: longDateTime },
 ]);
 
-// // Function to fetch accomplishment details
+// Function to fetch accomplishment details
 const fetchAccomplishDetails = async (accomplishmentId) => {
   isDetailsLoading.value = true;
   isDetailsModalOpen.value = true;
@@ -234,7 +234,7 @@ const fetchAccomplishDetails = async (accomplishmentId) => {
   }
 };
 
-// // Handler for viewing accomplishment details and details modal function
+// Handler for viewing accomplishment details and details modal function
 const handleViewDetails = (accomplishment) => {
   fetchAccomplishDetails(accomplishment.id);
 };
@@ -269,10 +269,25 @@ const departmentOptions = computed(() => {
 });
 
 // tab handling navigation
+const isRegularTab = computed(
+  () =>
+    authUser.value.userType === "employee" &&
+    authUser.value.hierarchy !== "Leader"
+);
+const isLeaderTab = computed(
+  () =>
+    authUser.value.userType === "employee" &&
+    authUser.value.hierarchy === "Leader" &&
+    props.currentType === "employee"
+);
 const tabs = computed(() => {
   const items = [{ id: "all_accomplishments", label: "All Accomplishments" }];
 
-  if (authUser.value.userType !== "super_admin") {
+  if (
+    isRegularTab.value ||
+    isLeaderTab.value ||
+    authUser.value.userType === "intern"
+  ) {
     items.unshift({
       id: "your_accomplishments",
       label: "Your Accomplishments",

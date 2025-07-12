@@ -610,13 +610,28 @@ const departmentOptions = computed(() => {
 });
 
 // tab handling navigation
+const isRegularTab = computed(
+  () =>
+    authUser.value.userType === "employee" &&
+    authUser.value.hierarchy !== "Leader"
+);
+const isLeaderTab = computed(
+  () =>
+    authUser.value.userType === "employee" &&
+    authUser.value.hierarchy === "Leader" &&
+    props.currentType === "employee"
+);
 const tabs = computed(() => {
   const items = [
     { id: "active_tasks", label: "Active Tasks" },
     { id: "archived", label: "Archived" },
   ];
 
-  if (authUser.value.userType !== "super_admin") {
+  if (
+    isRegularTab.value ||
+    isLeaderTab.value ||
+    authUser.value.userType === "intern"
+  ) {
     items.unshift({ id: "your_tasks", label: "Your Tasks" });
   }
 

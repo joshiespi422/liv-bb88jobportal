@@ -61,7 +61,14 @@ class TaskController extends Controller
         }
 
         // Determine active tab
-        $defaultTab = in_array($userType, ['employee', 'intern']) ? 'your_tasks' : 'active_tasks';
+        if ($userType === 'employee' && $user->employeeDetails->hierarchy === 'Leader' && $taskType === 'intern') {
+            $defaultTab = 'active_tasks';
+        } else {
+            $defaultTab = in_array($userType, ['employee', 'intern']) 
+                ? 'your_tasks' 
+                : 'active_tasks';
+        }
+
         $activeTab = in_array($request->tab, ['your_tasks', 'active_tasks', 'archived']) 
             ? $request->tab 
             : $defaultTab;
