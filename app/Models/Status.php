@@ -19,4 +19,10 @@ class Status extends Model
     {
         return $this->hasMany(Task::class);
     }
+
+    // relationship to leaves, one status can have many leaves
+    public function leaves() : HasMany
+    {
+        return $this->hasMany(Leave::class);
+    }
 }

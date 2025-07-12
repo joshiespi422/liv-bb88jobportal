@@ -126,19 +126,7 @@ export const menuItems = [
         name: "LEAVE FORM",
         icon: "pi pi-folder-open",
         userType: ["super_admin", "employee"], // Different from parent
-        hasSubmenu: true,
-        submenu: [
-          {
-            name: "REGULAR LEAVE", // Inherits from immediate parent
-            icon: "pi pi-folder",
-            routeName: "leave.regular",
-          },
-          {
-            name: "SPECIAL LEAVE", // Inherits from immediate parent
-            icon: "pi pi-folder",
-            routeName: "leave.special",
-          },
-        ],
+        routeName: "leave",
       },
     ],
   },

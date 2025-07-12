@@ -6,6 +6,7 @@ use App\Http\Controllers\InternController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\AccomplishmentController;
+use App\Http\Controllers\LeaveController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -68,15 +69,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
     Route::post('/profile/details', [ProfileController::class, 'updateDetails'])->name('profile.details.update');
 
-    Route::prefix('leave')->name('leave.')->group(function () {
-        Route::get('/regular', function () {
-            return Inertia::render('RegularLeaveView');
-        })->name('regular');
-
-        Route::get('/special', function () {
-            return Inertia::render('SpecialLeaveView');
-        })->name('special');
+    Route::middleware('user.type:super_admin,employee')->group(function () {
+        Route::get('/leave', [LeaveController::class, 'index'])->name('leave');
     });
+    
 });
 
 

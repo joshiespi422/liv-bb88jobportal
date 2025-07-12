@@ -98,6 +98,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Define a one-to-many relationship between users and leaves
+     */
+    public function leaves() : HasMany
+    {
+        return $this->hasMany(Leave::class);
+    }
+
+    /**
      * Check if the user has a specific role.
      *
      * @param string $typeName
