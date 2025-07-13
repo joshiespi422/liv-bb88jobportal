@@ -131,7 +131,6 @@ class AccomplishmentController extends Controller
      */
     public function show(string $id)
     {
-      
         $accomplishment = Accomplishment::with([
                 'user:id,name',
                 'tasks:id,title'
@@ -150,10 +149,7 @@ class AccomplishmentController extends Controller
                 ]
                 : null,
             'created_at' => $accomplishment->created_at,
-            'user' => [
-                    'id' => $accomplishment->user->id,
-                    'name' => $accomplishment->user->name
-                ],
+            'user_name' => $accomplishment->user->name,             
             'task_title' => $accomplishment->tasks->first()->title, 
         ]);
         

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Department;
 use App\Models\Leave;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -22,18 +23,15 @@ class LeaveController extends Controller
 
         // Eager load related data for efficiency.
         $leavesQuery = Leave::query()->with([
-            'user:id,name', 
-            'leaveType:id,name',
-            'leaveCategory:id,name',
+            'user:id,name,picture', 
             'status:id,status_name'
-        ]);
+        ])->select('id', 'created_at', 'user_id', 'status_id'); 
 
         // Determine if the current user has permission to view leaves by department.
         $canViewByDepartment = ($userType === 'super_admin') || 
                                ($userType === 'employee' && $userDepartmentName === 'Admin');
 
         // --- Authorization & Filtering Logic ---
-
         if ($canViewByDepartment) {
             // user is a 'super_admin' or an 'employee' in the 'Admin' department.
             $departmentId = $request->query('dept', session('current_department_id'));
@@ -68,10 +66,21 @@ class LeaveController extends Controller
             $leavesQuery->whereRaw('1 = 0');
         }
 
-        $leaves = $leavesQuery->latest()->get();
+        $leaves = $leavesQuery->latest()->get()->map(function ($leave) {
+            return [
+                'id' => $leave->id,
+                'created_at' => $leave->created_at,
+                'user' => [
+                        'name' => $leave->user->name,
+                        'picture' => $leave->user->picture 
+                            ? Storage::url($leave->user->picture)  // Generates full URL for stored image
+                            : Storage::url('profile-images/default.png'),  // Fallback to default image
+                    ],
+                'status' => $leave->status->status_name,
+            ];
+        });
 
         // --- Prepare Props for the Vue Component ---
-        
         $props = [
             'leaves' => $leaves,
         ];
@@ -107,7 +116,36 @@ class LeaveController extends Controller
      */
     public function show(string $id)
     {
-        //
+        // Eager load related data for efficiency
+        $leave = Leave::with([
+            'user:id,name', 
+            'user.employeeDetails.department:id,dept_name',
+            'leaveType:id,name',
+            'leaveCategory:id,name',
+            'status:id,status_name'
+        ])->findOrFail($id);
+        
+        return response()->json([
+            'id' => $leave->id,
+            'created_at' => $leave->created_at,
+            'dept_name' => $leave->user->employeeDetails?->department?->dept_name,
+            'name' => $leave->user->name,
+            'leave_type' => $leave->leaveType->name,
+            'category' => $leave->leaveCategory->name,
+            'status' => $leave->status->status_name,
+            'reason' => $leave->reason,
+            'request_date' => $leave->request_date,
+            'proof' => $leave->proof
+                ? [
+                    'url' => Storage::url($leave->proof),
+                    'name' => basename($leave->proof)
+                ] : null,
+            'hard_copy' => $leave->hard_copy
+                ? [
+                    'url' => Storage::url($leave->hard_copy),
+                    'name' => basename($leave->hard_copy)
+                ] : null
+        ]);
     }
 
     /**

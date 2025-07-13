@@ -181,7 +181,7 @@ const isDetailsError = ref(false);
 // the fields to be displayed in the details modal for an accomplishment
 const accomplishDetailFields = ref([
   { key: "task_title", label: "Task" },
-  { key: "user", label: "From", formatter: (user) => user.name },
+  { key: "user_name", label: "From" },
   { key: "title", label: "Title" },
   { key: "description", label: "Description" },
   {

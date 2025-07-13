@@ -479,7 +479,7 @@ const taskDetailFields = ref([
   { key: "status", label: "Status" },
 ]);
 
-// // Function to fetch task details
+// Function to fetch task details
 const fetchTaskDetails = async (taskId) => {
   isDetailsLoading.value = true;
   isDetailsModalOpen.value = true;
@@ -499,7 +499,7 @@ const fetchTaskDetails = async (taskId) => {
   }
 };
 
-// // Handler for viewing task details and details modal function
+// Handler for viewing task details and details modal function
 const handleViewDetails = (task) => {
   fetchTaskDetails(task.id);
 };
@@ -542,7 +542,7 @@ const showBackButtonInAccomplish = computed(() => {
 // Fields for accomplishment details modal
 const accomplishDetailFields = ref([
   { key: "task_title", label: "Task" },
-  { key: "user", label: "From", formatter: (user) => user.name },
+  { key: "user_name", label: "From" },
   { key: "title", label: "Title" },
   { key: "description", label: "Description" },
   {
