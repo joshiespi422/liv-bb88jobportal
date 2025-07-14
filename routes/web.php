@@ -72,6 +72,8 @@ Route::middleware('auth')->group(function () {
     Route::middleware('user.type:super_admin,employee')->group(function () {
         Route::get('/leave', [LeaveController::class, 'index'])->name('leave');
         Route::get('/leave/{id}', [LeaveController::class, 'show']);
+        Route::get('/leave/categories/{leaveTypeId}', [LeaveController::class, 'fetchCategories'])->name('leave.categories');
+        Route::post('/leave', [LeaveController::class, 'store'])->name('leave.store');
     });
     
 });

@@ -1,10 +1,15 @@
 <script setup>
-import { ref, computed, h } from "vue";
-import { usePage, router } from "@inertiajs/vue3";
+import { ref, computed, h, reactive, watch } from "vue";
+import { usePage, router, useForm } from "@inertiajs/vue3";
 import { longDate } from "../Composables/useDateFormatter";
 import DataTable from "../Components/DataTable.vue";
 import ListBox from "../Components/ListBox.vue";
 import DetailsModal from "../Components/DetailsModal.vue";
+import FormModal from "../Components/FormModal.vue";
+import ConfirmModal from "../Components/ConfirmModal.vue";
+import SelectInput from "../Components/forms/SelectInput.vue";
+import TextInput from "../Components/forms/TextInput.vue";
+import FileInput from "../Components/forms/FileInput.vue";
 
 const props = defineProps({
   leaves: {
@@ -12,6 +17,10 @@ const props = defineProps({
     default: () => [],
   },
   departments: {
+    type: Array,
+    default: () => [],
+  },
+  leaveTypes: {
     type: Array,
     default: () => [],
   },
@@ -26,6 +35,222 @@ const props = defineProps({
 const page = usePage();
 const authUser = computed(() => page.props.auth.user);
 
+// For requesting leave
+const isRequestModalOpen = ref(false);
+// Holds the action to be executed on confirmation
+const pendingAction = ref(null);
+// confirmation before request
+const isConfirmModalOpen = ref(false);
+
+// Holds the properties for the confirmation modal
+const confirmModalProps = reactive({
+  title: "",
+  message: "",
+  confirmText: "",
+  confirmButtonBg: "",
+  iconName: "",
+});
+// Closes the confirmation modal
+const closeConfirmModal = () => {
+  isConfirmModalOpen.value = false;
+};
+// Executes the action on confirmation
+const executeConfirm = () => {
+  if (pendingAction.value) {
+    pendingAction.value();
+  }
+};
+
+// request form state
+const categoriesList = ref([]);
+const requestForm = useForm({
+  user_id: authUser.value.id,
+  leave_type_id: "",
+  leave_category_id: "",
+  request_date: "",
+  reason: "",
+  proof: null,
+});
+
+// for min attribute deadline
+const today = computed(() => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+});
+// find the full object for the selected leave type using its ID.
+const selectedLeaveType = computed(() => {
+  if (!requestForm.leave_type_id) return "";
+  const type = props.leaveTypes.find((t) => t.id == requestForm.leave_type_id);
+  return type ? type.name : "";
+});
+// Form field configuration for requesting leave
+const requestFormFields = computed(() => {
+  const fields = [
+    {
+      key: "leave_type_id",
+      label: "Leave Type",
+      component: SelectInput,
+      attrs: {
+        options: props.leaveTypes.map((l) => ({
+          value: l.id,
+          label: l.name,
+        })),
+        required: true,
+        placeholder: "Select leave type",
+      },
+    },
+    {
+      key: "leave_category_id",
+      label: "Leave Category",
+      component: SelectInput,
+      attrs: {
+        required: true,
+        placeholder: "Select leave category",
+        options: categoriesList.value.map((c) => ({
+          value: c.id,
+          label: c.name,
+        })),
+      },
+    },
+  ];
+
+  if (selectedLeaveType.value === "Regular") {
+    fields.push({
+      key: "request_date",
+      label: "Request Date",
+      component: TextInput,
+      attrs: {
+        type: "date",
+        required: true,
+        min: today.value,
+      },
+    });
+  }
+
+  if (selectedLeaveType.value === "Special") {
+    // find the full object for the selected leave category.
+    const selectedCategory = categoriesList.value.find(
+      (c) => c.id == requestForm.leave_category_id
+    );
+    fields.push({
+      key: "days_display",
+      label: "Entitled days of leave:",
+      component: TextInput,
+      attrs: {
+        disabled: true,
+        value: selectedCategory
+          ? `${selectedCategory.days} days`
+          : "Select a category to see the number of days.",
+      },
+    });
+  }
+
+  fields.push(
+    {
+      key: "reason",
+      label: "Reason",
+      component: TextInput,
+      attrs: {
+        required: true,
+        placeholder: "Example reason",
+      },
+    },
+    {
+      key: "proof",
+      label: "Proof (optional)",
+      component: FileInput,
+      attrs: {
+        accept: ".pdf,.jpg,.jpeg,.png",
+        maxSize: 2 * 1024 * 1024,
+      },
+    }
+  );
+
+  return fields;
+});
+// fetch leave categories for request leave
+const fetchCategoriesList = async (leaveTypeId) => {
+  if (!leaveTypeId) {
+    categoriesList.value = [];
+    return;
+  }
+  try {
+    // Use the route() helper from Ziggy
+    const response = await axios.get(
+      route("leave.categories", {
+        leaveTypeId: leaveTypeId,
+      })
+    );
+    categoriesList.value = response.data;
+  } catch (error) {
+    console.error("Failed to fetch leave categories:", error);
+    categoriesList.value = [];
+  }
+};
+// Watch for changes in leave type to fetch new categories
+watch(
+  () => requestForm.leave_type_id,
+  async (newLeaveType) => {
+    if (newLeaveType) {
+      requestForm.leave_category_id = "";
+      requestForm.request_date = "";
+      categoriesList.value = [];
+      await fetchCategoriesList(newLeaveType);
+    }
+  }
+);
+// Watch for changes in leave category
+watch(
+  () => requestForm.leave_category_id,
+  (newCategoryId) => {
+    if (selectedLeaveType.value === "Special" && newCategoryId) {
+      const category = categoriesList.value.find((c) => c.id == newCategoryId);
+      if (category) {
+        // Update the days display by triggering recomputation
+        categoriesList.value = [...categoriesList.value];
+      }
+    }
+  }
+);
+
+// handle request leave
+const handleRequestLeave = () => {
+  isRequestModalOpen.value = true;
+};
+const closeAllModal = () => {
+  isRequestModalOpen.value = false;
+  isConfirmModalOpen.value = false;
+};
+// -- Request Leave Flow --
+const handleRequestSubmit = () => {
+  Object.assign(confirmModalProps, {
+    title: "Request Leave",
+    message: "Are you sure you want to request this leave?",
+    confirmText: "Request",
+    confirmButtonBg: "bg-blue-600 hover:bg-blue-700",
+    iconName: "pi pi-folder-open",
+    iconColor: "text-blue-600",
+    iconBgColor: "bg-blue-100",
+  });
+
+  pendingAction.value = () =>
+    requestForm.post(route("leave.store"), {
+      preserveScroll: true,
+      onSuccess: () => {
+        closeAllModal();
+        requestForm.reset();
+      },
+      onError: () => {
+        closeConfirmModal();
+      },
+    });
+
+  isConfirmModalOpen.value = true;
+};
+
 // Details Modal state
 const isDetailsModalOpen = ref(false);
 const selectedDetails = ref(null);
@@ -37,8 +262,8 @@ const attachFormatter = (attachment) => {
   return `
     <div class="flex items-center gap-2">
       <i class="pi pi-paperclip text-sm"></i>
-      <a href="${attachment.url}" 
-         target="_blank" 
+      <a href="${attachment.url}"
+         target="_blank"
          class="text-blue-500 hover:underline truncate"
          download="${attachment.name}">
         ${attachment.name}
@@ -70,11 +295,13 @@ const leaveDetailFields = ref([
     key: "proof",
     label: "Proof",
     formatter: attachFormatter,
+    html: true,
   },
   {
     key: "hard_copy",
     label: "Hard Copy",
     formatter: attachFormatter,
+    html: true,
   },
 ]);
 
@@ -113,7 +340,11 @@ const selectedDepartment = computed({
   },
   // SET: This runs when the user selects a new item in the ListBox.
   set(newDeptId) {
-    if (authUser.value.userType === "super_admin" && newDeptId) {
+    if (
+      (authUser.value.userType === "super_admin" ||
+        authUser.value.department.name === "Admin") &&
+      newDeptId
+    ) {
       router.get(
         route("leave"),
         { dept: newDeptId },
@@ -225,12 +456,22 @@ const leaveTableColumns = [
     enableSorting: false,
   },
 ];
-
 const statusColor = {
   pending: "badge-accent",
   approved: "badge-info",
   rejected: "badge-error",
 };
+
+const showRequestButton = computed(() => {
+  const isSuperAdmin = authUser.value?.userType === "super_admin";
+
+  // 1. Must not be super admin
+  if (isSuperAdmin) {
+    return false;
+  }
+
+  return true;
+});
 </script>
 
 <template>
@@ -240,7 +481,10 @@ const statusColor = {
     >
       <h1 class="text-2xl lg:text-3xl font-bold">Leave Management</h1>
       <div
-        v-if="authUser?.userType === 'super_admin'"
+        v-if="
+          authUser?.userType === 'super_admin' ||
+          authUser?.department?.name === 'Admin'
+        "
         class="w-52 md:w-60 lg:w-72"
       >
         <ListBox
@@ -269,16 +513,28 @@ const statusColor = {
     <!-- Task Table -->
     <DataTable :data="props.leaves" :columns="leaveTableColumns">
       <template #custom-actions>
-        <!-- <button
-          @click="handleNewTask"
-          v-if="showNewButton"
+        <button
+          @click="handleRequestLeave"
+          v-if="showRequestButton"
           class="btn rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
         >
-          New Task
-        </button> -->
+          Request Leave
+        </button>
       </template>
     </DataTable>
   </div>
+
+  <!-- Request Leave Modal -->
+  <FormModal
+    :isOpen="isRequestModalOpen"
+    :inert="isConfirmModalOpen"
+    title="REQUEST LEAVE"
+    :form="requestForm"
+    :fields="requestFormFields"
+    submitText="Request"
+    @close="closeAllModal"
+    @submit="handleRequestSubmit"
+  />
 
   <!-- Leave Details Modal -->
   <DetailsModal
@@ -289,5 +545,13 @@ const statusColor = {
     title="LEAVE DETAILS"
     :fields="leaveDetailFields"
     @close="closeDetailsModal"
+  />
+
+  <!-- Confirmation Modal -->
+  <ConfirmModal
+    :show="isConfirmModalOpen"
+    v-bind="confirmModalProps"
+    @cancel="closeConfirmModal"
+    @confirm="executeConfirm"
   />
 </template>

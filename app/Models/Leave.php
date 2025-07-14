@@ -11,7 +11,13 @@ class Leave extends Model
     use HasFactory;
     
     protected $fillable = [
-        //
+        'user_id',
+        'leave_type_id',
+        'leave_category_id',
+        'status_id',
+        'request_date',
+        'reason',
+        'proof',
     ];
     
     // Define a one-to-many relationship between leaves and leave_types

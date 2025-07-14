@@ -4,9 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Department;
 use App\Models\Leave;
+use App\Models\LeaveCategory;
+use App\Models\LeaveType;
+use App\Models\Status;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Http\JsonResponse;
 
 class LeaveController extends Controller
 {
@@ -104,8 +108,23 @@ class LeaveController extends Controller
             $props['currentDepartmentId'] = $departmentId ? (int)$departmentId : null;
         }
 
+        // provide the full leave type and category lists
+        if ($userType !== 'super_admin') {
+            $props['leaveTypes'] = LeaveType::query()->orderBy('name')->get(['id', 'name']);
+        }
+
         // Render the Inertia view and pass the props.
         return Inertia::render('LeaveView', $props);
+    }
+
+    public function fetchCategories(int $leaveTypeId): JsonResponse
+    {
+        $query = LeaveCategory::query()
+            ->where('leave_type_id', $leaveTypeId)
+            ->select('id', 'name', 'days')
+            ->get();
+       
+        return response()->json($query);
     }
 
     /**
@@ -121,7 +140,39 @@ class LeaveController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        // Authorization
+        $user = $request->user();
+        $isEmployee = $user->userType->type_name === 'employee';
+        
+        if (!$isEmployee) {
+            abort(403, 'not authorized');
+        }
+
+        // Validation
+        $request->validate([
+            'leave_type_id' => 'required|exists:leave_types,id',
+            'leave_category_id' => 'required|exists:leave_categories,id',
+            'request_date' => 'nullable|date',
+            'reason' => 'required|string',
+            'proof' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
+        ]);
+
+        // Get status
+        $status = Status::firstWhere('status_name', 'pending');
+
+        // Create leave
+        Leave::create([
+            'user_id' => $user->id,
+            'leave_type_id' => $request->leave_type_id,
+            'leave_category_id' => $request->leave_category_id,
+            'status_id' => $status->id,
+            'request_date' => $request->request_date,
+            'reason' => $request->reason,
+            'proof' => $request->file('proof') ? 
+                $request->file('proof')->store('leave-proofs', 'public') : null
+        ]);
+
+        return back()->with('success', 'Leave request submitted successfully');
     }
 
     /**
