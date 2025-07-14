@@ -1,8 +1,9 @@
 <script setup>
 import { ref, computed, h } from "vue";
-import { usePage } from "@inertiajs/vue3";
+import { usePage, router } from "@inertiajs/vue3";
 import { longDate } from "../Composables/useDateFormatter";
 import DataTable from "../Components/DataTable.vue";
+import ListBox from "../Components/ListBox.vue";
 import DetailsModal from "../Components/DetailsModal.vue";
 
 const props = defineProps({
@@ -18,11 +19,7 @@ const props = defineProps({
     type: Number,
     default: null,
   },
-  // currentType: {
-  //   type: String,
-  //   default: "employee",
-  // },
-  // activeTab: String,
+  activeTab: String,
 });
 
 // logged in user data
@@ -48,6 +45,10 @@ const attachFormatter = (attachment) => {
       </a>
     </div>`;
 };
+const requestDateFormatter = (date) => {
+  if (props.activeTab === "special") return date;
+  return longDate(date);
+};
 const leaveDetailFields = ref([
   { key: "name", label: "Employee" },
   { key: "dept_name", label: "Department" },
@@ -62,7 +63,7 @@ const leaveDetailFields = ref([
     formatter: (value) => `${value} Leave`,
   },
   { key: "created_at", label: "Submitted", formatter: longDate },
-  { key: "request_date", label: "Leave Date", formatter: longDate },
+  { key: "request_date", label: "Leave Date", formatter: requestDateFormatter },
   { key: "reason", label: "Reason" },
   { key: "status", label: "Status" },
   {
@@ -103,6 +104,58 @@ const handleViewDetails = (leaveId) => {
 const closeDetailsModal = () => {
   isDetailsModalOpen.value = false;
 };
+
+// core logic for the super_admin filter
+const selectedDepartment = computed({
+  // GET: This runs on initial load and whenever props change.
+  get() {
+    return props.currentDepartmentId;
+  },
+  // SET: This runs when the user selects a new item in the ListBox.
+  set(newDeptId) {
+    if (authUser.value.userType === "super_admin" && newDeptId) {
+      router.get(
+        route("leave"),
+        { dept: newDeptId },
+        {
+          preserveState: true, // Keeps Vue component state
+          preserveScroll: true, // Keeps scroll position
+          replace: true, // Avoids polluting browser history
+        }
+      );
+    }
+  },
+});
+// format of departments for the ListBox component
+const departmentOptions = computed(() => {
+  return props.departments.map((d) => ({ value: d.id, label: d.dept_name }));
+});
+
+// tab handling navigation
+const tabs = computed(() => {
+  const items = [
+    { id: "regular", label: "Regular" },
+    { id: "special", label: "Special" },
+  ];
+
+  return items;
+});
+// handle tab navigation
+function setTab(tabId) {
+  if (tabId === props.activeTab) return;
+  router.get(
+    route("leave"),
+    {
+      ...route().params,
+      tab: tabId,
+    },
+    {
+      preserveState: true,
+      preserveScroll: true,
+      replace: true,
+    }
+  );
+}
 
 // Tanstack Table columns definition
 const leaveTableColumns = [
@@ -186,6 +239,31 @@ const statusColor = {
       class="flex flex-col items-center gap-2 sm:flex-row sm:justify-between sm:gap-0 mx-4 mb-5"
     >
       <h1 class="text-2xl lg:text-3xl font-bold">Leave Management</h1>
+      <div
+        v-if="authUser?.userType === 'super_admin'"
+        class="w-52 md:w-60 lg:w-72"
+      >
+        <ListBox
+          v-model="selectedDepartment"
+          :options="departmentOptions"
+          placeholder="Select a department"
+        />
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs tabs-box my-3">
+      <a
+        v-for="tab in tabs"
+        :key="tab.id"
+        @click.prevent="setTab(tab.id)"
+        :class="[
+          'tab',
+          activeTab === tab.id ? 'tab-active font-bold' : 'hover:bg-base-300',
+        ]"
+      >
+        {{ tab.label }}
+      </a>
     </div>
 
     <!-- Task Table -->

@@ -18,7 +18,7 @@ return new class extends Migration
             $table->foreignId('leave_category_id')->constrained('leave_categories')->onDelete('restrict');
             $table->foreignId('status_id')->constrained('statuses')->onDelete('restrict');
             $table->text('reason');
-            $table->date('request_date');
+            $table->date('request_date')->nullable();
             $table->string('proof')->nullable();
             $table->string('hard_copy')->nullable();
             $table->text('reject_reason')->nullable();

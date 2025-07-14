@@ -21,6 +21,13 @@ class LeaveController extends Controller
         $userType = $user->userType->type_name;
         $userDepartmentName = $user->employeeDetails?->department?->dept_name;
 
+        // Determine active tab from query parameter (default: 'regular')
+        $tab = $request->query('tab', 'regular');
+        $allowedTabs = ['regular', 'special'];
+        $activeTab = in_array($tab, $allowedTabs) ? $tab : 'regular';
+        // Map tab to leave type name
+        $leaveTypeName = ucfirst($activeTab);
+
         // Eager load related data for efficiency.
         $leavesQuery = Leave::query()->with([
             'user:id,name,picture', 
@@ -66,6 +73,11 @@ class LeaveController extends Controller
             $leavesQuery->whereRaw('1 = 0');
         }
 
+        // Add leave type filter based on activeTab
+        $leavesQuery->whereHas('leaveType', function ($query) use ($leaveTypeName) {
+            $query->where('name', $leaveTypeName);
+        });
+
         $leaves = $leavesQuery->latest()->get()->map(function ($leave) {
             return [
                 'id' => $leave->id,
@@ -83,6 +95,7 @@ class LeaveController extends Controller
         // --- Prepare Props for the Vue Component ---
         $props = [
             'leaves' => $leaves,
+            'activeTab' => $activeTab,
         ];
 
         // provide the full department list and current department ID
@@ -121,10 +134,17 @@ class LeaveController extends Controller
             'user:id,name', 
             'user.employeeDetails.department:id,dept_name',
             'leaveType:id,name',
-            'leaveCategory:id,name',
+            'leaveCategory:id,name,days',
             'status:id,status_name'
         ])->findOrFail($id);
         
+        // condtionally display the number of days or the actual date
+        $requestDateDisplay = $leave->request_date;
+        if ($leave->leaveType->name === 'Special') {
+            $days = $leave->leaveCategory->days;
+            $requestDateDisplay = $days . ' days';
+        }
+
         return response()->json([
             'id' => $leave->id,
             'created_at' => $leave->created_at,
@@ -134,7 +154,7 @@ class LeaveController extends Controller
             'category' => $leave->leaveCategory->name,
             'status' => $leave->status->status_name,
             'reason' => $leave->reason,
-            'request_date' => $leave->request_date,
+            'request_date' => $requestDateDisplay,
             'proof' => $leave->proof
                 ? [
                     'url' => Storage::url($leave->proof),
