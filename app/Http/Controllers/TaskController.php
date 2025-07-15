@@ -223,12 +223,14 @@ class TaskController extends Controller
         
         if (!$isLeader && $user->userType->type_name !== 'super_admin') {
             abort(403, 'not authorized');
+        } elseif ($task->status->status_name !== 'for approval') {
+            abort(403, 'task is not for approval');
         }
 
         // Validation
         $request->validate([
             'status' => 'required|in:done,revision',
-            'revise_reason' => 'required_if:status,revision|string|max:1000',
+            'revise_reason' => 'nullable|required_if:status,revision|string|max:1000',
         ]);
 
         // Logic

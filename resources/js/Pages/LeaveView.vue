@@ -35,8 +35,9 @@ const props = defineProps({
 const page = usePage();
 const authUser = computed(() => page.props.auth.user);
 
-// For requesting leave
+// State for modals for forms
 const isRequestModalOpen = ref(false);
+const isValidateModalOpen = ref(false);
 // Holds the action to be executed on confirmation
 const pendingAction = ref(null);
 // confirmation before request
@@ -70,6 +71,12 @@ const requestForm = useForm({
   request_date: "",
   reason: "",
   proof: null,
+});
+// validate form state
+const validateForm = useForm({
+  status: "",
+  reject_reason: "",
+  hard_copy: null,
 });
 
 // for min attribute deadline
@@ -216,13 +223,84 @@ watch(
   }
 );
 
+// form field configuration for validating leave
+const validateFormFields = computed(() => {
+  const fields = [
+    {
+      key: "leave_selected",
+      label: "Leave Selected",
+      component: TextInput,
+      attrs: {
+        disabled: true,
+        value: selectedDetails.value?.reason || "N/A",
+      },
+    },
+    {
+      key: "status",
+      label: "Status",
+      component: SelectInput,
+      attrs: {
+        required: true,
+        placeholder: "Select a status",
+        options: [
+          { value: "approved", label: "Approved" },
+          { value: "rejected", label: "Rejected" },
+        ],
+      },
+    },
+  ];
+
+  // If the selected status is 'rejected', add the reason text input
+  if (validateForm.status === "rejected") {
+    fields.push({
+      key: "reject_reason",
+      label: "Reason",
+      component: TextInput,
+      attrs: {
+        required: true,
+        placeholder: "Reason for rejection",
+      },
+    });
+  }
+
+  fields.push({
+    key: "hard_copy",
+    label: "Hard Copy",
+    component: FileInput,
+    attrs: {
+      required: true,
+      accept: ".pdf,.jpg,.jpeg,.png",
+      maxSize: 2 * 1024 * 1024,
+    },
+  });
+
+  return fields;
+});
+
+// handle validate leave
+const handleValidateLeave = () => {
+  if (!selectedDetails.value) return;
+  isValidateModalOpen.value = true;
+  isDetailsModalOpen.value = false;
+};
 // handle request leave
 const handleRequestLeave = () => {
   isRequestModalOpen.value = true;
 };
 const closeAllModal = () => {
   isRequestModalOpen.value = false;
+  isValidateModalOpen.value = false;
   isConfirmModalOpen.value = false;
+};
+
+// control validate back button visibility
+const showBackButtonInValidate = computed(() => {
+  return isValidateModalOpen.value && selectedDetails.value !== null;
+});
+// handle validate back navigation
+const handleBackFromValidate = () => {
+  isValidateModalOpen.value = false;
+  isDetailsModalOpen.value = true;
 };
 // -- Request Leave Flow --
 const handleRequestSubmit = () => {
@@ -243,10 +321,36 @@ const handleRequestSubmit = () => {
         closeAllModal();
         requestForm.reset();
       },
-      onError: () => {
-        closeConfirmModal();
-      },
+      onError: () => closeConfirmModal(),
     });
+
+  isConfirmModalOpen.value = true;
+};
+
+// -- Validate Leave Flow --
+const handleValidateSubmit = () => {
+  Object.assign(confirmModalProps, {
+    title: "Validate Leave",
+    message: "Are you sure you want to validate this leave?",
+    confirmText: "Validate",
+    confirmButtonBg: "bg-blue-600 hover:bg-blue-700",
+    iconName: "pi pi-folder-open",
+    iconColor: "text-blue-600",
+    iconBgColor: "bg-blue-100",
+  });
+
+  pendingAction.value = () =>
+    validateForm.post(
+      route("leave.validate", { leave: selectedDetails.value.id }),
+      {
+        preserveScroll: true,
+        onSuccess: () => {
+          closeAllModal();
+          validateForm.reset();
+        },
+        onError: () => closeConfirmModal(),
+      }
+    );
 
   isConfirmModalOpen.value = true;
 };
@@ -472,6 +576,27 @@ const showRequestButton = computed(() => {
 
   return true;
 });
+
+const showValidateButton = computed(() => {
+  const isSuperAdmin = authUser.value?.userType === "super_admin";
+  const isAdmin = authUser.value?.department?.name === "Admin";
+
+  // 1. Must be super admin
+  if (!isSuperAdmin && !isAdmin) {
+    return false;
+  }
+
+  // 2. Must have selected task details
+  if (!selectedDetails.value) {
+    return false;
+  }
+
+  // 3. Must be in "pending" status
+  if (selectedDetails.value.status !== "pending") {
+    return false;
+  }
+  return true;
+});
 </script>
 
 <template>
@@ -536,6 +661,21 @@ const showRequestButton = computed(() => {
     @submit="handleRequestSubmit"
   />
 
+  <!-- Validate Leave Modal -->
+  <FormModal
+    :isOpen="isValidateModalOpen"
+    :inert="isConfirmModalOpen"
+    :showBackButton="showBackButtonInValidate"
+    title="VALIDATE LEAVE"
+    :form="validateForm"
+    :fields="validateFormFields"
+    submitText="Submit"
+    disabledButton
+    @close="closeAllModal"
+    @back="handleBackFromValidate"
+    @submit="handleValidateSubmit"
+  />
+
   <!-- Leave Details Modal -->
   <DetailsModal
     :isOpen="isDetailsModalOpen"
@@ -545,7 +685,17 @@ const showRequestButton = computed(() => {
     title="LEAVE DETAILS"
     :fields="leaveDetailFields"
     @close="closeDetailsModal"
-  />
+  >
+    <template #custom-buttons>
+      <button
+        v-if="showValidateButton"
+        @click="handleValidateLeave"
+        class="btn rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3 me-2"
+      >
+        Validate
+      </button>
+    </template>
+  </DetailsModal>
 
   <!-- Confirmation Modal -->
   <ConfirmModal

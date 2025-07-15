@@ -74,6 +74,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/leave/{id}', [LeaveController::class, 'show']);
         Route::get('/leave/categories/{leaveTypeId}', [LeaveController::class, 'fetchCategories'])->name('leave.categories');
         Route::post('/leave', [LeaveController::class, 'store'])->name('leave.store');
+        Route::post('/leave/{leave}/validate', [LeaveController::class, 'validateLeave'])->name('leave.validate');
     });
     
 });

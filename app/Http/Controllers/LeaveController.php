@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 
 class LeaveController extends Controller
 {
@@ -125,6 +126,61 @@ class LeaveController extends Controller
             ->get();
        
         return response()->json($query);
+    }
+
+    public function validateLeave(Request $request, Leave $leave)
+    {
+        // Get the authenticated user and eager load their type and department details
+        $user = $request->user()->load('userType', 'employeeDetails.department');
+        $isSuperAdmin = $user->userType->type_name === 'super_admin';
+        $isAdmin = $user->employeeDetails->department->dept_name === 'Admin';
+       
+        // Authorization
+        if (!$isSuperAdmin && !$isAdmin) {
+            abort(403, 'not authorized');
+        } elseif ($leave->status->status_name !== 'pending') {
+            abort(403, 'leave is not pending');
+        }
+
+        // Validation
+        $request->validate([
+            'status' => 'required|in:approved,rejected',
+            'reject_reason' => 'nullable|required_if:status,rejected|string|max:1000',
+            'hard_copy' => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',
+        ]);
+
+        
+        //Logic
+        DB::transaction(function () use ($request, $leave) {
+            $newStatus = Status::where('status_name', $request->status)->firstOrFail();
+            $leave->status_id = $newStatus->id;
+
+            // If status is 'rejected', save the reason. Otherwise, clear it.
+            if ($request->status === 'rejected') {
+                $leave->reject_reason = $request->reject_reason;
+            } else {
+                $leave->reject_reason = null; // Clear reason if marked as approved
+            }
+
+            // Upload hard copy if provided
+            if ($request->hasFile('hard_copy')) {
+
+                $hardCopyPath = $leave->hard_copy;
+
+                // Delete old hard copy if it exists
+                if ($hardCopyPath && Storage::disk('public')->exists($hardCopyPath)) {
+                    Storage::disk('public')->delete($hardCopyPath);
+                }
+
+                // Store new hard copy
+                $hardCopyPath = $request->file('hard_copy')->store('leave-hard-copies', 'public');
+                $leave->hard_copy = $hardCopyPath;
+            }
+
+            $leave->save();
+        });
+
+        return back()->with('success', 'Leave has been validated successfully!');
     }
 
     /**
