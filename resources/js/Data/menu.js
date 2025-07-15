@@ -112,6 +112,12 @@ export const menuItems = [
     ],
   },
   {
+    name: "PROJECTS",
+    icon: "pi pi-briefcase",
+    userType: ["super_admin", "employee", "intern"],
+    routeName: "project",
+  },
+  {
     name: "OTHERS",
     icon: "pi pi-cog",
     userType: ["super_admin", "employee", "intern"],

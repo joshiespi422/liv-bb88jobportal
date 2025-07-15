@@ -7,6 +7,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\AccomplishmentController;
 use App\Http\Controllers\LeaveController;
+use App\Http\Controllers\ProjectController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -62,6 +63,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/accomplishment', [AccomplishmentController::class, 'index'])->name('accomplishment');
     Route::get('/accomplishment/{id}', [AccomplishmentController::class, 'show']);
     Route::put('/accomplishment/{accomplishment}', [AccomplishmentController::class, 'update'])->name('accomplishment.update');
+
+    Route::get('/project', [ProjectController::class, 'index'])->name('project');
 
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
     Route::post('/profile/picture', [ProfileController::class, 'updatePicture'])->name('profile.picture.update');

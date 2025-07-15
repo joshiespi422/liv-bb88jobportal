@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Department extends Model
 {
@@ -30,5 +31,11 @@ class Department extends Model
     public function tasks() : HasMany
     {
         return $this->hasMany(Task::class);
+    }
+
+    // Define a many-to-many relationship with departments and projects (pivot table)
+    public function projects() : BelongsToMany
+    {
+        return $this->belongsToMany(Project::class);
     }
 }

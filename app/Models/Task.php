@@ -51,4 +51,10 @@ class Task extends Model
     {
         return $this->belongsToMany(Accomplishment::class);
     }
+
+    // relationship to project, many task has many project
+    public function projects() : BelongsToMany
+    {
+        return $this->belongsToMany(Project::class);
+    }
 }
