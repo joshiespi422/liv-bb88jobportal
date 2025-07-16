@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('project_department', function (Blueprint $table) {
+        Schema::create('department_project', function (Blueprint $table) {
             // composite primary key instead of auto-increment
             $table->foreignId('project_id')->constrained('projects')->onDelete('cascade');
             $table->foreignId('department_id')->constrained('departments')->onDelete('cascade');
@@ -26,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('project_department');
+        Schema::dropIfExists('department_project');
     }
 };

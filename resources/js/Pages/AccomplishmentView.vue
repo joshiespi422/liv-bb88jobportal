@@ -448,6 +448,7 @@ const showEditButton = computed(() => {
       :data="props.accomplishments"
       :columns="accomplishTableColumns"
       enable-tooltips
+      display-mode="card"
     />
 
     <!-- Edit Accomplishment Modal -->

@@ -32,6 +32,11 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  displayMode: {
+    type: String,
+    default: "table",
+    validator: (value) => ["table", "card"].includes(value),
+  },
   // add more props here for other table features
 });
 
@@ -81,6 +86,7 @@ const table = useVueTable({
   getPaginationRowModel: getPaginationRowModel(),
   // add more table options here, potentially passed via props
 });
+
 const availablePageSizes = [10, 25, 50, 100];
 
 // Initialize tooltips for dynamic content
@@ -153,6 +159,7 @@ onBeforeUnmount(() => {
     ref="tableRef"
     class="overflow-x-auto rounded-3xl border-4 border-green-primary-1 bg-base-100 p-5 shadow-xl"
   >
+    <!-- Header Controls -->
     <div
       class="flex flex-col sm:flex-row sm:items-center justify-between items-start gap-2 p-2"
     >
@@ -179,70 +186,126 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <table
-      class="table text-center font-semibold my-5"
-      style="table-layout: fixed"
-    >
-      <thead>
-        <tr
-          v-for="headerGroup in table.getHeaderGroups()"
-          :key="headerGroup.id"
-        >
-          <th
-            v-for="header in headerGroup.headers"
-            :key="header.id"
-            scope="col"
-            :style="{ width: `${header.getSize()}px` }"
-            :class="{
-              'cursor-pointer select-none': header.column.getCanSort(),
-            }"
-            @click="
-              header.column.getCanSort()
-                ? header.column.getToggleSortingHandler()?.($event)
-                : null
-            "
+    <!-- Table View -->
+    <div v-if="displayMode === 'table'">
+      <table
+        class="table text-center font-semibold my-5"
+        style="table-layout: fixed"
+      >
+        <thead>
+          <tr
+            v-for="headerGroup in table.getHeaderGroups()"
+            :key="headerGroup.id"
           >
-            <FlexRender
-              :render="header.column.columnDef.header"
-              :props="header.getContext()"
-            />
-            <span v-if="header.column.getIsSorted()">
-              {{ header.column.getIsSorted() === "asc" ? " 🡩" : " 🡫" }}
-            </span>
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr
-          v-for="row in table.getRowModel().rows"
-          :key="row.id"
-          class="hover:bg-base-200"
-        >
-          <td
-            v-for="cell in row.getVisibleCells()"
-            :key="cell.id"
-            :style="{ width: `${cell.column.getSize()}px` }"
-            class="max-w-full truncate"
+            <th
+              v-for="header in headerGroup.headers"
+              :key="header.id"
+              scope="col"
+              :style="{ width: `${header.getSize()}px` }"
+              :class="{
+                'cursor-pointer select-none': header.column.getCanSort(),
+              }"
+              @click="
+                header.column.getCanSort()
+                  ? header.column.getToggleSortingHandler()?.($event)
+                  : null
+              "
+            >
+              <FlexRender
+                :render="header.column.columnDef.header"
+                :props="header.getContext()"
+              />
+              <span v-if="header.column.getIsSorted()">
+                {{ header.column.getIsSorted() === "asc" ? " 🡩" : " 🡫" }}
+              </span>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            v-for="row in table.getRowModel().rows"
+            :key="row.id"
+            class="hover:bg-base-200"
           >
-            <FlexRender
-              :render="cell.column.columnDef.cell"
-              :props="cell.getContext()"
-            />
-          </td>
-        </tr>
-        <tr v-if="table.getRowModel().rows.length === 0">
-          <td :colspan="table.getHeaderGroups()[0].headers.length">
-            <div role="alert" class="alert alert-soft alert-info">
-              <i class="pi pi-info-circle text-xl"></i>
-              <p class="text-sm font-semibold">
-                No data available in the table
-              </p>
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+            <td
+              v-for="cell in row.getVisibleCells()"
+              :key="cell.id"
+              :style="{ width: `${cell.column.getSize()}px` }"
+              class="max-w-full truncate"
+            >
+              <FlexRender
+                :render="cell.column.columnDef.cell"
+                :props="cell.getContext()"
+              />
+            </td>
+          </tr>
+          <tr v-if="table.getRowModel().rows.length === 0">
+            <td :colspan="table.getHeaderGroups()[0].headers.length">
+              <div role="alert" class="alert alert-soft alert-info">
+                <i class="pi pi-info-circle text-xl"></i>
+                <p class="text-sm font-semibold">
+                  No data available in the table
+                </p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
+    <!-- Card View -->
+    <div v-else-if="displayMode === 'card'" class="my-5">
+      <div v-if="table.getRowModel().rows.length === 0" class="py-4">
+        <div
+          role="alert"
+          class="alert alert-soft alert-info inline-flex w-full"
+        >
+          <i class="pi pi-info-circle text-xl"></i>
+          <p class="text-sm font-semibold">No data available</p>
+        </div>
+      </div>
+
+      <div
+        v-else
+        class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4"
+      >
+        <!-- Card Layout using slot -->
+        <div v-for="row in table.getRowModel().rows" :key="row.id">
+          <slot
+            name="card-item"
+            :row="row.original"
+            :index="row.index"
+            :columns="tableColumns"
+            :cells="row.getVisibleCells()"
+          >
+            <!-- Default card layout if no slot provided -->
+            <div
+              class="card shadow-lg border-2 border-base-300 hover:shadow-xl transition-shadow"
+            >
+              <div class="card-body">
+                <div
+                  v-for="cell in row.getVisibleCells()"
+                  :key="cell.id"
+                  class="flex justify-between items-center py-2 border-b border-base-200 last:border-b-0"
+                >
+                  <span class="font-semibold text-base-content/70">
+                    {{ cell.column.columnDef.header }}:
+                  </span>
+                  <span class="ms-7 truncate">
+                    <FlexRender
+                      :render="cell.column.columnDef.cell"
+                      :props="cell.getContext()"
+                    />
+                  </span>
+                </div>
+              </div>
+            </div>
+          </slot>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pagination -->
     <div
       class="flex flex-col sm:flex-row justify-between items-center gap-2 p-2"
     >
