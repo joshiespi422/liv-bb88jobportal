@@ -700,7 +700,7 @@ const taskTableColumns = [
               },
               [
                 h("div", { class: "avatar" }, [
-                  h("div", { class: "w-12" }, [
+                  h("div", { class: "w-12 bg-neutral" }, [
                     h("img", {
                       src: assignee.picture || "/profile-images/default.png",
                       alt: assignee.name,

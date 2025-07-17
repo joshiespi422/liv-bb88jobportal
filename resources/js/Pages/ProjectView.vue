@@ -1,5 +1,6 @@
 <script setup>
-import { h } from "vue";
+import { computed } from "vue";
+import { usePage } from "@inertiajs/vue3";
 import { longDate } from "../Composables/useDateFormatter";
 import DataTable from "../Components/DataTable.vue";
 
@@ -9,6 +10,10 @@ const props = defineProps({
     default: () => [],
   },
 });
+
+// logged in user data
+const page = usePage();
+const authUser = computed(() => page.props.auth.user);
 
 // Tanstack Table columns definition
 const projectTableColumns = [
@@ -21,29 +26,42 @@ const projectTableColumns = [
     header: "DESCRIPTION",
   },
   {
-    header: "STARTED",
-    accessorFn: (row) => longDate(row.created_at),
-    id: "started-date",
-    cell: ({ cell }) => {
-      return h("span", {}, cell.getValue());
-    },
+    id: "assignees",
+    accessorFn: (row) => row.assignees.map((a) => a.name).join(", "),
+    header: "ASSIGNEES",
   },
   {
-    id: "details",
-    header: "DETAILS",
-    cell: ({ row }) =>
-      h(
-        "button",
-        {
-          onClick: () => handleViewDetails(row.original),
-          class:
-            "btn rounded-full bg-green-primary-1 text-white hover:bg-green-primary-3",
-        },
-        "View Details"
-      ),
-    enableSorting: false,
+    accessorFn: (row) => longDate(row.created_at),
+    id: "started-date",
+    header: "STARTED DATE",
+  },
+  {
+    accessorKey: "departments",
+    header: "DEPARTMENTS",
   },
 ];
+
+// Assignee info
+const renderAssignees = (assignees) => {
+  if (!assignees || assignees.length === 0) {
+    return [];
+  }
+
+  // Move current user to top (same logic as table)
+  let sortedAssignees = [...assignees];
+  const currentUserIndex = sortedAssignees.findIndex(
+    (a) => a.id === authUser.value.id
+  );
+  if (currentUserIndex > -1) {
+    const currentUser = sortedAssignees.splice(currentUserIndex, 1)[0];
+    sortedAssignees.unshift(currentUser);
+  }
+
+  const visibleAssignees = sortedAssignees.slice(0, 3);
+  const hiddenCount = sortedAssignees.length - visibleAssignees.length;
+
+  return { visibleAssignees, hiddenCount };
+};
 </script>
 
 <template>
@@ -58,6 +76,7 @@ const projectTableColumns = [
       :data="props.projects"
       :columns="projectTableColumns"
       display-mode="card"
+      enable-tooltips
     >
       <!-- Custom card layout -->
       <template #card-item="{ row }">
@@ -65,12 +84,14 @@ const projectTableColumns = [
           class="card bg-gradient-to-r from-green-50 to-green-100 shadow-lg border-l-4 border-green-primary-1 hover:shadow-xl hover:border-pink-500 transition-all duration-300"
         >
           <div class="card-body">
+            <!-- Date in top right -->
             <p
               class="text-xs text-end font-medium text-gray-500 -mt-3 truncate"
             >
               {{ longDate(row.created_at) }}
             </p>
 
+            <!-- Title and Description -->
             <div class="flex flex-col">
               <h3 class="card-title text-lg font-bold text-gray-800 truncate">
                 {{ row.title }}
@@ -79,10 +100,78 @@ const projectTableColumns = [
                 {{ row.description }}
               </p>
 
-              <div class="card-actions justify-end">
+              <!-- Departments as badges -->
+              <div class="mb-3">
+                <div
+                  class="flex flex-wrap gap-2"
+                  v-if="row.departments && row.departments.length > 0"
+                >
+                  <div
+                    v-for="dept in row.departments"
+                    :key="dept"
+                    class="badge badge-ghost text-sm"
+                  >
+                    {{ dept }}
+                  </div>
+                </div>
+                <span v-else class="text-gray-400 italic text-sm"
+                  >No departments</span
+                >
+              </div>
+
+              <!-- Bottom section with assignees and button -->
+              <div class="flex justify-between items-center overflow-hidden">
+                <!-- Assignees Avatar Group -->
+                <div class="flex-1">
+                  <div
+                    v-if="row.assignees && row.assignees.length > 0"
+                    class="avatar-group p-1 -space-x-3"
+                  >
+                    <!-- Visible assignees -->
+                    <div
+                      v-for="assignee in renderAssignees(row.assignees)
+                        .visibleAssignees"
+                      class="avatar border-0 bg-neutral w-11 h-11 cursor-pointer hover:z-10 hover:scale-110 transition-transform"
+                      :data-tippy-content="assignee.name"
+                    >
+                      <div>
+                        <img
+                          :src="
+                            assignee.picture || '/profile-images/default.png'
+                          "
+                          :alt="assignee.name"
+                        />
+                      </div>
+                    </div>
+
+                    <!-- Counter for hidden assignees -->
+                    <div
+                      v-if="renderAssignees(row.assignees).hiddenCount > 0"
+                      class="avatar w-11 h-11 border-0 placeholder cursor-pointer hover:z-10 hover:scale-110 transition-transform"
+                      :data-tippy-content="`${
+                        renderAssignees(row.assignees).hiddenCount
+                      } more assignees`"
+                    >
+                      <div class="bg-neutral text-neutral-content rounded-full">
+                        <span class="font-bold flex mt-2.5 justify-center"
+                          >+{{
+                            renderAssignees(row.assignees).hiddenCount
+                          }}</span
+                        >
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- No assignees state -->
+                  <div v-else class="text-gray-400 italic text-sm">
+                    Unassigned
+                  </div>
+                </div>
+
+                <!-- View details button -->
                 <button
                   @click="handleViewDetails(row)"
-                  class="btn bg-green-primary-1 rounded-full border-0 text-white hover:bg-green-primary-3"
+                  class="btn btn-sm bg-green-primary-1 rounded-full border-0 text-white hover:bg-green-primary-3"
                 >
                   Details
                 </button>

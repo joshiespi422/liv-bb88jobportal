@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Project;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -48,31 +49,36 @@ class ProjectController extends Controller
         $projects = $projectsQuery->get();
 
         // Transform the collection to create the desired data structure
-        $projects->transform(function ($project) {
+        $formattedProjects = $projects->map(function ($project) {
             // Process assignees to remove the pivot object
-            $project->assignees = $project->tasks->flatMap(function ($task) {
+            $assignees = $project->tasks->flatMap(function ($task) {
                 return $task->users;
             })
             ->unique('id')
-            ->each->makeHidden('id') // the 'id' attribute from each user model
-            ->each->makeHidden('pivot') // the 'pivot' attribute from each user model
+            ->map(function ($user) { // Using map to be explicit
+                return [
+                    'name' => $user->name,
+                    'picture' => $user->picture
+                        ? Storage::url($user->picture)  // Generates full URL for stored image
+                        : Storage::url('profile-images/default.png'),  // Fallback to default image
+                ];
+            })
             ->values();
-            
-            // Clean up departments - return only department names array
-            $departmentNames = [];
-            foreach ($project->departments as $department) {
-                $departmentNames[] = $department->dept_name;
-            }
-            $project->departments = $departmentNames;
-            
-            // Remove the raw tasks relationship to avoid redundant data in the prop
-            unset($project->tasks);
-            
-            return $project;
+
+            // Return a new, explicitly structured array for the project
+            return [
+                'id' => $project->id,
+                'title' => $project->title,
+                'description' => $project->description,
+                'created_at' => $project->created_at,
+                'assignees' => $assignees,
+                'departments' => $project->departments->pluck('dept_name'),
+            ];
         });
 
+
         return Inertia::render('ProjectView', [
-            'projects' => $projects
+            'projects' => $formattedProjects 
         ]);
     
     }
