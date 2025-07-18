@@ -11,7 +11,10 @@ class Project extends Model
     use HasFactory;
     
     protected $fillable = [
-        //
+        'title',
+        'description',
+        'client',
+        'deadline',
     ];
 
     // Define a many-to-many relationship with projects and tasks (pivot table)

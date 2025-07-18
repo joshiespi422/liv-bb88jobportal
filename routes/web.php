@@ -65,6 +65,8 @@ Route::middleware('auth')->group(function () {
     Route::put('/accomplishment/{accomplishment}', [AccomplishmentController::class, 'update'])->name('accomplishment.update');
 
     Route::get('/project', [ProjectController::class, 'index'])->name('project');
+    Route::get('/project/{id}', [ProjectController::class, 'show'])->name('project.show');
+    Route::post('/project', [ProjectController::class, 'store'])->name('project.store');
 
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
     Route::post('/profile/picture', [ProfileController::class, 'updatePicture'])->name('profile.picture.update');

@@ -195,7 +195,7 @@ class TaskController extends Controller
             ]);
 
             // Associate accomplishment with task
-            $task->accomplishments()->attach($accomplishment->id);
+            $task->accomplishments()->sync($accomplishment->id);
 
             // Update task status only if it changed
             $newStatusName = $request->status;
@@ -289,8 +289,8 @@ class TaskController extends Controller
             'user_type_id' => $userType->id
         ]);
 
-        // Attach assignees
-        $task->users()->attach($validated['assignees']);
+        // Sync assignees
+        $task->users()->sync($validated['assignees']);
 
         return back()->with('success', 'Task created successfully!');
     }

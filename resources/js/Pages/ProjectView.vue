@@ -1,11 +1,20 @@
 <script setup>
-import { computed } from "vue";
-import { usePage } from "@inertiajs/vue3";
+import { ref, computed, reactive } from "vue";
+import { usePage, useForm } from "@inertiajs/vue3";
 import { longDate } from "../Composables/useDateFormatter";
 import DataTable from "../Components/DataTable.vue";
+import DetailsModal from "../Components/DetailsModal.vue";
+import FormModal from "../Components/FormModal.vue";
+import ConfirmModal from "../Components/ConfirmModal.vue";
+import TextInput from "../Components/forms/TextInput.vue";
+import ComboBox from "../Components/forms/ComboBox.vue";
 
 const props = defineProps({
   projects: {
+    type: Array,
+    default: () => [],
+  },
+  departments: {
     type: Array,
     default: () => [],
   },
@@ -14,6 +23,178 @@ const props = defineProps({
 // logged in user data
 const page = usePage();
 const authUser = computed(() => page.props.auth.user);
+
+// State for modals for forms
+const isNewProjectModalOpen = ref(false);
+// Holds the action to be executed on confirmation
+const pendingAction = ref(null);
+// confirmation before updating
+const isConfirmModalOpen = ref(false);
+
+// Holds the properties for the confirmation modal
+const confirmModalProps = reactive({
+  title: "",
+  message: "",
+  confirmText: "",
+  confirmButtonBg: "",
+  iconName: "",
+});
+// Closes the confirmation modal
+const closeConfirmModal = () => {
+  isConfirmModalOpen.value = false;
+};
+// Executes the action on confirmation
+const executeConfirm = () => {
+  if (pendingAction.value) {
+    pendingAction.value();
+  }
+};
+
+// New project form state
+const newProjectForm = useForm({
+  title: "",
+  description: "",
+  client: "",
+  deadline: "",
+  department_ids: [],
+});
+
+// Form field configuration for adding new project
+const newProjectFormFields = computed(() => {
+  return [
+    {
+      key: "department_ids",
+      label: "Departments",
+      component: ComboBox,
+      attrs: {
+        options: props.departments,
+        placeholder: "Select Departments",
+        multiple: true,
+      },
+    },
+    {
+      key: "title",
+      label: "Project",
+      component: TextInput,
+      attrs: { required: true, placeholder: "Example Project" },
+    },
+    {
+      key: "description",
+      label: "Description",
+      component: TextInput,
+      attrs: { required: true, placeholder: "Example Description" },
+    },
+    {
+      key: "client",
+      label: "Client",
+      component: TextInput,
+      attrs: { required: true, placeholder: "Example Client" },
+    },
+    {
+      key: "deadline",
+      label: "Deadline",
+      component: TextInput,
+      attrs: { type: "date", required: true, min: today.value },
+    },
+  ];
+});
+// for min attribute deadline
+const today = computed(() => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+});
+
+// -- New Project Flow --
+const handleNewProjectSubmit = () => {
+  const transformedData = {
+    ...newProjectForm.data(),
+    department_ids: newProjectForm.department_ids.map((a) => a.id),
+  };
+  Object.assign(confirmModalProps, {
+    title: "Create New Project",
+    message: "Are you sure you want to create a new project?",
+    confirmText: "Create",
+    confirmButtonBg: "bg-blue-600 hover:bg-blue-700",
+    iconName: "pi pi-briefcase",
+    iconColor: "text-blue-600",
+    iconBgColor: "bg-blue-100",
+  });
+
+  pendingAction.value = () =>
+    newProjectForm
+      .transform(() => transformedData)
+      .post(route("project.store"), {
+        preserveScroll: true,
+        onSuccess: () => {
+          closeAllModal();
+          newProjectForm.reset();
+        },
+        onError: () => closeConfirmModal(),
+      });
+
+  isConfirmModalOpen.value = true;
+};
+
+// handle new project
+const handleNewProject = () => {
+  isNewProjectModalOpen.value = true;
+};
+const closeAllModal = () => {
+  isNewProjectModalOpen.value = false;
+  isConfirmModalOpen.value = false;
+};
+
+// Project Details Modal state
+const isProjectDetailsOpen = ref(false);
+const selectedProject = ref(null);
+const isProjectLoading = ref(false);
+const isProjectError = ref(false);
+
+// formatter for departments
+const formatDepartments = (departments) => {
+  if (!departments || departments.length === 0) return "N/A";
+  return departments.join(", ");
+};
+// the fields to be displayed in the project details modal for an project
+const projectDetailFields = ref([
+  { key: "title", label: "Project" },
+  { key: "description", label: "Description" },
+  { key: "client", label: "Client" },
+  { key: "departments", label: "Departments", formatter: formatDepartments },
+  { key: "created_at", label: "Started", formatter: longDate },
+  { key: "deadline", label: "Deadline", formatter: longDate },
+]);
+
+// Function to fetch project details
+const fetchProjectDetails = async (projectId) => {
+  isProjectLoading.value = true;
+  isProjectDetailsOpen.value = true;
+  selectedProject.value = null;
+  isProjectError.value = false;
+
+  try {
+    const response = await axios.get(`/project/${projectId}`);
+    selectedProject.value = response.data;
+  } catch (error) {
+    console.error("Error fetching project details:", error);
+    selectedProject.value = null;
+    isProjectError.value = true;
+  } finally {
+    await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for 1 second
+    isProjectLoading.value = false;
+  }
+};
+
+// Handler for viewing project details and details modal function
+const handleViewDetails = (projectId) => {
+  fetchProjectDetails(projectId);
+};
+const closeProjectDetails = () => {
+  isProjectDetailsOpen.value = false;
+};
 
 // Tanstack Table columns definition
 const projectTableColumns = [
@@ -36,13 +217,13 @@ const projectTableColumns = [
     header: "STARTED DATE",
   },
   {
-    accessorKey: "departments",
+    accessorFn: (row) => row.departments.join(", "),
     header: "DEPARTMENTS",
   },
 ];
 
 // Assignee info
-const renderAssignees = (assignees) => {
+const renderAssignees = (assignees, maximum = 3) => {
   if (!assignees || assignees.length === 0) {
     return [];
   }
@@ -57,7 +238,7 @@ const renderAssignees = (assignees) => {
     sortedAssignees.unshift(currentUser);
   }
 
-  const visibleAssignees = sortedAssignees.slice(0, 3);
+  const visibleAssignees = sortedAssignees.slice(0, maximum);
   const hiddenCount = sortedAssignees.length - visibleAssignees.length;
 
   return { visibleAssignees, hiddenCount };
@@ -71,6 +252,7 @@ const renderAssignees = (assignees) => {
     >
       <h1 class="text-2xl lg:text-3xl font-bold">Project Management</h1>
     </div>
+
     <!-- Project Table -->
     <DataTable
       :data="props.projects"
@@ -152,7 +334,7 @@ const renderAssignees = (assignees) => {
                         renderAssignees(row.assignees).hiddenCount
                       } more assignees`"
                     >
-                      <div class="bg-neutral text-neutral-content rounded-full">
+                      <div class="bg-neutral text-neutral-content">
                         <span class="font-bold flex mt-2.5 justify-center"
                           >+{{
                             renderAssignees(row.assignees).hiddenCount
@@ -170,7 +352,7 @@ const renderAssignees = (assignees) => {
 
                 <!-- View details button -->
                 <button
-                  @click="handleViewDetails(row)"
+                  @click="handleViewDetails(row.id)"
                   class="btn btn-sm bg-green-primary-1 rounded-full border-0 text-white hover:bg-green-primary-3"
                 >
                   Details
@@ -180,6 +362,219 @@ const renderAssignees = (assignees) => {
           </div>
         </div>
       </template>
+
+      <!-- Custom button -->
+      <template #custom-actions>
+        <button
+          @click="handleNewProject"
+          class="btn rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
+        >
+          New Project
+        </button>
+      </template>
     </DataTable>
+
+    <!-- Project Details Modal -->
+    <DetailsModal
+      :isOpen="isProjectDetailsOpen"
+      :item="selectedProject"
+      :loading="isProjectLoading"
+      :error="isProjectError"
+      title="PROJECT DETAILS"
+      :fields="projectDetailFields"
+      :panel-class="'w-full max-w-4xl'"
+      @close="closeProjectDetails"
+    >
+      <!-- Custom Skeleton -->
+      <template #skeleton="{ skeletonFieldCount }">
+        <div class="grid grid-cols-[2fr_2fr] gap-4 py-6 px-3">
+          <div class="space-y-3">
+            <div
+              v-for="i in skeletonFieldCount"
+              :key="`custom-skel-${i}`"
+              class="grid grid-cols-[1fr_3fr] gap-2 items-center"
+            >
+              <div class="skeleton h-8 w-full" />
+              <div class="skeleton h-8 w-full" />
+            </div>
+          </div>
+          <div class="rounded-xl bg-base-200 p-3">
+            <div
+              class="collapse collapse-plus bg-base-100 border border-base-300"
+            >
+              <input type="radio" name="my-accordion-1" checked="checked" />
+              <div class="collapse-title text-sm font-medium">
+                <div class="skeleton h-8 w-full" />
+              </div>
+              <div class="collapse-content space-y-1">
+                <div class="skeleton h-8 w-full" />
+                <div class="skeleton h-8 w-full" />
+              </div>
+            </div>
+            <div
+              class="collapse collapse-plus bg-base-100 border border-base-300"
+            >
+              <input type="radio" name="my-accordion-2" checked="checked" />
+              <div class="collapse-title text-sm font-medium">
+                <div class="skeleton h-8 w-full" />
+              </div>
+              <div class="collapse-content space-y-1">
+                <div class="skeleton h-8 w-full" />
+                <div class="skeleton h-8 w-full" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- Custom Content Layout -->
+      <template #content="{ item, getFieldValue }">
+        <div class="grid grid-cols-[2fr_2fr] gap-4 py-6 px-3">
+          <div class="space-y-3">
+            <div
+              v-for="field in projectDetailFields"
+              :key="field.key"
+              class="grid grid-cols-[1.5fr_4fr] gap-2 items-center"
+            >
+              <label class="block text-sm font-bold">
+                {{ field.label }}
+              </label>
+
+              <p
+                class="text-sm bg-base-200 rounded-xl px-3 py-2 font-medium text-wrap truncate"
+              >
+                {{ getFieldValue(item, field) }}
+              </p>
+            </div>
+          </div>
+          <div class="rounded-xl bg-base-200 p-3">
+            <div
+              class="collapse collapse-plus bg-base-100 border border-base-300"
+            >
+              <input type="radio" name="my-accordion-3" checked="checked" />
+              <div class="collapse-title font-semibold">Tasks List</div>
+              <div class="collapse-content text-sm">
+                <ul
+                  class="list bg-base-200 rounded-box shadow-md overflow-y-auto max-h-40 list-scroll"
+                  v-if="item.tasks && item.tasks.length"
+                >
+                  <li
+                    v-for="task in item.tasks"
+                    :key="task.id"
+                    class="list-row hover:bg-base-300 hover:cursor-pointer"
+                    @click="handleViewAccomplish(task.id)"
+                  >
+                    <div>
+                      <div class="font-semibold truncate">
+                        {{ task.title }}
+                      </div>
+                      <div
+                        v-if="task.assignees && task.assignees.length > 0"
+                        class="avatar-group p-1 -space-x-1"
+                      >
+                        <div
+                          v-for="assignee in renderAssignees(task.assignees, 5)
+                            .visibleAssignees"
+                          class="avatar w-8 h-8 border-0 bg-neutral hover:z-10 hover:-mt-1 transition-all duration-200"
+                        >
+                          <div>
+                            <img :src="assignee.picture" />
+                          </div>
+                        </div>
+
+                        <div
+                          v-if="
+                            renderAssignees(task.assignees, 5).hiddenCount > 0
+                          "
+                          class="avatar w-8 h-8 border-0 placeholder hover:z-10 hover:-mt-1 transition-all duration-200"
+                        >
+                          <div class="bg-neutral text-neutral-content">
+                            <span class="font-bold flex mt-1.5 justify-center"
+                              >+{{
+                                renderAssignees(task.assignees).hiddenCount
+                              }}</span
+                            >
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </li>
+                </ul>
+                <div
+                  v-else
+                  role="alert"
+                  class="alert alert-warning alert-soft font-semibold"
+                >
+                  <span>No tasks found</span>
+                </div>
+              </div>
+            </div>
+            <div
+              class="collapse collapse-plus bg-base-100 border border-base-300 mt-1"
+            >
+              <input type="radio" name="my-accordion-3" />
+              <div class="collapse-title font-semibold">Comments</div>
+              <div class="collapse-content text-sm">
+                <ul
+                  class="list bg-base-200 rounded-box shadow-md overflow-y-auto max-h-60"
+                >
+                  <li class="list-row">
+                    <div>
+                      <div>Dio Lupa</div>
+                      <div class="text-xs uppercase font-semibold opacity-60">
+                        Remaining Reason
+                      </div>
+                    </div>
+                  </li>
+
+                  <li class="list-row">
+                    <div>
+                      <div>Ellie Beilish</div>
+                      <div class="text-xs uppercase font-semibold opacity-60">
+                        Bears of a fever
+                      </div>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+    </DetailsModal>
+
+    <!-- New Project Modal -->
+    <FormModal
+      :isOpen="isNewProjectModalOpen"
+      :inert="isConfirmModalOpen"
+      title="ADD PROJECT"
+      :form="newProjectForm"
+      :fields="newProjectFormFields"
+      submitText="Add"
+      @close="closeAllModal"
+      @submit="handleNewProjectSubmit"
+    />
+
+    <!-- Confirmation Modal -->
+    <ConfirmModal
+      :show="isConfirmModalOpen"
+      v-bind="confirmModalProps"
+      @cancel="closeConfirmModal"
+      @confirm="executeConfirm"
+    />
   </div>
 </template>
+
+<style scoped>
+.list-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.list-scroll::-webkit-scrollbar-thumb {
+  border-radius: 3px;
+  background-color: var(--color-green-primary-1);
+}
+.list-scroll::-webkit-scrollbar-track {
+  margin: 6px;
+  background-color: transparent;
+}
+</style>

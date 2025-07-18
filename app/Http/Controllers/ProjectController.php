@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Project;
+use App\Models\Department;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -78,7 +79,9 @@ class ProjectController extends Controller
 
 
         return Inertia::render('ProjectView', [
-            'projects' => $formattedProjects 
+            'projects' => $formattedProjects,
+            'departments' => ($user->userType->type_name === 'super_admin') 
+                ? Department::all(['id', 'dept_name as name']) : [],
         ]);
     
     }
@@ -96,7 +99,20 @@ class ProjectController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'title' => 'required|string',
+            'description' => 'required|string',
+            'client' => 'required|string',
+            'deadline' => ['required','date','after_or_equal:today'],
+            'department_ids' => 'required|array|min:1',
+            'department_ids.*' => 'exists:departments,id'
+        ]);
+       
+        $project = Project::create($validated);
+
+        $project->departments()->sync($validated['department_ids']);
+        
+        return back()->with('success', 'Project created successfully!');
     }
 
     /**
@@ -104,7 +120,35 @@ class ProjectController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $project = Project::with([
+                'tasks:id,title',
+                'departments:id,dept_name',
+                'tasks.users:id,picture'
+            ])
+            ->findOrFail($id);
+
+        $projectDetails = [
+            'id' => $project->id,
+            'title' => $project->title,
+            'description' => $project->description,
+            'client' => $project->client,
+            'created_at' => $project->created_at,
+            'deadline' => $project->deadline,
+            'tasks' => $project->tasks->sortBy('created_at')->map(fn ($task) => [
+                'id' => $task->id,
+                'title' => $task->title,
+                'assignees' => $task->users->map(fn ($user) => [
+                    'id' => $user->id,
+                    'picture' => $user->picture
+                        ? Storage::url($user->picture)
+                        : Storage::url('profile-images/default.png'),
+                ])
+            ])->values()->toArray(),
+            'departments' => $project->departments->pluck('dept_name'),
+        ];
+       
+        return response()->json($projectDetails);
+
     }
 
     /**
