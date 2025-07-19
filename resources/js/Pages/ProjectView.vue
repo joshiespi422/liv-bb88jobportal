@@ -513,29 +513,35 @@ const renderAssignees = (assignees, maximum = 3) => {
               class="collapse collapse-plus bg-base-100 border border-base-300 mt-1"
             >
               <input type="radio" name="my-accordion-3" />
-              <div class="collapse-title font-semibold">Comments</div>
+              <div class="collapse-title font-semibold">Issues List</div>
               <div class="collapse-content text-sm">
                 <ul
-                  class="list bg-base-200 rounded-box shadow-md overflow-y-auto max-h-60"
+                  class="list bg-base-200 rounded-box shadow-md overflow-y-auto max-h-40 list-scroll"
+                  v-if="item.issues && item.issues.length"
                 >
-                  <li class="list-row">
+                  <li
+                    v-for="issue in item.issues"
+                    :key="issue.id"
+                    class="list-row hover:bg-base-300 hover:cursor-pointer"
+                    @click="handleViewAccomplish(issue.id)"
+                  >
                     <div>
-                      <div>Dio Lupa</div>
-                      <div class="text-xs uppercase font-semibold opacity-60">
-                        Remaining Reason
+                      <div class="font-semibold truncate">
+                        {{ issue.user_name }}
                       </div>
-                    </div>
-                  </li>
-
-                  <li class="list-row">
-                    <div>
-                      <div>Ellie Beilish</div>
                       <div class="text-xs uppercase font-semibold opacity-60">
-                        Bears of a fever
+                        {{ issue.title }}
                       </div>
                     </div>
                   </li>
                 </ul>
+                <div
+                  v-else
+                  role="alert"
+                  class="alert alert-warning alert-soft font-semibold"
+                >
+                  <span>No issues found</span>
+                </div>
               </div>
             </div>
           </div>

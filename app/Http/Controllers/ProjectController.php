@@ -123,7 +123,9 @@ class ProjectController extends Controller
         $project = Project::with([
                 'tasks:id,title',
                 'departments:id,dept_name',
-                'tasks.users:id,picture'
+                'tasks.users:id,picture',
+                'projectIssues:id,title,project_id,user_id',
+                'projectIssues.user:id,name'
             ])
             ->findOrFail($id);
 
@@ -145,6 +147,11 @@ class ProjectController extends Controller
                 ])
             ])->values()->toArray(),
             'departments' => $project->departments->pluck('dept_name'),
+            'issues' => $project->projectIssues->sortBy('created_at')->map(fn ($issue) => [
+                'id' => $issue->id,
+                'title' => $issue->title,
+                'user_name' => $issue->user->name
+            ])->values()->toArray()
         ];
        
         return response()->json($projectDetails);

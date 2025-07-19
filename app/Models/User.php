@@ -106,6 +106,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Define a one-to-many relationship between users and project_issues
+     */
+    public function projectIssues() : HasMany
+    {
+        return $this->hasMany(ProjectIssue::class);
+    }
+
+    /**
      * Check if the user has a specific role.
      *
      * @param string $typeName

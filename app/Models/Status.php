@@ -25,4 +25,10 @@ class Status extends Model
     {
         return $this->hasMany(Leave::class);
     }
+
+    // relationship to project_issues, one status can have many project_issues
+    public function projectIssues() : HasMany
+    {
+        return $this->hasMany(ProjectIssue::class);
+    }
 }
