@@ -166,6 +166,17 @@ class TaskController extends Controller
         return response()->json($query);
     }
 
+    public function fetchProjects(Department $department): JsonResponse
+    {
+        // Get projects related to the department through pivot table
+        $projects = $department->projects()
+            ->select('projects.id', 'projects.title as name')
+            ->orderBy('projects.title')
+            ->get();
+
+        return response()->json($projects);
+    }
+
     public function updateTask(Request $request, Task $task)
     {
         // 1. Authorization
@@ -270,7 +281,7 @@ class TaskController extends Controller
             'description' => 'required|string',
             'collateral' => 'required|string|max:255',
             'department_id' => 'required|exists:departments,id',
-            'project' => 'nullable|string',
+            'project' => 'nullable|integer|exists:projects,id',
             'assignees' => 'required|array|min:1',
             'assignees.*' => 'integer|exists:users,id',
             'deadline' => ['required','date','after_or_equal:today'],
@@ -289,8 +300,9 @@ class TaskController extends Controller
             'user_type_id' => $userType->id
         ]);
 
-        // Sync assignees
+        // Sync assignees and projects
         $task->users()->sync($validated['assignees']);
+        $task->projects()->sync($validated['project']);
 
         return back()->with('success', 'Task created successfully!');
     }

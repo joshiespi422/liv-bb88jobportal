@@ -9,7 +9,7 @@ import {
 import { onClickOutside } from "@vueuse/core";
 
 const props = defineProps({
-  modelValue: [Array, Object],
+  modelValue: [Array, Object, String],
   options: {
     type: Array,
     default: () => [],

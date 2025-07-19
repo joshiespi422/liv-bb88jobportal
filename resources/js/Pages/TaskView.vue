@@ -79,6 +79,7 @@ const validateTaskForm = useForm({
 });
 // new task form state
 const assigneesList = ref([]);
+const projectsList = ref([]);
 const newTaskForm = useForm({
   title: "",
   description: "",
@@ -134,9 +135,12 @@ const newTaskFormFields = computed(() => {
     },
     {
       key: "project",
-      label: "Project",
-      component: TextInput,
-      attrs: { placeholder: "Example Project" },
+      label: "Project (optional)",
+      component: ComboBox,
+      attrs: {
+        options: projectsList.value,
+        placeholder: "Select a project",
+      },
     },
     {
       key: "assignees",
@@ -205,15 +209,45 @@ const fetchAssigneesList = async (departmentId, type) => {
     assigneesList.value = [];
   }
 };
-// Watch for changes in department_id to fetch new users
+const fetchProjectsList = async (departmentId) => {
+  if (!departmentId) {
+    projectsList.value = [];
+    return;
+  }
+  try {
+    // Use the route() helper from Ziggy
+    const response = await axios.get(
+      route("task.projects", {
+        department: departmentId,
+      })
+    );
+    projectsList.value = response.data;
+  } catch (error) {
+    console.error("Failed to fetch projects:", error);
+    projectsList.value = [];
+  }
+};
+// Watch for changes in department_id to fetch new assignees and projects
 watch(
   () => newTaskForm.department_id,
   async (newDeptId) => {
     if (authUser.value.userType === "super_admin" && newDeptId) {
       newTaskForm.assignees = [];
       await fetchAssigneesList(newDeptId, props.currentType);
+      await fetchProjectsList(newDeptId);
     }
   }
+);
+// Add immediate watch for non-super_admin
+watch(
+  () => authUser.value.department?.id,
+  async (departmentId) => {
+    if (authUser.value.userType !== "super_admin" && departmentId) {
+      await fetchAssigneesList(departmentId, props.currentType);
+      await fetchProjectsList(departmentId);
+    }
+  },
+  { immediate: true }
 );
 
 // Form field configuration for updating task
@@ -429,6 +463,7 @@ const handleValidateSubmit = () => {
 const handleNewTaskSubmit = () => {
   const transformedData = {
     ...newTaskForm.data(),
+    project: newTaskForm.project?.id || null,
     assignees: newTaskForm.assignees.map((a) => a.id),
   };
   Object.assign(confirmModalProps, {
