@@ -68,6 +68,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/project', [ProjectController::class, 'index'])->name('project');
     Route::get('/project/{id}', [ProjectController::class, 'show'])->name('project.show');
     Route::post('/project', [ProjectController::class, 'store'])->name('project.store');
+    Route::get('/project-issue/{issue}', [ProjectController::class, 'showIssue'])->name('project.issue.show');
 
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
     Route::post('/profile/picture', [ProfileController::class, 'updatePicture'])->name('profile.picture.update');
@@ -77,7 +78,7 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('user.type:super_admin,employee')->group(function () {
         Route::get('/leave', [LeaveController::class, 'index'])->name('leave');
-        Route::get('/leave/{id}', [LeaveController::class, 'show']);
+        Route::get('/leave/{id}', [LeaveController::class, 'show'])->name('leave.show');
         Route::get('/leave/categories/{leaveTypeId}', [LeaveController::class, 'fetchCategories'])->name('leave.categories');
         Route::post('/leave', [LeaveController::class, 'store'])->name('leave.store');
         Route::post('/leave/{leave}/validate', [LeaveController::class, 'validateLeave'])->name('leave.validate');

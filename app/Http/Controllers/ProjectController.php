@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Project;
 use App\Models\Department;
+use App\Models\ProjectIssue;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -84,6 +85,28 @@ class ProjectController extends Controller
                 ? Department::all(['id', 'dept_name as name']) : [],
         ]);
     
+    }
+
+    public function showIssue(ProjectIssue $issue)
+    {
+        $issue->load([
+            'project:id,title',
+            'user:id,name',
+            'status:id,status_name'
+        ]);
+
+        $issueDetails = [
+            'id' => $issue->id,
+            'title' => $issue->title,
+            'description' => $issue->description,
+            'solution' => $issue->solution,
+            'created_at' => $issue->created_at,
+            'status' => $issue->status->status_name,
+            'project_title' => $issue->project->title,
+            'user_name' => $issue->user->name
+        ];
+
+        return response()->json($issueDetails);
     }
 
     /**
