@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, reactive } from "vue";
+import { ref, computed, reactive, watch } from "vue";
 import { usePage, useForm } from "@inertiajs/vue3";
 import { longDate, longDateTime } from "../Composables/useDateFormatter";
 import DataTable from "../Components/DataTable.vue";
@@ -26,6 +26,8 @@ const authUser = computed(() => page.props.auth.user);
 
 // State for modals for forms
 const isNewProjectModalOpen = ref(false);
+const isAddIssueModalOpen = ref(false);
+const isResolveModalOpen = ref(false);
 // Holds the action to be executed on confirmation
 const pendingAction = ref(null);
 // confirmation before updating
@@ -57,6 +59,19 @@ const newProjectForm = useForm({
   client: "",
   deadline: "",
   department_ids: [],
+});
+
+// add issue form state
+const projectsList = ref([]);
+const addIssueForm = useForm({
+  project: "",
+  title: "",
+  description: "",
+});
+
+// resolve issue form state
+const resolveIssueForm = useForm({
+  solution: "",
 });
 
 // Form field configuration for adding new project
@@ -107,6 +122,160 @@ const today = computed(() => {
   return `${year}-${month}-${day}`;
 });
 
+// form field configuration for adding new issue
+const addIssueFormFields = computed(() => {
+  return [
+    {
+      key: "project",
+      label: "Project",
+      component: ComboBox,
+      attrs: {
+        options: projectsList.value,
+        placeholder: "Select Project",
+      },
+    },
+    {
+      key: "title",
+      label: "Issue",
+      component: TextInput,
+      attrs: { required: true, placeholder: "Example Issue" },
+    },
+    {
+      key: "description",
+      label: "Description",
+      component: TextInput,
+      attrs: { required: true, placeholder: "Example Description" },
+    },
+  ];
+});
+const fetchProjectsList = async (departmentId) => {
+  if (!departmentId) {
+    projectsList.value = [];
+    return;
+  }
+  try {
+    // Use the route() helper from Ziggy
+    const response = await axios.get(
+      route("task.projects", {
+        department: departmentId,
+      })
+    );
+    projectsList.value = response.data;
+  } catch (error) {
+    console.error("Failed to fetch projects:", error);
+    projectsList.value = [];
+  }
+};
+// Add immediate watch for non-super_admin
+watch(
+  () => authUser.value.department?.id,
+  async (departmentId) => {
+    if (authUser.value.userType !== "super_admin" && departmentId) {
+      await fetchProjectsList(departmentId);
+    }
+  },
+  { immediate: true }
+);
+
+// Form field configuration for resolving issue
+const resolveIssueFormFields = computed(() => {
+  return [
+    {
+      key: "issue_title",
+      label: "Issue Selected",
+      component: TextInput,
+      attrs: {
+        disabled: true,
+        value: selectedIssue.value?.title || "N/A",
+      },
+    },
+    {
+      key: "solution",
+      label: "Solution",
+      component: TextInput,
+      attrs: { required: true, placeholder: "Example Solution" },
+    },
+  ];
+});
+
+// -- Add Issue Flow --
+const handleAddIssueSubmit = () => {
+  const transformedData = {
+    ...addIssueForm.data(),
+    project_id: addIssueForm.project?.id || null,
+  };
+
+  Object.assign(confirmModalProps, {
+    title: "Create New Issue",
+    message: "Are you sure you want to create a new issue?",
+    confirmText: "Create",
+    confirmButtonBg: "bg-blue-600 hover:bg-blue-700",
+    iconName: "pi pi-check-square",
+    iconColor: "text-blue-600",
+    iconBgColor: "bg-blue-100",
+  });
+
+  pendingAction.value = () =>
+    addIssueForm
+      .transform(() => transformedData)
+      .post(route("project.issue.store"), {
+        preserveScroll: true,
+        onSuccess: () => {
+          closeAllModal();
+          addIssueForm.reset();
+        },
+        onError: () => closeConfirmModal(),
+      });
+
+  isConfirmModalOpen.value = true;
+};
+// handle add issue
+const handleAddIssue = () => {
+  isAddIssueModalOpen.value = true;
+};
+
+// -- Resolve Issue Flow --
+const handleResolveIssueSubmit = () => {
+  Object.assign(confirmModalProps, {
+    title: "Resolve Issue",
+    message: "Are you sure you want to resolve this issue?",
+    confirmText: "Resolve",
+    confirmButtonBg: "bg-blue-600 hover:bg-blue-700",
+    iconName: "pi pi-check-square",
+    iconColor: "text-blue-600",
+    iconBgColor: "bg-blue-100",
+  });
+
+  pendingAction.value = () =>
+    resolveIssueForm.patch(
+      route("project.issue.resolve", { issue: selectedIssue.value.id }),
+      {
+        preserveScroll: true,
+        onSuccess: () => {
+          closeAllModal();
+          resolveIssueForm.reset();
+        },
+        onError: () => closeConfirmModal(),
+      }
+    );
+  isConfirmModalOpen.value = true;
+};
+// handle resolve issue
+const handleResolveIssue = () => {
+  if (!selectedIssue.value) return;
+  isIssueDetailsOpen.value = false;
+  isResolveModalOpen.value = true;
+};
+// control resolve back button visibility
+const showBackButtonInResolve = computed(() => {
+  return isResolveModalOpen.value && selectedIssue.value !== null;
+});
+// handle resolve back navigation
+const handleBackFromResolve = () => {
+  isIssueDetailsOpen.value = true;
+  isResolveModalOpen.value = false;
+};
+
 // -- New Project Flow --
 const handleNewProjectSubmit = () => {
   const transformedData = {
@@ -137,13 +306,14 @@ const handleNewProjectSubmit = () => {
 
   isConfirmModalOpen.value = true;
 };
-
 // handle new project
 const handleNewProject = () => {
   isNewProjectModalOpen.value = true;
 };
 const closeAllModal = () => {
   isNewProjectModalOpen.value = false;
+  isAddIssueModalOpen.value = false;
+  isResolveModalOpen.value = false;
   isConfirmModalOpen.value = false;
 };
 
@@ -428,6 +598,28 @@ const renderAssignees = (assignees, maximum = 3) => {
 
   return { visibleAssignees, hiddenCount };
 };
+
+const showResolveButton = computed(() => {
+  const isSuperAdmin = authUser.value?.userType === "super_admin";
+  const selectedStatus = selectedIssue.value?.status;
+
+  // 1. Must be super admin
+  if (!isSuperAdmin) {
+    return false;
+  }
+
+  // 2. Must have selected issue details
+  if (!selectedIssue.value) {
+    return false;
+  }
+
+  // 3. Must be in "pending" status
+  if (selectedStatus !== "pending") {
+    return false;
+  }
+
+  return true;
+});
 </script>
 
 <template>
@@ -551,10 +743,18 @@ const renderAssignees = (assignees, maximum = 3) => {
       <!-- Custom button -->
       <template #custom-actions>
         <button
+          v-if="authUser?.userType === 'super_admin'"
           @click="handleNewProject"
           class="btn rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
         >
           New Project
+        </button>
+        <button
+          v-if="authUser?.userType !== 'super_admin'"
+          @click="handleAddIssue"
+          class="btn rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
+        >
+          Add Issue
         </button>
       </template>
     </DataTable>
@@ -742,6 +942,7 @@ const renderAssignees = (assignees, maximum = 3) => {
       :error="isIssueError"
       title="ISSUE DETAILS"
       :fields="issueDetailFields"
+      hide-close-btn
       @close="closeIssueDetails"
     >
       <template #custom-buttons>
@@ -751,6 +952,13 @@ const renderAssignees = (assignees, maximum = 3) => {
           @click="handleBackFromIssue"
         >
           <i class="pi pi-arrow-left me-1" /> Back
+        </button>
+        <button
+          v-if="showResolveButton"
+          @click="handleResolveIssue"
+          class="btn rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
+        >
+          Resolve
         </button>
       </template>
     </DetailsModal>
@@ -941,6 +1149,33 @@ const renderAssignees = (assignees, maximum = 3) => {
       submitText="Add"
       @close="closeAllModal"
       @submit="handleNewProjectSubmit"
+    />
+
+    <!-- Add Issue Modal -->
+    <FormModal
+      :isOpen="isAddIssueModalOpen"
+      :inert="isConfirmModalOpen"
+      title="ADD ISSUE"
+      :form="addIssueForm"
+      :fields="addIssueFormFields"
+      submitText="Add"
+      @close="closeAllModal"
+      @submit="handleAddIssueSubmit"
+    />
+
+    <!-- Resolve Issue Modal -->
+    <FormModal
+      :isOpen="isResolveModalOpen"
+      :inert="isConfirmModalOpen"
+      :showBackButton="showBackButtonInResolve"
+      title="RESOLVE ISSUE"
+      :form="resolveIssueForm"
+      :fields="resolveIssueFormFields"
+      submitText="Resolve"
+      disabledButton
+      @back="handleBackFromResolve"
+      @close="closeAllModal"
+      @submit="handleResolveIssueSubmit"
     />
 
     <!-- Confirmation Modal -->

@@ -37,6 +37,10 @@ const props = defineProps({
     type: String,
     default: "w-full max-w-md", // Default size
   },
+  hideCloseBtn: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits(["close"]);
@@ -184,6 +188,7 @@ const skeletonFieldCount = computed(() => {
                 <!-- custom buttons here -->
                 <slot name="custom-buttons" />
                 <button
+                  v-if="!hideCloseBtn"
                   type="button"
                   class="btn btn-soft rounded-full"
                   @click="requestDialogClose"

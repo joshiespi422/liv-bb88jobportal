@@ -62,7 +62,7 @@ const executeConfirm = () => {
 
 // edit form state
 const editAccomplishForm = useForm({
-  _method: "PUT",
+  _method: "PATCH",
   description: "",
   link: "",
   attachment: null,

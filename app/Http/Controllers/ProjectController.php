@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Project;
 use App\Models\Department;
 use App\Models\ProjectIssue;
+use App\Models\Status;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -107,6 +108,60 @@ class ProjectController extends Controller
         ];
 
         return response()->json($issueDetails);
+    }
+
+    public function storeIssue(Request $request)
+    {
+        // Authorization
+        $user = $request->user(); 
+        
+        if ($user->userType->type_name === 'super_admin') {
+            abort(403, 'not authorized');
+        }
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'project_id' => 'required|integer|exists:projects,id',
+        ]);
+
+        // Get user and status
+        $userId = $user->id;
+        $status = Status::firstWhere('status_name', 'pending');
+
+        ProjectIssue::create([
+            ...$validated,
+            'user_id' => $userId,
+            'status_id' => $status->id
+        ]);
+
+        return back()->with('success', 'Issue created successfully!');
+    }
+
+    public function resolveIssue(Request $request, ProjectIssue $issue)
+    {
+        // Authorization
+        $user = $request->user(); 
+        
+        if ($user->userType->type_name !== 'super_admin') {
+            abort(403, 'not authorized');
+        } elseif ($issue->status->status_name !== 'pending') {
+            abort(403, 'issue is not pending');
+        }
+
+        $validated = $request->validate([
+            'solution' => 'required|string',
+        ]);
+
+        // Get status
+        $status = Status::firstWhere('status_name', 'resolved');
+
+        $issue->update([
+            ...$validated,
+            'status_id' => $status->id
+        ]);
+
+        return back()->with('success', 'Issue resolved successfully!');
     }
 
     /**

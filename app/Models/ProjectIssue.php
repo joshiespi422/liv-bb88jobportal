@@ -11,7 +11,12 @@ class ProjectIssue extends Model
     use HasFactory;
 
     protected $fillable = [
-        //
+        'project_id',
+        'user_id',
+        'status_id',
+        'title',
+        'description',
+        'solution'
     ];
 
     // Define a one-to-many relationship between project_issues and projects
