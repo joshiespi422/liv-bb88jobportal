@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import {
   Dialog,
   DialogPanel,
@@ -41,6 +41,7 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  inert: Boolean,
 });
 
 const emit = defineEmits(["close"]);
@@ -70,11 +71,19 @@ const getFieldValue = (dataItem, field) => {
 const skeletonFieldCount = computed(() => {
   return props.fields && props.fields.length > 0 ? props.fields.length : 7; // Fallback to 7 if fields aren't defined yet
 });
+
+const focusElement = ref(null);
 </script>
 
 <template>
   <TransitionRoot appear :show="isOpen" as="template">
-    <Dialog as="div" @close="requestDialogClose" class="relative z-10">
+    <Dialog
+      as="div"
+      class="relative z-10"
+      :inert="inert"
+      @close="!inert && requestDialogClose()"
+      :initial-focus="inert ? undefined : focusElement"
+    >
       <TransitionChild
         as="template"
         enter="duration-300 ease-out"

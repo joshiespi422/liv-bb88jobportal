@@ -23,3 +23,6 @@ export const longDate = (dateString) =>
 
 export const longDateTime = (dateString) =>
   formatDate(dateString, "EEE, MMMM d, yyyy - h:mm a");
+
+export const shortDateTime = (dateString) =>
+  formatDate(dateString, "MMM d, yyyy, h:mm a");

@@ -8,6 +8,7 @@ use App\Http\Controllers\TaskController;
 use App\Http\Controllers\AccomplishmentController;
 use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\CommentController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -77,6 +78,8 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile/picture', [ProfileController::class, 'deletePicture'])->name('profile.picture.delete');
     Route::post('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
     Route::post('/profile/details', [ProfileController::class, 'updateDetails'])->name('profile.details.update');
+
+    Route::post('/comment', [CommentController::class, 'store'])->name('comment.store');
 
     Route::middleware('user.type:super_admin,employee')->group(function () {
         Route::get('/leave', [LeaveController::class, 'index'])->name('leave');

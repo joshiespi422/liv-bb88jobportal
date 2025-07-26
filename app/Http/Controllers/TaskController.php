@@ -315,7 +315,8 @@ class TaskController extends Controller
         $task = Task::with([
                 'users:id,name',
                 'status:id,status_name',
-                'accomplishments.user:id,name'
+                'accomplishments.user:id,name',
+                'comments.user:id,name,picture'
             ])
             ->findOrFail($id);
 
@@ -336,6 +337,16 @@ class TaskController extends Controller
                 'id' => $accomplishment->id,
                 'title' => $accomplishment->title,
                 'user_name' => $accomplishment->user->name,
+            ])->values()->toArray(),
+            'comments' => $task->comments->sortByDesc('created_at')->map(fn ($comment) => [
+                'id' => $comment->id,
+                'message' => $comment->message,
+                'user_name' => $comment->user->name,
+                'user_picture' => $comment->user->picture
+                    ? Storage::url($comment->user->picture)
+                    : Storage::url('profile-images/default.png'),
+                'created_at' => $comment->created_at,
+                
             ])->values()->toArray(),
         ];
         return response()->json($taskDetails);

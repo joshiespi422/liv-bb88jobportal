@@ -1,7 +1,11 @@
 <script setup>
 import { ref, h, computed, reactive, watch } from "vue";
 import { useForm, usePage, router } from "@inertiajs/vue3";
-import { longDate, longDateTime } from "../Composables/useDateFormatter";
+import {
+  shortDateTime,
+  longDate,
+  longDateTime,
+} from "../Composables/useDateFormatter";
 import DataTable from "../Components/DataTable.vue";
 import ListBox from "../Components/ListBox.vue";
 import DetailsModal from "../Components/DetailsModal.vue";
@@ -90,6 +94,12 @@ const newTaskForm = useForm({
   deadline: "",
   priority: "",
   type: props.currentType,
+});
+// add comment form state
+const commentForm = useForm({
+  message: "",
+  commentable_id: null,
+  commentable_type: "App\\Models\\Task",
 });
 
 // Form field configuration for adding new task
@@ -490,6 +500,42 @@ const handleNewTaskSubmit = () => {
 
   isConfirmModalOpen.value = true;
 };
+// -- Comment Flow --
+const handleCommentSubmit = () => {
+  Object.assign(confirmModalProps, {
+    title: "Add Comment",
+    message: "Are you sure you want to add this comment?",
+    confirmText: "Comment",
+    confirmButtonBg: "bg-blue-600 hover:bg-blue-700",
+    iconName: "pi pi-comment",
+    iconColor: "text-blue-600",
+    iconBgColor: "bg-blue-100",
+  });
+
+  pendingAction.value = () =>
+    commentForm.post(route("comment.store"), {
+      preserveScroll: true,
+      onSuccess: () => {
+        commentForm.reset();
+        if (selectedDetails.value) {
+          fetchTaskDetails(selectedDetails.value.id);
+        }
+        closeConfirmModal();
+      },
+      onError: () => closeConfirmModal(),
+    });
+
+  isConfirmModalOpen.value = true;
+};
+// Handle enter key press
+const handleEnterKey = (event) => {
+  if (event.key === "Enter" && !event.shiftKey) {
+    event.preventDefault();
+    if (commentForm.message.trim()) {
+      handleCommentSubmit();
+    }
+  }
+};
 
 // Details Modal state
 const isDetailsModalOpen = ref(false);
@@ -524,6 +570,9 @@ const fetchTaskDetails = async (taskId) => {
   try {
     const response = await axios.get(`/task/${taskId}`);
     selectedDetails.value = response.data;
+    // Reset comment form with new task ID
+    commentForm.commentable_id = response.data.id;
+    commentForm.message = "";
   } catch (error) {
     console.error("Error fetching task details:", error);
     selectedDetails.value = null;
@@ -1000,12 +1049,13 @@ const showNewButton = computed(() => {
     <!-- Task Details Modal -->
     <DetailsModal
       :isOpen="isDetailsModalOpen"
+      :inert="isConfirmModalOpen"
       :item="selectedDetails"
       :loading="isDetailsLoading"
       :error="isDetailsError"
       title="TASK DETAILS"
       :fields="taskDetailFields"
-      :panel-class="'w-full max-w-3xl'"
+      :panel-class="'w-full max-w-4xl'"
       @close="closeDetailsModal"
     >
       <!-- Custom Skeleton -->
@@ -1052,7 +1102,7 @@ const showNewButton = computed(() => {
 
       <!-- Custom Content Layout -->
       <template #content="{ item, getFieldValue }">
-        <div class="grid grid-cols-[2fr_1.5fr] gap-4 py-6 px-3">
+        <div class="grid grid-cols-[2fr_2fr] gap-4 py-6 px-3">
           <div class="space-y-3">
             <div
               v-for="field in taskDetailFields"
@@ -1115,25 +1165,52 @@ const showNewButton = computed(() => {
               <div class="collapse-title font-semibold">Comments</div>
               <div class="collapse-content text-sm">
                 <ul
-                  class="list bg-base-200 rounded-box shadow-md overflow-y-auto max-h-60"
+                  class="list bg-base-200 rounded-box shadow-md overflow-y-auto max-h-60 list-scroll"
                 >
-                  <li class="list-row">
-                    <div>
-                      <div>Dio Lupa</div>
-                      <div class="text-xs uppercase font-semibold opacity-60">
-                        Remaining Reason
+                  <!-- Comments list -->
+                  <li
+                    v-for="comment in selectedDetails.comments"
+                    :key="comment.id"
+                    class="list-row p-2 pe-0"
+                  >
+                    <div class="chat chat-start">
+                      <div class="chat-image avatar">
+                        <div class="w-10 rounded-full">
+                          <img
+                            :src="comment.user_picture"
+                            :alt="comment.user_name"
+                          />
+                        </div>
+                      </div>
+
+                      <div class="chat-bubble max-w-full whitespace-pre-wrap">
+                        {{ comment.message }}
+                        <div class="text-xs opacity-50">
+                          {{ comment.user_name }} -
+                          {{ shortDateTime(comment.created_at) }}
+                        </div>
                       </div>
                     </div>
                   </li>
 
-                  <li class="list-row">
-                    <div>
-                      <div>Ellie Beilish</div>
-                      <div class="text-xs uppercase font-semibold opacity-60">
-                        Bears of a fever
-                      </div>
+                  <div class="m-3 grid grid-cols-[4fr_1fr]">
+                    <textarea
+                      v-model="commentForm.message"
+                      @keydown="handleEnterKey"
+                      placeholder="Write a comment..."
+                      class="textarea textarea-primary min-h-4 textarea-sm"
+                      required
+                    ></textarea>
+                    <div class="flex justify-center items-center">
+                      <button
+                        @click="handleCommentSubmit"
+                        :disabled="!commentForm.message.trim()"
+                        class="btn btn-circle btn-primary"
+                      >
+                        <i class="pi pi-send text-lg" />
+                      </button>
                     </div>
-                  </li>
+                  </div>
                 </ul>
               </div>
             </div>
