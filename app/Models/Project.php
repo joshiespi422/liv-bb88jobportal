@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 class Project extends Model
 {
     use HasFactory;
-    
+
     protected $fillable = [
         'title',
         'description',
@@ -24,7 +24,7 @@ class Project extends Model
     {
         return $this->belongsToMany(Task::class);
     }
-    
+
     // Define a many-to-many relationship with projects and departments (pivot table)
     public function departments(): BelongsToMany
     {
@@ -32,7 +32,7 @@ class Project extends Model
     }
 
     // Define a one-to-many relationship between projects and project_issues
-    public function projectIssues() : HasMany
+    public function projectIssues(): HasMany
     {
         return $this->hasMany(ProjectIssue::class);
     }
@@ -41,5 +41,11 @@ class Project extends Model
     public function comments(): MorphMany
     {
         return $this->morphMany(Comment::class, 'commentable');
+    }
+
+    // Define a one-to-many polymorphic relationship between projects and notifications
+    public function notifications(): MorphMany
+    {
+        return $this->morphMany(Notification::class, 'notifiable');
     }
 }

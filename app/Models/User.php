@@ -57,10 +57,10 @@ class User extends Authenticatable
         ];
     }
 
-     /**
+    /**
      * Get the user type that owns the user.
      */
-    public function userType(): BelongsTo 
+    public function userType(): BelongsTo
     {
         return $this->belongsTo(UserType::class);
     }
@@ -68,23 +68,23 @@ class User extends Authenticatable
     /**
      * Defines a one-to-one relationship with users and user_employees
      */
-    public function employeeDetails() : HasOne
+    public function employeeDetails(): HasOne
     {
         return $this->hasOne(UserEmployee::class);
     }
-    
+
     /**
      * Defines a one-to-one relationship with users and user_interns
      */
-    public function internDetails() : HasOne
+    public function internDetails(): HasOne
     {
         return $this->hasOne(UserIntern::class);
     }
 
-     /**
+    /**
      * Defines a many-to-many relationship with users and tasks (pivot table)
      */
-    public function tasks() : BelongsToMany
+    public function tasks(): BelongsToMany
     {
         return $this->belongsToMany(Task::class);
     }
@@ -92,7 +92,7 @@ class User extends Authenticatable
     /**
      * Defines a one-to-many relationship with users and accomplishments
      */
-    public function accomplishments() : HasMany
+    public function accomplishments(): HasMany
     {
         return $this->hasMany(Accomplishment::class);
     }
@@ -100,7 +100,7 @@ class User extends Authenticatable
     /**
      * Define a one-to-many relationship between users and leaves
      */
-    public function leaves() : HasMany
+    public function leaves(): HasMany
     {
         return $this->hasMany(Leave::class);
     }
@@ -108,9 +108,25 @@ class User extends Authenticatable
     /**
      * Define a one-to-many relationship between users and project_issues
      */
-    public function projectIssues() : HasMany
+    public function projectIssues(): HasMany
     {
         return $this->hasMany(ProjectIssue::class);
+    }
+
+    /**
+     * Define a one-to-many relationship between users and comments
+     */
+    public function comments(): HasMany
+    {
+        return $this->hasMany(Comment::class);
+    }
+
+    /**
+     * Define a one-to-many relationship between users and notifications
+     */
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(Notification::class);
     }
 
     /**
@@ -119,7 +135,7 @@ class User extends Authenticatable
      * @param string $typeName
      * @return bool
      */
-    public function hasRole(string $typeName): bool 
+    public function hasRole(string $typeName): bool
     {
         return $this->userType && $this->userType->type_name === $typeName;
     }

@@ -21,13 +21,13 @@ class Accomplishment extends Model
     ];
 
     // Define a many-to-many relationship with users and tasks (pivot table)
-    public function tasks() : BelongsToMany
+    public function tasks(): BelongsToMany
     {
         return $this->belongsToMany(Task::class);
     }
 
     // Define a one-to-many relationship between accomplishments and users
-    public function user() : BelongsTo
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
@@ -38,4 +38,9 @@ class Accomplishment extends Model
         return $this->morphMany(Comment::class, 'commentable');
     }
 
+    // Define a one-to-many polymorphic relationship between accomplishments and notifications
+    public function notifications(): MorphMany
+    {
+        return $this->morphMany(Notification::class, 'notifiable');
+    }
 }

@@ -24,44 +24,50 @@ class Task extends Model
     ];
 
     // relationship to user type, many task has one user type
-    public function userType() : BelongsTo
+    public function userType(): BelongsTo
     {
         return $this->belongsTo(UserType::class);
     }
 
     // relationship to status, many task has one status
-    public function status() : BelongsTo
+    public function status(): BelongsTo
     {
         return $this->belongsTo(Status::class);
     }
 
     // relationship to department, many task has one department
-    public function department() : BelongsTo
+    public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
     }
 
     // relationship to user, many task has many user
-    public function users() : BelongsToMany
+    public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class);
     }
 
     // relationship to accomplishment, many task has many accomplishment
-    public function accomplishments() : BelongsToMany
+    public function accomplishments(): BelongsToMany
     {
         return $this->belongsToMany(Accomplishment::class);
     }
 
     // relationship to project, many task has many project
-    public function projects() : BelongsToMany
+    public function projects(): BelongsToMany
     {
         return $this->belongsToMany(Project::class);
     }
 
     // relationship to comment polymorphic, many task has many comment
-    public function comments() : MorphMany
+    public function comments(): MorphMany
     {
         return $this->morphMany(Comment::class, 'commentable');
+    }
+
+    // relationship to notification polymorphic, many task has many notification
+    public function notifications(): MorphMany
+    {
+        return $this->morphMany(Notification::class, 'notifiable');
     }
 }
