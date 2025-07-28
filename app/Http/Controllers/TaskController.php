@@ -13,6 +13,7 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\JsonResponse;
+use App\Events\TaskCreated;
 
 class TaskController extends Controller
 {
@@ -289,20 +290,28 @@ class TaskController extends Controller
             'type' => 'required|in:employee,intern'
         ]);
 
-        // Get status and user type
-        $status = Status::firstWhere('status_name', 'in progress');
-        $userType = UserType::firstWhere('type_name', $validated['type']);
-
         // Create task
-        $task = Task::create([
-            ...$validated,
-            'status_id' => $status->id,
-            'user_type_id' => $userType->id
-        ]);
+         DB::transaction(function () use ($validated) {
+            // Get status and user type
+            $status = Status::firstWhere('status_name', 'in progress');
+            $userType = UserType::firstWhere('type_name', $validated['type']);
 
-        // Sync assignees and projects
-        $task->users()->sync($validated['assignees']);
-        $task->projects()->sync($validated['project']);
+            // Create task
+            $task = Task::create([
+                ...$validated,
+                'status_id' => $status->id,
+                'user_type_id' => $userType->id
+            ]);
+
+            // Sync assignees and projects
+            $task->users()->sync($validated['assignees']);
+            if (!empty($validated['project'])) {
+                $task->projects()->sync($validated['project']);
+            }
+
+            // Dispatch the event after the task and its relations are saved
+            TaskCreated::dispatch($task);
+        });
 
         return back()->with('success', 'Task created successfully!');
     }
