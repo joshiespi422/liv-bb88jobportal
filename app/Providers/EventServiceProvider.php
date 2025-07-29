@@ -3,6 +3,8 @@ namespace App\Providers;
 
 use App\Events\TaskCreated;
 use App\Listeners\SendNewTaskNotification;
+use App\Events\AccomplishmentCreated;
+use App\Listeners\SendAccomplishmentNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
 class EventServiceProvider extends ServiceProvider
@@ -16,6 +18,9 @@ class EventServiceProvider extends ServiceProvider
         // Add event and listener here
         TaskCreated::class => [
             SendNewTaskNotification::class,
+        ],
+        AccomplishmentCreated::class => [
+            SendAccomplishmentNotification::class,
         ],
     ];
 

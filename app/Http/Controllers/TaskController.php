@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\JsonResponse;
 use App\Events\TaskCreated;
+use App\Events\AccomplishmentCreated;
 
 class TaskController extends Controller
 {
@@ -207,7 +208,7 @@ class TaskController extends Controller
             ]);
 
             // Associate accomplishment with task
-            $task->accomplishments()->sync($accomplishment->id);
+            $task->accomplishments()->syncWithoutDetaching($accomplishment->id);
 
             // Update task status only if it changed
             $newStatusName = $request->status;
@@ -221,6 +222,10 @@ class TaskController extends Controller
                     $task->save();
                 }
             }
+
+            // DISPATCH THE EVENT HERE
+            // Pass both the accomplishment and the task to the event
+            AccomplishmentCreated::dispatch($accomplishment, $task);
         });
 
         return back()->with('success', 'Task has been updated successfully!');
