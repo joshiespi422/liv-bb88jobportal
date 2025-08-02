@@ -5,6 +5,10 @@ use App\Events\TaskCreated;
 use App\Listeners\SendNewTaskNotification;
 use App\Events\AccomplishmentCreated;
 use App\Listeners\SendAccomplishmentNotification;
+use App\Events\ProjectCreated;
+use App\Listeners\SendProjectNotification;
+use App\Events\TaskValidated;
+use App\Listeners\SendTaskValidatedNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
 class EventServiceProvider extends ServiceProvider
@@ -22,6 +26,12 @@ class EventServiceProvider extends ServiceProvider
         AccomplishmentCreated::class => [
             SendAccomplishmentNotification::class,
         ],
+        ProjectCreated::class => [
+            SendProjectNotification::class
+        ],
+        TaskValidated::class => [
+            SendTaskValidatedNotification::class
+        ]        
     ];
 
     /**

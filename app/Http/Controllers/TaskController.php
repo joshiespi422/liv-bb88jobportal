@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\JsonResponse;
 use App\Events\TaskCreated;
 use App\Events\AccomplishmentCreated;
+use App\Events\TaskValidated;
 
 class TaskController extends Controller
 {
@@ -263,6 +264,9 @@ class TaskController extends Controller
             }
 
             $task->save();
+
+            // DISPATCH THE EVENT HERE
+            TaskValidated::dispatch($task, $request->status);
         });
 
         return back()->with('success', 'Task has been validated successfully!');

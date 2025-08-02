@@ -9,6 +9,7 @@ use App\Models\Status;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Events\ProjectCreated;
 
 class ProjectController extends Controller
 {
@@ -189,6 +190,9 @@ class ProjectController extends Controller
         $project = Project::create($validated);
 
         $project->departments()->sync($validated['department_ids']);
+
+        // dispatch event
+        ProjectCreated::dispatch($project);
         
         return back()->with('success', 'Project created successfully!');
     }
