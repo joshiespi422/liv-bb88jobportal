@@ -21,6 +21,7 @@ class TaskCreated
      * @var \App\Models\Task
      */
     public $task;
+    public $assignees;
 
     /**
      * Create a new event instance.
@@ -28,9 +29,10 @@ class TaskCreated
      * @param \App\Models\Task $task
      * @return void
      */
-    public function __construct(Task $task)
+    public function __construct(Task $task, array $assignees)
     {
         $this->task = $task;
+        $this->assignees = $assignees;
     }
 
     /**

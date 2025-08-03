@@ -25,16 +25,12 @@ class SendProjectNotification
      */
     public function handle(ProjectCreated $event): void
     {
-        $project = $event->project;
-        $departmentIds = $project->departments()->pluck('departments.id');
-
-        if ($departmentIds->isEmpty()) {
-            return;
-        }
-
-        // Get user IDs from employees and interns in these departments
+        $departmentIds = $event->departmentIds;
+        
+        // Get all user IDs from employees and interns in these departments
         $employeeUserIds = UserEmployee::whereIn('department_id', $departmentIds)
             ->pluck('user_id');
+            
         $internUserIds = UserIntern::whereIn('department_id', $departmentIds)
             ->pluck('user_id');
 
@@ -44,14 +40,14 @@ class SendProjectNotification
             return;
         }
 
-        $message = "A new project {$project->title} has been created and assigned to your department(s).";
+        $message = "A new project {$event->project->title} has been assigned to your department.";
         $now = now();
 
-        $notifications = $userIds->map(function ($userId) use ($project, $message, $now) {
+        $notifications = $userIds->map(function ($userId) use ($event, $message, $now) {
             return [
                 'user_id' => $userId,
                 'message' => $message,
-                'notifiable_id' => $project->id,
+                'notifiable_id' => $event->project->id,
                 'notifiable_type' => Project::class,
                 'created_at' => $now,
                 'updated_at' => $now,
@@ -59,6 +55,5 @@ class SendProjectNotification
         })->toArray();
 
         Notification::insert($notifications);
-        
     }
 }

@@ -21,13 +21,15 @@ class ProjectCreated
      * @var \App\Models\Project
      */
     public $project;
+    public $departmentIds;
 
     /**
      * Create a new event instance.
      */
-    public function __construct(Project $project)
+    public function __construct(Project $project, array $departmentIds)
     {
         $this->project = $project;
+        $this->departmentIds = $departmentIds;
     }
 
     /**

@@ -192,7 +192,7 @@ class ProjectController extends Controller
         $project->departments()->sync($validated['department_ids']);
 
         // dispatch event
-        ProjectCreated::dispatch($project);
+        ProjectCreated::dispatch($project, $validated['department_ids']);
         
         return back()->with('success', 'Project created successfully!');
     }

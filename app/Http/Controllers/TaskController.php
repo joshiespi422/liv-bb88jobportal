@@ -319,7 +319,7 @@ class TaskController extends Controller
             }
 
             // Dispatch the event after the task and its relations are saved
-            TaskCreated::dispatch($task);
+            TaskCreated::dispatch($task, $validated['assignees']);
         });
 
         return back()->with('success', 'Task created successfully!');

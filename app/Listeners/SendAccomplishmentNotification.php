@@ -6,6 +6,8 @@ use App\Events\AccomplishmentCreated;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use App\Models\User;
+use App\Models\Notification;
+use App\Models\Accomplishment;
 use Illuminate\Database\Eloquent\Builder;
 
 class SendAccomplishmentNotification
@@ -25,39 +27,45 @@ class SendAccomplishmentNotification
     {
         $accomplishment = $event->accomplishment;
         $task = $event->task;
-        $submitter = $accomplishment->user; // The user who created the accomplishment
+        $submitterId = $accomplishment->user_id;
 
-        // 1. Get all super admins
-        $superAdmins = User::whereHas('userType', function (Builder $query) {
-            $query->where('type_name', 'super_admin');
-        })->get();
+        // 1. Get super admin IDs - 1 query
+        $superAdminIds = User::whereHas('userType', fn(Builder $q) => 
+            $q->where('type_name', 'super_admin')
+        )->pluck('id');
 
-        // 2. Get all employee leaders of the task's department
-        $departmentLeaders = User::whereHas('employeeDetails', function (Builder $query) use ($task) {
-            $query->where('department_id', $task->department_id)
-                  ->where('hierarchy', 'Leader');
-        })->get();
+        // 2. Get department leader IDs - 1 query
+        $departmentLeaderIds = User::whereHas('employeeDetails', fn(Builder $q) => $q->where('department_id', $task->department_id)
+        ->where('hierarchy', 'Leader'))->pluck('id');
 
-        // 3. Get all assignees of the task
-        $taskAssignees = $task->users;
+        // 3. Get task assignee IDs - 1 query (if not already loaded)
+        $taskAssigneeIds = $task->users()->pluck('users.id');
 
-        // 4. Merge all collections and get unique users by ID
-        $recipients = $superAdmins
-            ->merge($departmentLeaders)
-            ->merge($taskAssignees)
-            ->unique('id');
+        // Combine and deduplicate IDs - in-memory processing
+        $recipientIds = collect()
+            ->merge($superAdminIds)
+            ->merge($departmentLeaderIds)
+            ->merge($taskAssigneeIds)
+            ->unique()
+            ->reject(fn($id) => $id === $submitterId); // Exclude submitter
 
-        // 5. Exclude the user who submitted the accomplishment and create notifications
-        $message = "New accomplishment {$accomplishment->title} added by: {$submitter->name}";
+        if ($recipientIds->isEmpty()) {
+            return;
+        }
 
-        $recipients
-            ->reject(fn($user) => $user->id === $submitter->id) // Exclude the submitter
-            ->each(function ($user) use ($accomplishment, $message) {
-                // Use the polymorphic relation on the Accomplishment model
-                $accomplishment->notifications()->create([
-                    'user_id' => $user->id,
-                    'message' => $message,
-                ]);
-            });
+        // Prepare bulk notification insert
+        $message = "New accomplishment {$accomplishment->title} added by: {$accomplishment->user->name}";
+        $now = now();
+        $notifications = $recipientIds->map(fn($id) => [
+            'user_id' => $id,
+            'message' => $message,
+            'notifiable_id' => $accomplishment->id,
+            'notifiable_type' => Accomplishment::class,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ])->toArray();
+
+        // Bulk insert - 1 query
+        Notification::insert($notifications);
     }
 }
