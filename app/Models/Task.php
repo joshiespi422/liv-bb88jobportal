@@ -59,13 +59,13 @@ class Task extends Model
         return $this->belongsToMany(Project::class);
     }
 
-    // relationship to comment polymorphic, many task has many comment
+    // relationship to comment polymorphic, one task has many comment
     public function comments(): MorphMany
     {
         return $this->morphMany(Comment::class, 'commentable');
     }
 
-    // relationship to notification polymorphic, many task has many notification
+    // relationship to notification polymorphic, one task has many notification
     public function notifications(): MorphMany
     {
         return $this->morphMany(Notification::class, 'notifiable');

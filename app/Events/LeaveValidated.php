@@ -9,27 +9,25 @@ use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
-use App\Models\Project;
+use App\Models\Leave;
 
-class ProjectCreated
+class LeaveValidated
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     /**
-     * The project instance.
+     * The leave instance.
      *
-     * @var \App\Models\Project
+     * @var \App\Models\Leave
      */
-    public $project;
-    public $departmentIds;
+    public $leave;
 
     /**
      * Create a new event instance.
      */
-    public function __construct(Project $project, array $departmentIds)
+    public function __construct(Leave $leave)
     {
-        $this->project = $project;
-        $this->departmentIds = $departmentIds;
+        $this->leave = $leave;
     }
 
     /**

@@ -12,6 +12,8 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use App\Events\LeaveRequested;
+use App\Events\LeaveValidated;
 
 class LeaveController extends Controller
 {
@@ -132,11 +134,11 @@ class LeaveController extends Controller
     {
         // Get the authenticated user and eager load their type and department details
         $user = $request->user()->load('userType', 'employeeDetails.department');
-        $isSuperAdmin = $user->userType->type_name === 'super_admin';
-        $isAdmin = $user->employeeDetails->department->dept_name === 'Admin';
+        $userType = $user->userType->type_name;
+        $userDeptName = $user->employeeDetails?->department?->dept_name;
        
         // Authorization
-        if (!$isSuperAdmin && !$isAdmin) {
+        if ($userType !== 'super_admin' && $userDeptName !== 'Admin') {
             abort(403, 'not authorized');
         } elseif ($leave->status->status_name !== 'pending') {
             abort(403, 'leave is not pending');
@@ -178,6 +180,9 @@ class LeaveController extends Controller
             }
 
             $leave->save();
+
+            // dispatch event
+            LeaveValidated::dispatch($leave);
         });
 
         return back()->with('success', 'Leave has been validated successfully!');
@@ -217,7 +222,7 @@ class LeaveController extends Controller
         $status = Status::firstWhere('status_name', 'pending');
 
         // Create leave
-        Leave::create([
+        $leave = Leave::create([
             'user_id' => $user->id,
             'leave_type_id' => $request->leave_type_id,
             'leave_category_id' => $request->leave_category_id,
@@ -227,6 +232,9 @@ class LeaveController extends Controller
             'proof' => $request->file('proof') ? 
                 $request->file('proof')->store('leave-proofs', 'public') : null
         ]);
+
+        // dispatch event
+        LeaveRequested::dispatch($leave);
 
         return back()->with('success', 'Leave request submitted successfully');
     }

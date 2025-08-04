@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Leave extends Model
 {
@@ -44,4 +45,9 @@ class Leave extends Model
         return $this->belongsTo(Status::class);
     }
 
+    // Define a one-to-many polymorphic relationship between leaves and notifications
+    public function notifications(): MorphMany
+    {
+        return $this->morphMany(Notification::class, 'notifiable');
+    }
 }

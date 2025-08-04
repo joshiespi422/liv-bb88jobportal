@@ -25,7 +25,7 @@ class SendAccomplishmentNotification
      */
     public function handle(AccomplishmentCreated $event): void
     {
-        $accomplishment = $event->accomplishment;
+        $accomplishment = $event->accomplishment->load('user'); // Eager load user
         $task = $event->task;
         $submitterId = $accomplishment->user_id;
 
