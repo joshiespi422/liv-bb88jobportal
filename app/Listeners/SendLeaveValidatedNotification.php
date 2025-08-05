@@ -26,7 +26,6 @@ class SendLeaveValidatedNotification
             'leaveCategory'
         ]);
 
-        $leave = $event->leave;
         $submitterId = $leave->user_id;
         $categoryName = strtolower($leave->leaveCategory->name);
 

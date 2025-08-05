@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Comment;
 use Illuminate\Http\Request;
+use App\Events\CommentCreated;
 
 class CommentController extends Controller
 {
@@ -36,10 +37,13 @@ class CommentController extends Controller
             'commentable_type' => 'required|string|in:App\Models\Task'
         ]);
 
-        Comment::create([
+        $comment = Comment::create([
             ...$validated,
             'user_id' => $userId
         ]);
+
+        // dispatch event
+        CommentCreated::dispatch($comment);
 
         return back()->with('success', 'Comment added successfully.');
     }

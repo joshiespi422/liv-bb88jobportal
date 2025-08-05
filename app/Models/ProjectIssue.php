@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Model;
 
 class ProjectIssue extends Model
@@ -35,5 +36,11 @@ class ProjectIssue extends Model
     public function status() : BelongsTo
     {
         return $this->belongsTo(Status::class);
+    }
+
+    // Define a one-to-many polymorphic relationship between project_issues and notifications
+    public function notifications(): MorphMany
+    {
+        return $this->morphMany(Notification::class, 'notifiable');
     }
 }

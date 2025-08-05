@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Events\ProjectCreated;
+use App\Events\ProjectIssueCreated;
+use App\Events\ProjectIssueResolved;
 
 class ProjectController extends Controller
 {
@@ -130,11 +132,14 @@ class ProjectController extends Controller
         $userId = $user->id;
         $status = Status::firstWhere('status_name', 'pending');
 
-        ProjectIssue::create([
+        $issue = ProjectIssue::create([
             ...$validated,
             'user_id' => $userId,
             'status_id' => $status->id
         ]);
+        
+        // dispatch event
+        ProjectIssueCreated::dispatch($issue);
 
         return back()->with('success', 'Issue created successfully!');
     }
@@ -161,6 +166,9 @@ class ProjectController extends Controller
             ...$validated,
             'status_id' => $status->id
         ]);
+
+        // dispatch event
+        ProjectIssueResolved::dispatch($issue);
 
         return back()->with('success', 'Issue resolved successfully!');
     }
