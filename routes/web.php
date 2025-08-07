@@ -9,6 +9,7 @@ use App\Http\Controllers\AccomplishmentController;
 use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\CommentController;
+use App\Http\Controllers\NotificationController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -80,6 +81,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/profile/details', [ProfileController::class, 'updateDetails'])->name('profile.details.update');
 
     Route::post('/comment', [CommentController::class, 'store'])->name('comment.store');
+
+    Route::get('/notification/latest', [NotificationController::class, 'latest'])->name('notification.latest');
+    Route::get('/notification', [NotificationController::class, 'index'])->name('notification');
 
     Route::middleware('user.type:super_admin,employee')->group(function () {
         Route::get('/leave', [LeaveController::class, 'index'])->name('leave');

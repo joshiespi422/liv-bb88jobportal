@@ -3,9 +3,10 @@ import Sidebar from "../Components/Sidebar.vue";
 import Header from "../Components/Header.vue";
 import ToastContainer from "../Components/toast/ToastContainer.vue";
 import { useSidebarStore } from "../Stores/sidebarStore.js";
+import { useNotificationStore } from "../Stores/notificationStore.js";
 import { useToast } from "../Composables/useToast";
 import { usePage } from "@inertiajs/vue3";
-import { watch } from "vue";
+import { watch, onMounted } from "vue";
 
 // for sidebar state
 const sidebarStore = useSidebarStore();
@@ -20,6 +21,11 @@ watch(
   },
   { immediate: true }
 );
+
+const notificationStore = useNotificationStore();
+onMounted(() => {
+  notificationStore.fetchNotifications();
+});
 </script>
 
 <template>

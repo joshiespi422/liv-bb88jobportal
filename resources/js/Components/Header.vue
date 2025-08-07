@@ -1,6 +1,39 @@
 <script setup>
 import { useSidebarStore } from "../Stores/sidebarStore.js";
 import { useThemeStore } from "../Stores/themeStore.js";
+import { useNotificationStore } from "../Stores/notificationStore.js";
+import { ref } from "vue";
+import { router } from "@inertiajs/vue3";
+import { onClickOutside } from "@vueuse/core";
+import { formatDistanceToNow } from "date-fns";
+
+const notificationStore = useNotificationStore();
+const showDropdown = ref(false);
+const dropdownRef = ref(null);
+const bellRef = ref(null);
+
+function toggleDropdown() {
+  showDropdown.value = !showDropdown.value;
+}
+
+onClickOutside(dropdownRef, (event) => {
+  if (
+    dropdownRef.value &&
+    !dropdownRef.value.contains(event.target) &&
+    bellRef.value &&
+    !bellRef.value.contains(event.target)
+  ) {
+    showDropdown.value = false;
+  }
+});
+
+function gotoNotifications() {
+  router.get(route("notifications.index"));
+}
+
+function formatTimeAgo(dateString) {
+  return formatDistanceToNow(new Date(dateString), { addSuffix: true });
+}
 
 const sidebarStore = useSidebarStore();
 const themeStore = useThemeStore();
@@ -35,10 +68,63 @@ const themeStore = useThemeStore();
           ]"
         ></i>
       </button>
-      <i
-        class="pi pi-bell p-2 text-xl mr-5 cursor-pointer text-white-primary bg-gradient-to-tr from-green-secondary to-green-primary-1 rounded-full hover:scale-110 transition-all duration-300 ease-in-out"
-      >
-      </i>
+      <div class="relative">
+        <i
+          ref="bellRef"
+          class="pi pi-bell p-2 text-xl mr-5 cursor-pointer text-white-primary bg-gradient-to-tr from-green-secondary to-green-primary-1 rounded-full hover:scale-110 transition-all duration-300 ease-in-out"
+          @click="toggleDropdown"
+        />
+        <span
+          v-if="notificationStore.unreadCount > 0"
+          class="absolute -top-1 right-3 bg-red-500 text-white font-bold text-xs rounded-full h-5 w-5 flex items-center justify-center"
+        >
+          {{ notificationStore.unreadCount }}
+        </span>
+
+        <!-- Notification Dropdown -->
+        <div
+          v-if="showDropdown"
+          ref="dropdownRef"
+          class="absolute right-5 mt-2 w-100 bg-base-100 shadow-lg rounded-md z-50 border-3 border-green-primary-1"
+        >
+          <div class="p-3 border-b-2 border-green-primary-1 font-semibold">
+            Notifications
+          </div>
+
+          <div class="max-h-70 overflow-y-auto list-scroll">
+            <template v-if="notificationStore.notifications.length">
+              <div
+                v-for="notification in notificationStore.notifications"
+                :key="notification.id"
+                :class="[
+                  'p-3 border-b border-base-300 cursor-pointer text-sm font-semibold',
+                  { 'bg-sky-100 text-black': !notification.read },
+                ]"
+              >
+                <div>{{ notification.message }}</div>
+                <div class="text-xs text-gray-500 mt-0.5">
+                  {{ formatTimeAgo(notification.created_at) }}
+                </div>
+              </div>
+            </template>
+            <div v-else class="p-3 text-center text-gray-500">
+              No notifications
+            </div>
+          </div>
+
+          <div
+            v-if="notificationStore.total > 20"
+            class="p-3 border-t text-center"
+          >
+            <button
+              @click="gotoNotifications"
+              class="text-blue-500 hover:underline font-medium"
+            >
+              Show all notifications ({{ notificationStore.total }})
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -67,5 +153,17 @@ const themeStore = useThemeStore();
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+}
+
+.list-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.list-scroll::-webkit-scrollbar-thumb {
+  border-radius: 3px;
+  background-color: var(--color-green-primary-1);
+}
+.list-scroll::-webkit-scrollbar-track {
+  margin: 6px;
+  background-color: transparent;
 }
 </style>
