@@ -43,6 +43,16 @@ class NotificationController extends Controller
         ]);
     }
 
+    public function markAllAsRead()
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        
+        $user->notifications()->where('read', false)->update(['read' => true]);
+        
+        return response()->json(['success' => true]);
+    }
+
     /**
      * Show the form for creating a new resource.
      */
@@ -88,6 +98,12 @@ class NotificationController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        
+        $notification = $user->notifications()->findOrFail($id);
+        $notification->delete();
+        
+        return response()->json(['success' => true]);
     }
 }

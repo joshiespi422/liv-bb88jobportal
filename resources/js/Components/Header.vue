@@ -28,8 +28,12 @@ onClickOutside(dropdownRef, (event) => {
 });
 
 function gotoNotifications() {
+  showDropdown.value = false;
   router.get(route("notifications.index"));
 }
+
+const markAllAsRead = () => notificationStore.markAllAsRead();
+const deleteNotif = (id) => notificationStore.deleteNotification(id);
 
 function formatTimeAgo(dateString) {
   return formatDistanceToNow(new Date(dateString), { addSuffix: true });
@@ -87,8 +91,17 @@ const themeStore = useThemeStore();
           ref="dropdownRef"
           class="absolute right-5 mt-2 w-100 bg-base-100 shadow-lg rounded-md z-50 border-3 border-green-primary-1"
         >
-          <div class="p-3 border-b-2 border-green-primary-1 font-semibold">
+          <div
+            class="p-3 border-b-2 border-green-primary-1 font-bold flex justify-between items-center"
+          >
             Notifications
+
+            <button
+              @click="markAllAsRead"
+              class="text-blue-500 underline text-sm hover:text-blue-600 cursor-pointer me-1"
+            >
+              Mark all as read
+            </button>
           </div>
 
           <div class="max-h-70 overflow-y-auto list-scroll">
@@ -97,13 +110,19 @@ const themeStore = useThemeStore();
                 v-for="notification in notificationStore.notifications"
                 :key="notification.id"
                 :class="[
-                  'p-3 border-b border-base-300 cursor-pointer text-sm font-semibold',
-                  { 'bg-sky-100 text-black': !notification.read },
+                  'p-3 border-b border-dashed border-gray-400 cursor-pointer text-sm font-semibold',
+                  { 'bg-indigo-100 text-black': !notification.read },
                 ]"
               >
                 <div>{{ notification.message }}</div>
                 <div class="text-xs text-gray-500 mt-0.5">
                   {{ formatTimeAgo(notification.created_at) }}
+                  <button
+                    @click="deleteNotif(notification.id)"
+                    class="text-red-500 underline text-xs hover:text-red-600 cursor-pointer ms-1"
+                  >
+                    Delete
+                  </button>
                 </div>
               </div>
             </template>

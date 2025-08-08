@@ -82,9 +82,11 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/comment', [CommentController::class, 'store'])->name('comment.store');
 
-    Route::get('/notification/latest', [NotificationController::class, 'latest'])->name('notification.latest');
     Route::get('/notification', [NotificationController::class, 'index'])->name('notification');
-
+    Route::get('/notification/latest', [NotificationController::class, 'latest'])->name('notification.latest');
+    Route::put('/notifications/mark-all-as-read', [NotificationController::class, 'markAllAsRead'])->name('notification.markAllAsRead');
+    Route::delete('/notifications/{notification}', [NotificationController::class, 'destroy'])->name('notification.destroy');
+    
     Route::middleware('user.type:super_admin,employee')->group(function () {
         Route::get('/leave', [LeaveController::class, 'index'])->name('leave');
         Route::get('/leave/{id}', [LeaveController::class, 'show'])->name('leave.show');
