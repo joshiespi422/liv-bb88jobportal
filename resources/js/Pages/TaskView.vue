@@ -6,6 +6,7 @@ import {
   longDate,
   longDateTime,
 } from "../Composables/useDateFormatter";
+import { useUrlParameter } from "../Composables/useUrlParameter";
 import DataTable from "../Components/DataTable.vue";
 import ListBox from "../Components/ListBox.vue";
 import DetailsModal from "../Components/DetailsModal.vue";
@@ -39,6 +40,8 @@ const props = defineProps({
 // logged in user data
 const page = usePage();
 const authUser = computed(() => page.props.auth.user);
+// for notification click
+const { onMountedHandleParameter } = useUrlParameter();
 
 // State for modals for forms
 const isUpdateModalOpen = ref(false);
@@ -326,6 +329,11 @@ const statusOptions = computed(() => {
     ];
   } else if (currentStatus === "for approval") {
     return [{ value: "for approval", label: "Still For Approval" }];
+  } else if (currentStatus === "revision") {
+    return [
+      { value: "revision", label: "Still For Revision" },
+      { value: "for approval", label: "For Approval" },
+    ];
   }
   return [];
 });
@@ -582,6 +590,8 @@ const fetchTaskDetails = async (taskId) => {
     isDetailsLoading.value = false;
   }
 };
+// Auto-handle 'open' parameter on mount
+onMountedHandleParameter("open", fetchTaskDetails);
 
 // Handler for viewing task details and details modal function
 const handleViewDetails = (task) => {
@@ -875,7 +885,10 @@ const showUpdateButton = computed(() => {
   // 3. Must be in "your_tasks" tab
   if (props.activeTab !== "your_tasks") return false;
 
-  // 4. Current user must be in assignees
+  // 4. Must be not in "done" status
+  if (selectedDetails.value.status === "done") return false;
+
+  // 5. Current user must be in assignees
   const isAssignee = selectedDetails.value.assignees.some(
     (assignee) => assignee.id === authUser.value.id
   );

@@ -32,6 +32,11 @@ function gotoNotifications() {
   router.get(route("notifications.index"));
 }
 
+function handleNotificationClick(notification) {
+  showDropdown.value = false;
+  notificationStore.handleNotificationClick(notification);
+}
+
 const markAllAsRead = () => notificationStore.markAllAsRead();
 const deleteNotif = (id) => notificationStore.deleteNotification(id);
 
@@ -109,6 +114,7 @@ const themeStore = useThemeStore();
               <div
                 v-for="notification in notificationStore.notifications"
                 :key="notification.id"
+                @click="handleNotificationClick(notification)"
                 :class="[
                   'p-3 border-b border-dashed border-gray-400 cursor-pointer text-sm font-semibold',
                   { 'bg-indigo-100 text-black': !notification.read },
@@ -118,7 +124,7 @@ const themeStore = useThemeStore();
                 <div class="text-xs text-gray-500 mt-0.5">
                   {{ formatTimeAgo(notification.created_at) }}
                   <button
-                    @click="deleteNotif(notification.id)"
+                    @click.stop="deleteNotif(notification.id)"
                     class="text-red-500 underline text-xs hover:text-red-600 cursor-pointer ms-1"
                   >
                     Delete

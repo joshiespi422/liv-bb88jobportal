@@ -2,6 +2,7 @@
 import { ref, h, computed, reactive } from "vue";
 import { useForm, usePage, router } from "@inertiajs/vue3";
 import { formatDate, longDateTime } from "../Composables/useDateFormatter";
+import { useUrlParameter } from "../Composables/useUrlParameter";
 import DataTable from "../Components/DataTable.vue";
 import ListBox from "../Components/ListBox.vue";
 import DetailsModal from "../Components/DetailsModal.vue";
@@ -33,6 +34,8 @@ const props = defineProps({
 // logged in user data
 const page = usePage();
 const authUser = computed(() => page.props.auth.user);
+// for notification click
+const { onMountedHandleParameter } = useUrlParameter();
 
 // For editing an accomplishment
 const isFormModalOpen = ref(false);
@@ -233,6 +236,8 @@ const fetchAccomplishDetails = async (accomplishmentId) => {
     isDetailsLoading.value = false;
   }
 };
+// Auto-handle 'open' parameter on mount
+onMountedHandleParameter("open", fetchAccomplishDetails);
 
 // Handler for viewing accomplishment details and details modal function
 const handleViewDetails = (accomplishment) => {

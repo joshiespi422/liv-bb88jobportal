@@ -182,9 +182,12 @@ class TaskController extends Controller
 
     public function updateTask(Request $request, Task $task)
     {
+
         // 1. Authorization
         if (!$task->users->contains($request->user())) {
             abort(403, 'not authorized');
+        } elseif ($task->status->status_name === 'done') {
+            abort(403, 'task is already done');
         }
 
         // 2. Validation
@@ -193,7 +196,7 @@ class TaskController extends Controller
             'description' => 'required|string',
             'link' => 'nullable|url',
             'attachment' => 'nullable|file|mimes:jpg,jpeg,png,pdf,docx,doc|max:5120', 
-            'status' => 'required|in:in progress,for approval',
+            'status' => 'required|in:in progress,for approval,revision',
         ]);
 
         

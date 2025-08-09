@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Task;
+use App\Models\Accomplishment;
 
 class NotificationController extends Controller
 {
@@ -31,6 +33,14 @@ class NotificationController extends Controller
         $user = Auth::user();
         
         $notifications = $user->notifications()
+            ->with([
+                'notifiable' => function ($morphTo) {
+                    $morphTo->morphWith([
+                        Task::class => ['userType', 'status', 'users', 'department'],
+                        Accomplishment::class => ['user.userType','tasks.department']
+                    ]);
+                }
+            ])
             ->orderBy('created_at', 'desc')
             ->take(20)
             ->get();
@@ -49,6 +59,17 @@ class NotificationController extends Controller
         $user = Auth::user();
         
         $user->notifications()->where('read', false)->update(['read' => true]);
+        
+        return response()->json(['success' => true]);
+    }
+
+    public function markAsRead($id)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        
+        $notification = $user->notifications()->findOrFail($id);
+        $notification->update(['read' => true]);
         
         return response()->json(['success' => true]);
     }

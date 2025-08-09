@@ -1,4 +1,10 @@
 import { defineStore } from "pinia";
+import { computed } from "vue";
+import { usePage, router } from "@inertiajs/vue3";
+
+// logged in user data
+const page = usePage();
+const authUser = computed(() => page.props.auth.user);
 
 export const useNotificationStore = defineStore("notification", {
   state: () => ({
@@ -40,6 +46,97 @@ export const useNotificationStore = defineStore("notification", {
       } catch (error) {
         console.error("Error deleting notification:", error);
       }
+    },
+
+    async markAsRead(id) {
+      try {
+        await axios.patch(
+          route("notification.markAsRead", { notification: id })
+        );
+        // Optimistically update local state
+        const index = this.notifications.findIndex((n) => n.id === id);
+        if (index !== -1) {
+          this.notifications[index].read = true;
+        }
+      } catch (error) {
+        console.error("Error marking notification as read:", error);
+      }
+    },
+
+    async handleNotificationClick(notification) {
+      // Mark as read if unread
+      if (!notification.read) {
+        await this.markAsRead(notification.id);
+      }
+
+      // Navigate based on notifiable type
+      switch (notification.notifiable_type) {
+        case "App\\Models\\Task":
+          this.navigateToTask(notification);
+          break;
+        case "App\\Models\\Accomplishment":
+          this.navigateToAccomplishment(notification);
+          break;
+        // Add more cases as needed
+      }
+    },
+
+    navigateToTask(notification) {
+      const task = notification.notifiable;
+      const userType = task.user_type.type_name;
+      let activeTab = "active_tasks";
+
+      // Determine tab based on task status
+      if (task.status.status_name === "done") {
+        activeTab = "archived";
+      } else if (task.users.some((u) => u.id === authUser.value.id)) {
+        activeTab = "your_tasks";
+      }
+
+      const routeParams = {
+        tab: activeTab,
+        type: userType,
+        open: task.id,
+      };
+
+      // Add dept only for super_admin
+      if (authUser.value.userType === "super_admin") {
+        routeParams.dept = task.department?.id;
+      }
+
+      router.visit(route("task", routeParams), {
+        preserveState: false,
+        preserveScroll: true,
+        replace: false,
+      });
+    },
+
+    navigateToAccomplishment(notification) {
+      const accomplishment = notification.notifiable;
+      const userType = accomplishment.user.user_type.type_name;
+      let activeTab = "all_accomplishments";
+
+      // Determine tab based on ownership
+      if (accomplishment.user.id === authUser.value.id) {
+        activeTab = "your_accomplishments";
+      }
+
+      const routeParams = {
+        tab: activeTab,
+        type: userType,
+        open: accomplishment.id,
+      };
+
+      // Add dept only for super_admin
+      if (authUser.value.userType === "super_admin") {
+        routeParams.dept = accomplishment.tasks[0]?.department?.id;
+      }
+
+      router.visit(route("accomplishment", routeParams), {
+        preserveState: false,
+        preserveScroll: true,
+        replace: false,
+      });
     },
   },
   getters: {
