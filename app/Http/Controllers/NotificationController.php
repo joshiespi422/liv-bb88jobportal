@@ -7,6 +7,7 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Task;
 use App\Models\Accomplishment;
+use App\Models\Leave;
 
 class NotificationController extends Controller
 {
@@ -37,7 +38,8 @@ class NotificationController extends Controller
                 'notifiable' => function ($morphTo) {
                     $morphTo->morphWith([
                         Task::class => ['userType', 'status', 'users', 'department'],
-                        Accomplishment::class => ['user.userType','tasks.department']
+                        Accomplishment::class => ['user.userType','tasks.department'],
+                        Leave::class => ['leaveType', 'user.employeeDetails.department']
                     ]);
                 }
             ])

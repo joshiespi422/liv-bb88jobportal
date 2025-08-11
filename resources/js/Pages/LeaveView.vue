@@ -2,6 +2,7 @@
 import { ref, computed, h, reactive, watch } from "vue";
 import { usePage, router, useForm } from "@inertiajs/vue3";
 import { longDate } from "../Composables/useDateFormatter";
+import { useUrlParameter } from "../Composables/useUrlParameter";
 import DataTable from "../Components/DataTable.vue";
 import ListBox from "../Components/ListBox.vue";
 import DetailsModal from "../Components/DetailsModal.vue";
@@ -34,6 +35,8 @@ const props = defineProps({
 // logged in user data
 const page = usePage();
 const authUser = computed(() => page.props.auth.user);
+// for notification click
+const { onMountedHandleParameter } = useUrlParameter();
 
 // State for modals for forms
 const isRequestModalOpen = ref(false);
@@ -428,6 +431,8 @@ const fetchLeaveDetails = async (leaveId) => {
     isDetailsLoading.value = false;
   }
 };
+// Auto-handle 'open' parameter on mount
+onMountedHandleParameter("open", fetchLeaveDetails);
 // Handler for viewing leave details and details modal function
 const handleViewDetails = (leaveId) => {
   fetchLeaveDetails(leaveId);

@@ -77,6 +77,12 @@ export const useNotificationStore = defineStore("notification", {
         case "App\\Models\\Accomplishment":
           this.navigateToAccomplishment(notification);
           break;
+        case "App\\Models\\Project":
+          this.navigateToProject(notification);
+          break;
+        case "App\\Models\\Leave":
+          this.navigateToLeave(notification);
+          break;
         // Add more cases as needed
       }
     },
@@ -133,6 +139,41 @@ export const useNotificationStore = defineStore("notification", {
       }
 
       router.visit(route("accomplishment", routeParams), {
+        preserveState: false,
+        preserveScroll: true,
+        replace: false,
+      });
+    },
+
+    navigateToProject(notification) {
+      const project = notification.notifiable;
+      router.visit(route("project", { open: project.id }), {
+        preserveState: false,
+        preserveScroll: true,
+        replace: false,
+      });
+    },
+
+    navigateToLeave(notification) {
+      const leave = notification.notifiable;
+      let activeTab = "regular";
+
+      // Determine tab based on leave type
+      if (leave.leave_type.name === "Special") {
+        activeTab = "special";
+      }
+
+      const routeParams = {
+        tab: activeTab,
+        open: leave.id,
+      };
+
+      // Add dept only for super_admin
+      if (authUser.value.userType === "super_admin") {
+        routeParams.dept = leave.user?.employee_details?.department?.id;
+      }
+
+      router.visit(route("leave", routeParams), {
         preserveState: false,
         preserveScroll: true,
         replace: false,

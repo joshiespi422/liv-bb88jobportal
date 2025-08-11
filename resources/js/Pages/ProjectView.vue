@@ -6,6 +6,7 @@ import {
   longDateTime,
   shortDateTime,
 } from "../Composables/useDateFormatter";
+import { useUrlParameter } from "../Composables/useUrlParameter";
 import DataTable from "../Components/DataTable.vue";
 import DetailsModal from "../Components/DetailsModal.vue";
 import FormModal from "../Components/FormModal.vue";
@@ -27,6 +28,8 @@ const props = defineProps({
 // logged in user data
 const page = usePage();
 const authUser = computed(() => page.props.auth.user);
+// for notification click
+const { onMountedHandleParameter } = useUrlParameter();
 
 // State for modals for forms
 const isNewProjectModalOpen = ref(false);
@@ -405,6 +408,9 @@ const fetchProjectDetails = async (projectId) => {
     isProjectLoading.value = false;
   }
 };
+// Auto-handle 'open' parameter on mount
+onMountedHandleParameter("open", fetchProjectDetails);
+
 // Handler for viewing project details and details modal function
 const handleViewDetails = (projectId) => {
   fetchProjectDetails(projectId);
