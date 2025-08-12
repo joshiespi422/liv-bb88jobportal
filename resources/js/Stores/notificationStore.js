@@ -83,6 +83,26 @@ export const useNotificationStore = defineStore("notification", {
         case "App\\Models\\Leave":
           this.navigateToLeave(notification);
           break;
+        case "App\\Models\\Comment":
+          // If the notification is for a comment, redirect to the comment's parent.
+          const parent = notification.notifiable.commentable;
+          if (!parent) return; // Safety check
+
+          // Create a "proxy" notification object to pass to the existing navigation functions.
+          const parentNotification = { notifiable: parent };
+
+          switch (notification.notifiable.commentable_type) {
+            case "App\\Models\\Task":
+              this.navigateToTask(parentNotification);
+              break;
+            case "App\\Models\\Accomplishment":
+              this.navigateToAccomplishment(parentNotification);
+              break;
+            case "App\\Models\\Project":
+              this.navigateToProject(parentNotification);
+              break;
+          }
+          break;
         // Add more cases as needed
       }
     },

@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Task;
 use App\Models\Accomplishment;
 use App\Models\Leave;
+use App\Models\Project;
+use App\Models\Comment;
 
 class NotificationController extends Controller
 {
@@ -38,8 +40,16 @@ class NotificationController extends Controller
                 'notifiable' => function ($morphTo) {
                     $morphTo->morphWith([
                         Task::class => ['userType', 'status', 'users', 'department'],
-                        Accomplishment::class => ['user.userType','tasks.department'],
-                        Leave::class => ['leaveType', 'user.employeeDetails.department']
+                        Accomplishment::class => ['user.userType', 'tasks.department'],
+                        Project::class => [],
+                        Leave::class => ['leaveType', 'user.employeeDetails.department'],
+                        Comment::class => ['commentable' => function ($morphTo) {
+                            $morphTo->morphWith([
+                                Task::class => ['userType', 'status', 'users', 'department'],
+                                Accomplishment::class => ['user.userType', 'tasks.department'],
+                                Project::class => [],
+                            ]);
+                        }],
                     ]);
                 }
             ])
