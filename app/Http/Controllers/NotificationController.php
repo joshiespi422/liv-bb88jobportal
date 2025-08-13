@@ -22,8 +22,26 @@ class NotificationController extends Controller
         $user = Auth::user();
         
         $notifications = $user->notifications()
+            // ✨ Eager load the same relationships here.
+            ->with([
+                'notifiable' => function ($morphTo) {
+                    $morphTo->morphWith([
+                        Task::class => ['userType', 'status', 'users', 'department'],
+                        Accomplishment::class => ['user.userType', 'tasks.department'],
+                        Project::class => [],
+                        Leave::class => ['leaveType', 'user.employeeDetails.department'],
+                        Comment::class => ['commentable' => function ($morphTo) {
+                            $morphTo->morphWith([
+                                Task::class => ['userType', 'status', 'users', 'department'],
+                                Accomplishment::class => ['user.userType', 'tasks.department'],
+                                Project::class => [],
+                            ]);
+                        }],
+                    ]);
+                }
+            ])
             ->orderBy('created_at', 'desc')
-            ->paginate(20);
+            ->paginate(20)->onEachSide(1);
 
         return Inertia::render('NotificationView', [
             'notifications' => $notifications
@@ -54,7 +72,7 @@ class NotificationController extends Controller
                 }
             ])
             ->orderBy('created_at', 'desc')
-            ->take(20)
+            ->take(10)
             ->get();
 
         $total = $user->notifications()->count();
@@ -84,6 +102,17 @@ class NotificationController extends Controller
         $notification->update(['read' => true]);
         
         return response()->json(['success' => true]);
+    }
+
+    public function destroyAll()
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        
+        $user->notifications()->delete();
+        
+        // Redirect back with a success flash message.
+        return back()->with('success', 'All notifications have been deleted!');
     }
 
     /**
@@ -137,6 +166,6 @@ class NotificationController extends Controller
         $notification = $user->notifications()->findOrFail($id);
         $notification->delete();
         
-        return response()->json(['success' => true]);
+        return back()->with('success', 'Notification has been deleted!');
     }
 }

@@ -84,9 +84,10 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/notification', [NotificationController::class, 'index'])->name('notification');
     Route::get('/notification/latest', [NotificationController::class, 'latest'])->name('notification.latest');
-    Route::put('/notifications/mark-all-as-read', [NotificationController::class, 'markAllAsRead'])->name('notification.markAllAsRead');
-    Route::delete('/notifications/{notification}', [NotificationController::class, 'destroy'])->name('notification.destroy');
-    Route::patch('/notifications/{notification}/mark-as-read', [NotificationController::class, 'markAsRead'])->name('notification.markAsRead');
+    Route::put('/notification/mark-all-as-read', [NotificationController::class, 'markAllAsRead'])->name('notification.markAllAsRead');
+    Route::delete('/notification/destroy-all', [NotificationController::class, 'destroyAll'])->name('notification.destroyAll');
+    Route::delete('/notification/{notification}', [NotificationController::class, 'destroy'])->name('notification.destroy');
+    Route::patch('/notification/{notification}/mark-as-read', [NotificationController::class, 'markAsRead'])->name('notification.markAsRead');
     
     Route::middleware('user.type:super_admin,employee')->group(function () {
         Route::get('/leave', [LeaveController::class, 'index'])->name('leave');

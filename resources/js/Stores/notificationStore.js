@@ -37,15 +37,31 @@ export const useNotificationStore = defineStore("notification", {
       }
     },
 
-    async deleteNotification(id) {
-      try {
-        await axios.delete(route("notification.destroy", { notification: id }));
-        // Remove from local state and update total
-        this.notifications = this.notifications.filter((n) => n.id !== id);
-        this.total = Math.max(0, this.total - 1);
-      } catch (error) {
-        console.error("Error deleting notification:", error);
-      }
+    deleteNotification(id) {
+      router.delete(route("notification.destroy", { notification: id }), {
+        preserveScroll: true,
+        onSuccess: () => {
+          if (this.notifications.length === 1) {
+            // If the deleted latest notification was the last one, refetch
+            this.fetchNotifications();
+          } else {
+            // Remove from local state and update total
+            this.notifications = this.notifications.filter((n) => n.id !== id);
+            this.total = Math.max(0, this.total - 1);
+          }
+        },
+      });
+    },
+
+    deleteAllNotifications() {
+      router.delete(route("notification.destroyAll"), {
+        preserveScroll: true,
+        onSuccess: () => {
+          // Reset local state
+          this.notifications = [];
+          this.total = 0;
+        },
+      });
     },
 
     async markAsRead(id) {

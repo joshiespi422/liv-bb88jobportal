@@ -29,7 +29,7 @@ onClickOutside(dropdownRef, (event) => {
 
 function gotoNotifications() {
   showDropdown.value = false;
-  router.get(route("notifications.index"));
+  router.get(route("notification"));
 }
 
 function handleNotificationClick(notification) {
@@ -38,7 +38,10 @@ function handleNotificationClick(notification) {
 }
 
 const markAllAsRead = () => notificationStore.markAllAsRead();
-const deleteNotif = (id) => notificationStore.deleteNotification(id);
+const deleteNotif = (id) => {
+  showDropdown.value = false;
+  notificationStore.deleteNotification(id);
+};
 
 function formatTimeAgo(dateString) {
   return formatDistanceToNow(new Date(dateString), { addSuffix: true });
@@ -132,18 +135,15 @@ const themeStore = useThemeStore();
                 </div>
               </div>
             </template>
-            <div v-else class="p-3 text-center text-gray-500">
+            <div v-else class="p-3 font-semibold text-center opacity-70">
               No notifications
             </div>
           </div>
 
-          <div
-            v-if="notificationStore.total > 20"
-            class="p-3 border-t text-center"
-          >
+          <div class="p-3 border-t text-center">
             <button
               @click="gotoNotifications"
-              class="text-blue-500 hover:underline font-medium"
+              class="text-blue-500 hover:underline font-medium cursor-pointer"
             >
               Show all notifications ({{ notificationStore.total }})
             </button>
