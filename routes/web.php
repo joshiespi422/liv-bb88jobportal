@@ -10,6 +10,7 @@ use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -21,9 +22,7 @@ Route::middleware('guest')->group(function () {
 
 // Authenticated routes
 Route::middleware('auth')->group(function () {
-    Route::get('/', function () {
-        return Inertia::render('DashboardView');
-    })->name('dashboard');
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::middleware('user.type:super_admin,employee')->group(function () {
         Route::prefix('team')->name('team.')->group(function () {

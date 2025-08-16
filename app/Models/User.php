@@ -130,6 +130,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Defines a one-to-many relationship with users and time_logs
+     */
+    public function timeLogs(): HasMany
+    {
+        return $this->hasMany(TimeLog::class);
+    }
+
+    /**
      * Check if the user has a specific role.
      *
      * @param string $typeName
