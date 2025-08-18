@@ -1,4 +1,4 @@
-import { format, parseISO } from "date-fns";
+import { format, parseISO, parse } from "date-fns";
 
 export const formatDate = (dateString, pattern = "MMMM d, yyyy") => {
   if (!dateString) return "N/A";
@@ -13,6 +13,18 @@ export const formatDate = (dateString, pattern = "MMMM d, yyyy") => {
   } catch (error) {
     console.error("Date formatting error:", error);
     return "Invalid Date";
+  }
+};
+
+export const formatTime = (timeString, pattern = "h:mm a") => {
+  if (!timeString) return "N/A";
+
+  try {
+    const date = parse(timeString, "HH:mm:ss", new Date());
+    return format(date, pattern);
+  } catch (error) {
+    console.error("Time formatting error:", error);
+    return "Invalid Time";
   }
 };
 
