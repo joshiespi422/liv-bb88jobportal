@@ -1,6 +1,6 @@
 <script setup>
-import { computed } from "vue";
-import { usePage } from "@inertiajs/vue3";
+import { computed, h, onMounted, onUnmounted, ref } from "vue";
+import { usePage, router } from "@inertiajs/vue3";
 import { formatDate } from "../Composables/useDateFormatter";
 import DataTable from "../Components/DataTable.vue";
 import { formatTime } from "../Composables/useDateFormatter";
@@ -20,9 +20,13 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  onlineUsers: {
+    type: Array,
+    default: () => [],
+  },
 });
 
-// Tanstack Table columns definition
+// Tanstack Table columns definition for attendance
 const attendanceColumns = [
   {
     accessorKey: "date",
@@ -49,6 +53,75 @@ const attendanceColumns = [
     header: "LAST OUT",
   },
 ];
+
+// Tanstack Table columns definition for online users
+const onlineUsersColumns = [
+  {
+    accessorKey: "name",
+    header: "NAME",
+  },
+  {
+    accessorKey: "department",
+    header: "DEPARTMENT",
+  },
+  {
+    accessorKey: "position",
+    header: "POSITION",
+  },
+  {
+    accessorKey: "status",
+    header: "STATUS",
+    // Custom cell render to apply green text style
+    cell: ({ getValue }) =>
+      h("span", { class: "font-bold text-green-600" }, getValue()),
+  },
+];
+
+// Auto-refresh logic
+let refreshInterval = null;
+let activityTimeout = null;
+const userIsActive = ref(true);
+
+// Marks user as active and resets the inactivity timer
+const handleUserActivity = () => {
+  userIsActive.value = true;
+  clearTimeout(activityTimeout);
+  activityTimeout = setTimeout(() => {
+    userIsActive.value = false; // set false after 3 minutes of inactivity
+  }, 3 * 60 * 1000);
+};
+
+// Fetches fresh data using an efficient partial reload
+const refreshOnlineUsers = () => {
+  if (authUser.value?.userType === "super_admin" && userIsActive.value) {
+    router.reload({
+      only: ["onlineUsers"], // IMPORTANT: Only fetch the 'onlineUsers' prop
+      preserveState: true,
+      preserveScroll: true,
+      onSuccess: () => console.log("Refreshed online users."),
+    });
+  }
+};
+
+// Set up listeners and intervals when the component is mounted
+onMounted(() => {
+  if (authUser.value?.userType === "super_admin") {
+    window.addEventListener("mousemove", handleUserActivity);
+    window.addEventListener("keydown", handleUserActivity);
+    handleUserActivity(); // Initial call
+    refreshInterval = setInterval(refreshOnlineUsers, 2 * 60 * 1000); // Refresh every 2 minutes
+  }
+});
+
+// Clean up listeners and intervals to prevent memory leaks
+onUnmounted(() => {
+  if (authUser.value?.userType === "super_admin") {
+    clearInterval(refreshInterval);
+    clearTimeout(activityTimeout);
+    window.removeEventListener("mousemove", handleUserActivity);
+    window.removeEventListener("keydown", handleUserActivity);
+  }
+});
 </script>
 
 <template>
@@ -124,7 +197,7 @@ const attendanceColumns = [
         </div>
 
         <div class="flex items-center gap-4 p-4 rounded-3xl bg-base-100">
-          <div class="w-24">
+          <div class="w-24 flex-none">
             <img src="../../assets/img/timein-icon.png" />
           </div>
 
@@ -146,7 +219,7 @@ const attendanceColumns = [
         </div>
 
         <div class="flex items-center gap-4 p-4 rounded-3xl bg-base-100">
-          <div class="w-24">
+          <div class="w-24 flex-none">
             <img src="../../assets/img/timeout-icon.png" />
           </div>
 
@@ -167,6 +240,53 @@ const attendanceColumns = [
           </div>
         </div>
       </div>
+    </div>
+
+    <div
+      v-if="authUser?.userType === 'super_admin'"
+      class="grid grid-cols-3 p-4 rounded-2xl shadow-md bg-base-200 space-x-4"
+    >
+      <div class="flex items-center gap-4 p-4 rounded-3xl bg-base-100">
+        <div class="w-24 flex-none">
+          <img src="../../assets/img/total-employee-icon.png" />
+        </div>
+
+        <div class="flex flex-col space-y-2 truncate">
+          <h3 class="text-3xl font-bold">
+            {{ props.totalCounts?.users }}
+          </h3>
+          <p class="text-slate-500 font-semibold">Total Users</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-4 p-4 rounded-3xl bg-base-100">
+        <div class="w-24 flex-none">
+          <img src="../../assets/img/total-task-icon.png" />
+        </div>
+
+        <div class="flex flex-col space-y-2 truncate">
+          <h3 class="text-3xl font-bold">
+            {{ props.totalCounts?.tasks }}
+          </h3>
+          <p class="text-slate-500 font-semibold">Total Tasks</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-4 p-4 rounded-3xl bg-base-100">
+        <div class="w-24 flex-none">
+          <img src="../../assets/img/total-accomplish-icon.png" />
+        </div>
+
+        <div class="flex flex-col space-y-2 truncate">
+          <h3 class="text-3xl font-bold">
+            {{ props.totalCounts?.accomplishments }}
+          </h3>
+          <p class="text-slate-500 font-semibold">Total Accomplishments</p>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="authUser?.userType === 'super_admin'" class="mt-7">
+      <h1 class="text-2xl lg:text-3xl font-bold mx-4 mb-3">Online Users</h1>
+      <DataTable :data="props.onlineUsers" :columns="onlineUsersColumns" />
     </div>
 
     <!-- Attendance Table -->

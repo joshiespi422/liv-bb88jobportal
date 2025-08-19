@@ -30,6 +30,34 @@ class DashboardController extends Controller
                 'tasks' => Task::count(),
                 'accomplishments' => Accomplishment::count(),
             ];
+
+            // Query for Online Users
+            $onlineUsers = User::whereHas('timeLogs', function ($query) {
+                $query->whereDate('date', now()->toDateString())
+                      ->whereNotNull('time_in')
+                      ->whereNull('time_out');
+            })
+            ->with(['employeeDetails.department', 'internDetails.department'])
+            ->get()
+            ->map(function ($onlineUser) {
+                // Determine department from either employee or intern details
+                $department = 'N/A';
+                if ($onlineUser->employeeDetails && $onlineUser->employeeDetails->department) {
+                    $department = $onlineUser->employeeDetails->department->dept_name;
+                } elseif ($onlineUser->internDetails && $onlineUser->internDetails->department) {
+                    $department = $onlineUser->internDetails->department->dept_name;
+                }
+
+                return [
+                    'name'       => $onlineUser->name,
+                    'position'   => $onlineUser->position,
+                    'department' => $department,
+                    'status'     => 'Online',
+                ];
+            });
+            
+            $props['onlineUsers'] = $onlineUsers;
+
         } else {
             // Determine relationship based on user type
             $relation = match($userType) {
