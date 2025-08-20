@@ -1,9 +1,11 @@
 <script setup>
-import { computed, h, onMounted, onUnmounted, ref } from "vue";
+import { computed, h, onMounted, onUnmounted, ref, watch } from "vue";
 import { usePage, router } from "@inertiajs/vue3";
 import { formatDate } from "../Composables/useDateFormatter";
 import DataTable from "../Components/DataTable.vue";
-import { formatTime } from "../Composables/useDateFormatter";
+import { formatTime, shortDate } from "../Composables/useDateFormatter";
+import LocationMap from "../Components/LocationMap.vue";
+import Combobox from "../Components/forms/ComboBox.vue";
 
 // logged in user data
 const page = usePage();
@@ -24,33 +26,46 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  timeLogLocations: {
+    type: Array,
+    default: () => [],
+  },
+  usersForMapFilter: {
+    type: Array,
+    default: () => [],
+  },
 });
 
 // Tanstack Table columns definition for attendance
 const attendanceColumns = [
   {
-    accessorKey: "date",
     header: "DATE",
+    accessorFn: (row) => shortDate(row.date),
   },
   {
-    accessorKey: "1stIn",
     header: "FIRST IN",
+    accessorFn: (row) =>
+      row.firstIn !== "N/A" ? formatTime(row.firstIn) : "N/A",
   },
   {
-    accessorKey: "2ndIn",
     header: "1ST BREAK",
+    accessorFn: (row) =>
+      row.secondIn !== "N/A" ? formatTime(row.secondIn) : "N/A",
   },
   {
-    accessorKey: "3rdIn",
     header: "LUNCH",
+    accessorFn: (row) =>
+      row.thirdIn !== "N/A" ? formatTime(row.thirdIn) : "N/A",
   },
   {
-    accessorKey: "4thIn",
     header: "2ND BREAK",
+    accessorFn: (row) =>
+      row.fourthIn !== "N/A" ? formatTime(row.fourthIn) : "N/A",
   },
   {
-    accessorKey: "lastOut",
     header: "LAST OUT",
+    accessorFn: (row) =>
+      row.lastOut !== "N/A" ? formatTime(row.lastOut) : "N/A",
   },
 ];
 
@@ -122,13 +137,37 @@ onUnmounted(() => {
     window.removeEventListener("keydown", handleUserActivity);
   }
 });
+
+// State for the user selection filter
+const selectedUser = ref(
+  props.usersForMapFilter[0] || { id: "all", name: "All Users" }
+);
+// this computed property decides IF the map should fit its bounds
+const shouldFitBounds = computed(() => {
+  // Only fit bounds if a specific user is selected
+  return selectedUser.value && selectedUser.value.id !== "all";
+});
+// The data-fetching watcher logic for user selection
+watch(selectedUser, (newUser) => {
+  if (newUser) {
+    router.get(
+      route("dashboard"),
+      { user_id: newUser.id },
+      {
+        preserveState: true,
+        preserveScroll: true,
+        only: ["timeLogLocations"],
+      }
+    );
+  }
+});
 </script>
 
 <template>
   <div class="p-4 md:p-8 lg:p-12 xl:p-16">
     <div
       v-if="authUser?.userType !== 'super_admin'"
-      class="p-4 rounded-2xl shadow-md bg-base-200 border-3 border-green-primary-1 space-y-5"
+      class="p-4 rounded-2xl shadow-md bg-base-200 border-4 border-green-primary-1 space-y-5"
     >
       <div class="flex items-center justify-between">
         <h1 class="text-xl xl:text-2xl font-bold flex-none">
@@ -149,7 +188,7 @@ onUnmounted(() => {
       </div>
 
       <div class="grid grid-cols-2 gap-4">
-        <div class="flex items-center gap-4 p-4 rounded-3xl bg-base-100">
+        <div class="flex items-center gap-5 p-4 rounded-3xl bg-base-100">
           <div class="avatar">
             <div
               class="ring-indigo-500 ring-offset-base-300 w-24 rounded-full ring-3 ring-offset-2"
@@ -205,7 +244,7 @@ onUnmounted(() => {
             <h3 class="text-lg font-bold">TIME IN</h3>
             <div
               v-if="props.userDetails?.time_in?.length"
-              class="text-slate-500 font-semibold"
+              class="text-slate-500 font-semibold leading-5"
             >
               <div
                 v-for="(time, index) in props.userDetails.time_in"
@@ -225,18 +264,29 @@ onUnmounted(() => {
 
           <div>
             <h3 class="text-lg font-bold">TIME OUT</h3>
-            <div
-              v-if="props.userDetails?.time_out?.length"
-              class="text-slate-500 font-semibold"
-            >
-              <div
-                v-for="(time, index) in props.userDetails.time_out"
-                :key="`out-${index}`"
-              >
-                {{ formatTime(time) }}
+            <div class="text-slate-500 font-semibold leading-5">
+              <div v-if="props.userDetails?.time_out?.length">
+                <div
+                  v-for="(time, index) in props.userDetails.time_out"
+                  :key="`out-${index}`"
+                >
+                  {{ formatTime(time) }}
+                </div>
+
+                <!-- Add N/A if time_in is longer than time_out -->
+                <div
+                  v-for="n in Math.max(
+                    props.userDetails.time_in.length -
+                      props.userDetails.time_out.length,
+                    0
+                  )"
+                  :key="`na-${n}`"
+                >
+                  N/A
+                </div>
               </div>
+              <p v-else>N/A</p>
             </div>
-            <p v-else class="text-slate-500 font-semibold">N/A</p>
           </div>
         </div>
       </div>
@@ -287,6 +337,37 @@ onUnmounted(() => {
     <div v-if="authUser?.userType === 'super_admin'" class="mt-7">
       <h1 class="text-2xl lg:text-3xl font-bold mx-4 mb-3">Online Users</h1>
       <DataTable :data="props.onlineUsers" :columns="onlineUsersColumns" />
+      <div
+        class="p-4 mt-7 rounded-2xl shadow-md border-4 border-green-primary-1"
+      >
+        <div class="flex items-center justify-between mb-4">
+          <h1 class="text-2xl lg:text-3xl font-bold mx-2">Map Coordinates</h1>
+          <div class="w-full max-w-xs z-[1001]">
+            <Combobox
+              v-model="selectedUser"
+              :options="props.usersForMapFilter"
+              placeholder="Filter by user..."
+            />
+          </div>
+        </div>
+
+        <LocationMap
+          :locations="props.timeLogLocations"
+          :fit-bounds="shouldFitBounds"
+        >
+          <template #popup="{ location }">
+            <div class="font-sans space-y-2">
+              <div class="font-bold">{{ location.name }}</div>
+              <hr />
+              <div class="mt-3">
+                <strong>Time In:</strong> {{ formatTime(location.time_in) }}
+              </div>
+              <div><strong>Position:</strong> {{ location.position }}</div>
+              <div><strong>Department:</strong> {{ location.department }}</div>
+            </div>
+          </template>
+        </LocationMap>
+      </div>
     </div>
 
     <!-- Attendance Table -->

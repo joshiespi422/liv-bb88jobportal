@@ -145,6 +145,7 @@ const wrapperClasses = computed(() => {
           :disabled="disabled"
           @change="query = $event.target.value"
           @focus="open = true"
+          @click="open = true"
         />
       </div>
     </div>

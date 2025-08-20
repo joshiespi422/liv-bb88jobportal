@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('time_logs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('restrict');
-            $table->time('time_in')->nullable();
+            $table->time('time_in');
             $table->time('time_out')->nullable();
             $table->date('date')->nullable();
             $table->string('ip_address', 45)->nullable();

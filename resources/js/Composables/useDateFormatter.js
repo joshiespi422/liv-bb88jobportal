@@ -29,7 +29,7 @@ export const formatTime = (timeString, pattern = "h:mm a") => {
 };
 
 // Pre-configured formatters
-// export const shortDate = (dateString) => formatDate(dateString, 'MM/dd/yyyy');
+export const shortDate = (dateString) => formatDate(dateString, "MMM d, yyyy");
 export const longDate = (dateString) =>
   formatDate(dateString, "EEE, MMMM d, yyyy");
 

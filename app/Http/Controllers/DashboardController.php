@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Carbon;
 use App\Models\User;
 use App\Models\Task;
 use App\Models\Accomplishment;
@@ -57,6 +58,61 @@ class DashboardController extends Controller
             });
             
             $props['onlineUsers'] = $onlineUsers;
+
+            // --- LOGIC FOR MAP ---
+            // 1. Get the list of users who have time logs today for the filter dropdown.
+            $usersWithLogsToday = User::whereHas('timeLogs', function ($query) {
+                    $query->whereDate('date', Carbon::today())
+                          ->whereNotNull(['latitude', 'longitude']);
+                })
+                ->select('id', 'name')
+                ->orderBy('name')
+                ->get();
+            
+            // Prepend "All Users" option for the combobox
+            $props['usersForMapFilter'] = $usersWithLogsToday->prepend(['id' => 'all', 'name' => 'All Users']);
+            
+            // 2. Get location data based on the request filter (user_id).
+            $selectedUserId = $request->input('user_id', 'all');
+
+            $query = TimeLog::with(['user.employeeDetails.department', 'user.internDetails.department'])
+                ->whereDate('date', Carbon::today())
+                ->whereNotNull(['latitude', 'longitude']);
+
+            if ($selectedUserId === 'all') {
+                // LOGIC 1: Get the LATEST time-in for EACH user today.
+                // We get all logs, sort them descendingly by time, group by user, and take the first one of each group.
+                $allLogsToday = $query->orderBy('time_in', 'desc')->get();
+                $latestLogs = $allLogsToday->groupBy('user_id')->map(function ($group) {
+                    return $group->first();
+                })->values();
+
+            } else {
+                // LOGIC 2: Get ALL time-ins for a SPECIFIC user today.
+                $latestLogs = $query->where('user_id', $selectedUserId)->orderBy('time_in', 'asc')->get();
+            }
+
+            // 3. Format the data for the map component.
+            $props['timeLogLocations'] = $latestLogs->map(function ($log) {
+                $department = 'N/A';
+                if ($log->user) {
+                    if ($log->user->employeeDetails && $log->user->employeeDetails->department) {
+                        $department = $log->user->employeeDetails->department->dept_name;
+                    } elseif ($log->user->internDetails && $log->user->internDetails->department) {
+                        $department = $log->user->internDetails->department->dept_name;
+                    }
+                }
+
+                return [
+                    'user_id'    => $log->user_id,
+                    'name'       => $log->user->name ?? 'Unknown',
+                    'position'   => $log->user->position ?? 'N/A',
+                    'department' => $department,
+                    'time_in'    => $log->time_in,
+                    'latitude'   => (float) $log->latitude,
+                    'longitude'  => (float) $log->longitude,
+                ];
+            });
 
         } else {
             // Determine relationship based on user type
@@ -110,33 +166,33 @@ class DashboardController extends Controller
             $attendanceList = $logsByDate->map(function (Collection $dailyLogs, $date) {
                 $record = [
                     'date' => $date,
-                    '1stIn' => 'N/A',
-                    '2ndIn' => 'N/A',
-                    '3rdIn' => 'N/A',
-                    '4thIn' => 'N/A',
-                    'LastOut' => 'N/A',
+                    'firstIn' => 'N/A',
+                    'secondIn' => 'N/A',
+                    'thirdIn' => 'N/A',
+                    'fourthIn' => 'N/A',
+                    'lastOut' => 'N/A',
                 ];
 
                 $timeIns = $dailyLogs->pluck('time_in')->filter()->values();
 
                 // Logic if user has a full 4 time-ins
                 if ($timeIns->count() === 4) {
-                    $record['1stIn'] = $timeIns[0];
-                    $record['2ndIn'] = $timeIns[1];
-                    $record['3rdIn'] = $timeIns[2];
-                    $record['4thIn'] = $timeIns[3];
+                    $record['firstIn'] = $timeIns[0];
+                    $record['secondIn'] = $timeIns[1];
+                    $record['thirdIn'] = $timeIns[2];
+                    $record['fourthIn'] = $timeIns[3];
                 } 
                 // Logic for incomplete time-ins, placed in specific windows
                 else {
                     foreach ($timeIns as $timeIn) {
                         if ($timeIn < '10:01:00') {
-                            $record['1stIn'] = $timeIn;
+                            $record['firstIn'] = $timeIn;
                         } elseif ($timeIn >= '10:14:00' && $timeIn < '12:01:00') {
-                            $record['2ndIn'] = $timeIn;
+                            $record['secondIn'] = $timeIn;
                         } elseif ($timeIn >= '12:59:00' && $timeIn < '15:01:00') {
-                            $record['3rdIn'] = $timeIn;
+                            $record['thirdIn'] = $timeIn;
                         } elseif ($timeIn >= '15:14:00') {
-                            $record['4thIn'] = $timeIn;
+                            $record['fourthIn'] = $timeIn;
                         }
                     }
                 }
@@ -144,7 +200,7 @@ class DashboardController extends Controller
                 // Get the latest time_out for the day
                 $lastOut = $dailyLogs->pluck('time_out')->filter()->max();
                 if ($lastOut) {
-                    $record['LastOut'] = $lastOut;
+                    $record['lastOut'] = $lastOut;
                 }
 
                 return $record;
