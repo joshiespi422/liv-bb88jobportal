@@ -26,14 +26,34 @@ class DashboardController extends Controller
 
         // SUPER ADMIN
         if ($userType === 'super_admin') {
-            $props['totalCounts'] = [
-                'users' => User::count(),
-                'tasks' => Task::count(),
-                'accomplishments' => Accomplishment::count(),
-            ];
+           // Eagerly load props that are always needed on initial visit
+            $props['totalCounts'] = $this->getTotalCounts();
+            $props['usersForMapFilter'] = $this->getUsersForMapFilter();
+            $props['onlineUsers'] = $this->getOnlineUsers();
+            $props['timeLogLocations'] = $this->getTimeLogLocations($request);
+        } else {
+            // Add props for other user types (employee, intern)
+            $props['userDetails'] = $this->getUserDetails($user, $userType);
+            $props['attendanceList'] = $this->getAttendanceList($user);  
+        }
 
-            // Query for Online Users
-            $onlineUsers = User::whereHas('timeLogs', function ($query) {
+        return Inertia::render('DashboardView', $props);
+    }
+    
+    // --- HELPER METHODS FOR SUPER ADMIN LOGIC ----
+    // Get the total counts of users, tasks, and accomplishments
+    private function getTotalCounts(): array
+    {
+        return [
+            'users' => User::count(),
+            'tasks' => Task::count(),
+            'accomplishments' => Accomplishment::count(),
+        ];
+    }
+    // Get the list of online users
+    private function getOnlineUsers(): Collection
+    {
+        return User::whereHas('timeLogs', function ($query) {
                 $query->whereDate('date', now()->toDateString())
                       ->whereNotNull('time_in')
                       ->whereNull('time_out');
@@ -41,82 +61,77 @@ class DashboardController extends Controller
             ->with(['employeeDetails.department', 'internDetails.department'])
             ->get()
             ->map(function ($onlineUser) {
-                // Determine department from either employee or intern details
                 $department = 'N/A';
                 if ($onlineUser->employeeDetails && $onlineUser->employeeDetails->department) {
                     $department = $onlineUser->employeeDetails->department->dept_name;
                 } elseif ($onlineUser->internDetails && $onlineUser->internDetails->department) {
                     $department = $onlineUser->internDetails->department->dept_name;
                 }
-
                 return [
                     'name'       => $onlineUser->name,
-                    'position'   => $onlineUser->position,
+                    'position'   => $onlineUser->position ?? 'N/A',
                     'department' => $department,
                     'status'     => 'Online',
                 ];
             });
-            
-            $props['onlineUsers'] = $onlineUsers;
+    }
+    // Get the list of users for the map filter
+    private function getUsersForMapFilter(): Collection
+    {
+        $users = User::whereHas('timeLogs', function ($query) {
+                $query->whereDate('date', Carbon::today())
+                      ->whereNotNull(['latitude', 'longitude']);
+            })
+            ->select('id', 'name')
+            ->orderBy('name')
+            ->get();
 
-            // --- LOGIC FOR MAP ---
-            // 1. Get the list of users who have time logs today for the filter dropdown.
-            $usersWithLogsToday = User::whereHas('timeLogs', function ($query) {
-                    $query->whereDate('date', Carbon::today())
-                          ->whereNotNull(['latitude', 'longitude']);
-                })
-                ->select('id', 'name')
-                ->orderBy('name')
-                ->get();
-            
-            // Prepend "All Users" option for the combobox
-            $props['usersForMapFilter'] = $usersWithLogsToday->prepend(['id' => 'all', 'name' => 'All Users']);
-            
-            // 2. Get location data based on the request filter (user_id).
-            $selectedUserId = $request->input('user_id', 'all');
+        return $users->prepend(['id' => 'all', 'name' => 'All Users']);
+    }
+    // Get the list of time logs for the map
+    private function getTimeLogLocations(Request $request): Collection
+    {
+        $selectedUserId = $request->input('user', 'all');
 
-            $query = TimeLog::with(['user.employeeDetails.department', 'user.internDetails.department'])
-                ->whereDate('date', Carbon::today())
-                ->whereNotNull(['latitude', 'longitude']);
+        $query = TimeLog::with(['user.employeeDetails.department', 'user.internDetails.department'])
+            ->whereDate('date', Carbon::today())
+            ->whereNotNull(['latitude', 'longitude']);
 
-            if ($selectedUserId === 'all') {
-                // LOGIC 1: Get the LATEST time-in for EACH user today.
-                // We get all logs, sort them descendingly by time, group by user, and take the first one of each group.
-                $allLogsToday = $query->orderBy('time_in', 'desc')->get();
-                $latestLogs = $allLogsToday->groupBy('user_id')->map(function ($group) {
-                    return $group->first();
-                })->values();
-
-            } else {
-                // LOGIC 2: Get ALL time-ins for a SPECIFIC user today.
-                $latestLogs = $query->where('user_id', $selectedUserId)->orderBy('time_in', 'asc')->get();
-            }
-
-            // 3. Format the data for the map component.
-            $props['timeLogLocations'] = $latestLogs->map(function ($log) {
-                $department = 'N/A';
-                if ($log->user) {
-                    if ($log->user->employeeDetails && $log->user->employeeDetails->department) {
-                        $department = $log->user->employeeDetails->department->dept_name;
-                    } elseif ($log->user->internDetails && $log->user->internDetails->department) {
-                        $department = $log->user->internDetails->department->dept_name;
-                    }
-                }
-
-                return [
-                    'user_id'    => $log->user_id,
-                    'name'       => $log->user->name ?? 'Unknown',
-                    'position'   => $log->user->position ?? 'N/A',
-                    'department' => $department,
-                    'time_in'    => $log->time_in,
-                    'latitude'   => (float) $log->latitude,
-                    'longitude'  => (float) $log->longitude,
-                ];
-            });
-
+        // Filter by user from the URL query parameter
+        if ($selectedUserId === 'all' || $selectedUserId === null) {
+            $allLogsToday = $query->orderBy('time_in', 'desc')->get();
+            $latestLogs = $allLogsToday->groupBy('user_id')->map->first()->values();
         } else {
-            // Determine relationship based on user type
-            $relation = match($userType) {
+            $latestLogs = $query->where('user_id', $selectedUserId)->orderBy('time_in', 'asc')->get();
+        }
+
+        // Map the logs to the desired format
+        return $latestLogs->map(function ($log) {
+             $department = 'N/A';
+            if ($log->user) {
+                if ($log->user->employeeDetails && $log->user->employeeDetails->department) {
+                    $department = $log->user->employeeDetails->department->dept_name;
+                } elseif ($log->user->internDetails && $log->user->internDetails->department) {
+                    $department = $log->user->internDetails->department->dept_name;
+                }
+            }
+            return [
+                'user_id'    => $log->user_id,
+                'name'       => $log->user->name ?? 'Unknown',
+                'position'   => $log->user->position ?? 'N/A',
+                'department' => $department,
+                'time_in'    => $log->time_in,
+                'latitude'   => (float) $log->latitude,
+                'longitude'  => (float) $log->longitude,
+            ];
+        });
+    }
+
+    // --- PRIVATE HELPER METHODS FOR EMPLOYEE/INTERN ---
+    // Get user details and his time logs
+    private function getUserDetails(User $user, string $userType): array
+    {
+        $relation = match($userType) {
                 'employee' => 'employeeDetails.department',
                 'intern' => 'internDetails.department',
                 default => null
@@ -124,7 +139,7 @@ class DashboardController extends Controller
 
             // Eager load only necessary relationships
             if ($relation) {
-                $user->load($relation);
+                $user->loadMissing($relation);
             }
             
             // Get today's time logs in single query
@@ -132,7 +147,7 @@ class DashboardController extends Controller
                 ->whereDate('date', now())
                 ->get();
             
-            $userDetails = [
+            return [
                 'name' => $user->name,
                 'department' => match($userType) {
                         'employee' => $user->employeeDetails->department->dept_name,
@@ -149,20 +164,20 @@ class DashboardController extends Controller
                     ? 'Online' 
                     : 'Offline',
             ];
-
-            $props['userDetails'] = $userDetails;
-
-            // 1. Fetch all time logs for the last 60 days in one query
-            $timeLogs = TimeLog::where('user_id', $user->id)
+    }
+    // Get user's attendance list for the last 30 days
+    private function getAttendanceList(User $user): array
+    {
+        $timeLogs = TimeLog::where('user_id', $user->id)
                 ->where('date', '>=', now()->subDays(30)->toDateString())
                 ->orderBy('date', 'desc')
                 ->orderBy('time_in', 'asc') // Order by time_in is crucial for sequential mapping
                 ->get();
 
-            // 2. Group the logs by date
+            // Group the logs by date
             $logsByDate = $timeLogs->groupBy('date');
 
-            // 3. Process each day's logs to create the desired format
+            // Process each day's logs to create the desired format
             $attendanceList = $logsByDate->map(function (Collection $dailyLogs, $date) {
                 $record = [
                     'date' => $date,
@@ -206,13 +221,9 @@ class DashboardController extends Controller
                 return $record;
             });
             
-            // Add the formatted list to props, ensuring it's a plain array
-            $props['attendanceList'] = $attendanceList->values()->all();
-        }
-
-        return Inertia::render('DashboardView', $props);
+            return $attendanceList->values()->all();
     }
-
+    
     /**
      * Show the form for creating a new resource.
      */

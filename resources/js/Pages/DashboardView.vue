@@ -139,9 +139,34 @@ onUnmounted(() => {
 });
 
 // State for the user selection filter
-const selectedUser = ref(
-  props.usersForMapFilter[0] || { id: "all", name: "All Users" }
-);
+const getInitialSelectedUser = () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const userIdFromUrl = urlParams.get("user");
+
+  // Case 1: A user is present in the URL
+  if (userIdFromUrl) {
+    //  find the user in the list and parse the ID as a number
+    const targetUserId = !isNaN(parseInt(userIdFromUrl))
+      ? parseInt(userIdFromUrl)
+      : userIdFromUrl;
+    const userInList = props.usersForMapFilter.find(
+      (user) => user.id === targetUserId
+    );
+
+    // To be valid, the user must exist in our filter list AND have location data
+    if (userInList && props.timeLogLocations.length > 0) {
+      return userInList; // Success! Set this user as the active one.
+    }
+
+    // If user isn't in the list or has no locations, select nothing
+    return null;
+  }
+
+  // Case 2: No user in the URL (initial page load), default to "all"
+  return props.usersForMapFilter.find((user) => user.id === "all") || null;
+};
+// State for the user selection filter, initialized with our new logic
+const selectedUser = ref(getInitialSelectedUser());
 // this computed property decides IF the map should fit its bounds
 const shouldFitBounds = computed(() => {
   // Only fit bounds if a specific user is selected
@@ -152,7 +177,7 @@ watch(selectedUser, (newUser) => {
   if (newUser) {
     router.get(
       route("dashboard"),
-      { user_id: newUser.id },
+      { user: newUser.id },
       {
         preserveState: true,
         preserveScroll: true,
