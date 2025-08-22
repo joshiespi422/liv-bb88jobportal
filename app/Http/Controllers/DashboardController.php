@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Models\Task;
 use App\Models\Accomplishment;
 use App\Models\TimeLog;
+use App\Http\Requests\StoreTimeInRequest;
 
 class DashboardController extends Controller
 {
@@ -235,9 +236,20 @@ class DashboardController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreTimeInRequest $request)
     {
-        //
+        $user = $request->user();
+
+        // The request has already been validated and passed all business rules
+        $user->timeLogs()->create([
+            'time_in' => now()->format('H:i:s'),
+            'date' => now()->toDateString(),
+            'ip_address' => $request->ip(),
+            'latitude' => $request->latitude,
+            'longitude' => $request->longitude,
+        ]);
+
+        return back()->with('success', 'Time in recorded successfully!');
     }
 
     /**

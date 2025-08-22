@@ -1,15 +1,17 @@
 <script setup>
 import { computed, h, onMounted, onUnmounted, ref, watch } from "vue";
-import { usePage, router } from "@inertiajs/vue3";
+import { usePage, router, useForm } from "@inertiajs/vue3";
 import { formatDate } from "../Composables/useDateFormatter";
 import DataTable from "../Components/DataTable.vue";
 import { formatTime, shortDate } from "../Composables/useDateFormatter";
 import LocationMap from "../Components/LocationMap.vue";
 import Combobox from "../Components/forms/ComboBox.vue";
+import { useToast } from "../Composables/useToast";
 
 // logged in user data
 const page = usePage();
 const authUser = computed(() => page.props.auth.user);
+const { error } = useToast();
 
 const props = defineProps({
   totalCounts: {
@@ -35,6 +37,49 @@ const props = defineProps({
     default: () => [],
   },
 });
+
+// time in form state
+const timeInform = useForm({
+  latitude: null,
+  longitude: null,
+});
+
+// The time-in function that gets location and sends data
+const handleTimeIn = () => {
+  // if (authUser.value.userType === "super_admin") return;
+  if ("geolocation" in navigator) {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        timeInform.latitude = position.coords.latitude;
+        timeInform.longitude = position.coords.longitude;
+        // Now send the form data to the backend
+        timeInform.post(route("time-in"), {
+          preserveScroll: true,
+          onError: (errors) => {
+            // The onError handler receives errors from the backend
+            const firstError = Object.values(errors)[0];
+            if (firstError) {
+              error(firstError);
+            }
+          },
+          onSuccess: () => {
+            timeInform.reset();
+            router.reload();
+          },
+        });
+      },
+      (geolocationError) => {
+        if (geolocationError.code === geolocationError.PERMISSION_DENIED) {
+          error("Location access is required for time in.");
+        } else {
+          error("Error getting location: " + geolocationError.message);
+        }
+      }
+    );
+  } else {
+    error("Geolocation is not supported by your browser.");
+  }
+};
 
 // Tanstack Table columns definition for attendance
 const attendanceColumns = [
@@ -200,6 +245,7 @@ watch(selectedUser, (newUser) => {
         </h1>
         <div>
           <button
+            @click="handleTimeIn"
             class="btn bg-emerald-600 text-white border-2 border-white rounded-full hover:scale-105 transition-all duration-200 ease-in-out me-3"
           >
             Time In

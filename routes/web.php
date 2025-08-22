@@ -23,6 +23,7 @@ Route::middleware('guest')->group(function () {
 // Authenticated routes
 Route::middleware('auth')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    Route::post('/time-in', [DashboardController::class, 'store'])->name('time-in');
 
     Route::middleware('user.type:super_admin,employee')->group(function () {
         Route::prefix('team')->name('team.')->group(function () {
