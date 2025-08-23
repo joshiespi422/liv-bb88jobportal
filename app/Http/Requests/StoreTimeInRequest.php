@@ -63,6 +63,7 @@ class StoreTimeInRequest extends FormRequest
             $allowedTypes = ['employee', 'intern'];
             if (!in_array($user->userType->type_name, $allowedTypes)) {
                 $validator->errors()->add('time_in', 'You are not allowed to time in');
+                return;
             }
 
             // Use a single query to get today's logs
@@ -72,11 +73,13 @@ class StoreTimeInRequest extends FormRequest
             if ($timeLogs->whereNotNull('time_in')->whereNull('time_out')->count() > 0) {
                 $lastTimeIn = $timeLogs->whereNull('time_out')->first()->time_in;
                 $validator->errors()->add('time_in', "You've already timed in at " . Carbon::parse($lastTimeIn)->format('h:i A'));
+                return;
             }
 
             // 2. Check if maximum time ins reached (4)
             if ($timeLogs->count() >= 4) {
                 $validator->errors()->add('time_in', "You have reached the maximum time ins for today");
+                return;
             }
 
             // 3. Check coordinates against Philippines boundaries
@@ -89,21 +92,26 @@ class StoreTimeInRequest extends FormRequest
             if ($this->latitude < $philippinesBoundary['min_lat'] || $this->latitude > $philippinesBoundary['max_lat'] ||
                 $this->longitude < $philippinesBoundary['min_lon'] || $this->longitude > $philippinesBoundary['max_lon']) {
                 $validator->errors()->add('location', 'You must be in the Philippines to time in');
+                return;
             }
 
             // 4. Time window checks
             $timeInsCount = $timeLogs->count();
             if ($timeInsCount == 0 && now()->lessThan(Carbon::createFromTimeString('05:45:00'))) {
                  $validator->errors()->add('time_in', "You cannot time in before 5:45 AM");
+                 return;
             }
             if ($currentHour == 10 && now()->lessThan(Carbon::createFromTimeString('10:15:00'))) {
                  $validator->errors()->add('time_in', "You cannot time in before 10:15 AM");
+                 return;
             }
             if ($currentHour == 12 && now()->lessThan(Carbon::createFromTimeString('13:00:00'))) {
                  $validator->errors()->add('time_in', "You cannot time in before 1:00 PM");
+                 return;
             }
             if ($currentHour == 15 && now()->lessThan(Carbon::createFromTimeString('15:15:00'))) {
                  $validator->errors()->add('time_in', "You cannot time in before 3:15 PM");
+                 return;
             }
             if (now()->greaterThan(Carbon::createFromTimeString('17:00:00'))) {
                 $validator->errors()->add('time_in', "You cannot time in after 5:00 PM");

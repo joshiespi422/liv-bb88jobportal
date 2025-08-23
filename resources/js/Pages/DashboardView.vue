@@ -1,11 +1,12 @@
 <script setup>
-import { computed, h, onMounted, onUnmounted, ref, watch } from "vue";
+import { computed, h, onMounted, onUnmounted, ref, watch, reactive } from "vue";
 import { usePage, router, useForm } from "@inertiajs/vue3";
 import { formatDate } from "../Composables/useDateFormatter";
 import DataTable from "../Components/DataTable.vue";
 import { formatTime, shortDate } from "../Composables/useDateFormatter";
 import LocationMap from "../Components/LocationMap.vue";
 import Combobox from "../Components/forms/ComboBox.vue";
+import ConfirmModal from "../Components/ConfirmModal.vue";
 import { useToast } from "../Composables/useToast";
 
 // logged in user data
@@ -43,13 +44,15 @@ const timeInform = useForm({
   latitude: null,
   longitude: null,
 });
+const isTimeLoading = ref(false);
 
 // The time-in function that gets location and sends data
 const handleTimeIn = () => {
-  // if (authUser.value.userType === "super_admin") return;
+  if (authUser.value.userType === "super_admin") return;
   if ("geolocation" in navigator) {
     navigator.geolocation.getCurrentPosition(
       (position) => {
+        isTimeLoading.value = true;
         timeInform.latitude = position.coords.latitude;
         timeInform.longitude = position.coords.longitude;
         // Now send the form data to the backend
@@ -66,6 +69,9 @@ const handleTimeIn = () => {
             timeInform.reset();
             router.reload();
           },
+          onFinish: () => {
+            isTimeLoading.value = false;
+          },
         });
       },
       (geolocationError) => {
@@ -79,6 +85,78 @@ const handleTimeIn = () => {
   } else {
     error("Geolocation is not supported by your browser.");
   }
+};
+
+// State for the confirmation modal
+const isConfirmModalOpen = ref(false);
+// Holds the properties for the confirmation modal
+const confirmModalProps = reactive({
+  title: "",
+  message: "",
+  confirmText: "",
+  confirmButtonBg: "",
+  iconName: "",
+});
+// Executes the action on confirmation
+const executeConfirm = () => {
+  if (pendingAction.value) {
+    pendingAction.value();
+  }
+};
+const closeConfirmModal = () => {
+  isConfirmModalOpen.value = false;
+  isTimeLoading.value = false;
+};
+
+// first request to check time-out validation
+const handleTimeOut = () => {
+  isTimeLoading.value = true;
+  axios
+    .post(route("time-out.check"))
+    .then((response) => {
+      // Backend determined that confirmation is needed
+      if (response.data.needsConfirmation) {
+        Object.assign(confirmModalProps, {
+          title: "Time Out",
+          message: response.data.message,
+          confirmText: "Time Out",
+          confirmButtonBg: "bg-blue-600 hover:bg-blue-700",
+          iconName: "pi pi-check-square",
+          iconColor: "text-blue-600",
+          iconBgColor: "bg-blue-100",
+        });
+        pendingAction.value = () => {
+          confirmTimeOut(response.data.timeLogId);
+        };
+        isConfirmModalOpen.value = true;
+      }
+    })
+    .catch((err) => {
+      isTimeLoading.value = false;
+      // Handle standard validation errors (like "no time in")
+      if (err.response && err.response.status === 422) {
+        const firstError = Object.values(err.response.data.errors)[0][0];
+        error(firstError);
+      } else {
+        error("An unexpected error occurred.");
+      }
+    });
+};
+// second request to confirm time-out
+const confirmTimeOut = (timeLogId) => {
+  router.patch(route("time-out.update", { timeLog: timeLogId }), {
+    preserveScroll: true,
+    onError: (errors) => {
+      const firstError = Object.values(errors)[0];
+      if (firstError) {
+        error(firstError);
+      }
+    },
+    onFinish: () => {
+      isConfirmModalOpen.value = false;
+      isTimeLoading.value = false;
+    },
+  });
 };
 
 // Tanstack Table columns definition for attendance
@@ -246,11 +324,14 @@ watch(selectedUser, (newUser) => {
         <div>
           <button
             @click="handleTimeIn"
+            :disabled="isTimeLoading"
             class="btn bg-emerald-600 text-white border-2 border-white rounded-full hover:scale-105 transition-all duration-200 ease-in-out me-3"
           >
             Time In
           </button>
           <button
+            @click="handleTimeOut"
+            :disabled="isTimeLoading"
             class="btn bg-rose-600 text-white border-2 border-white rounded-full hover:scale-105 transition-all duration-200 ease-in-out"
           >
             Time Out
@@ -447,6 +528,14 @@ watch(selectedUser, (newUser) => {
       :data="props.attendanceList"
       :columns="attendanceColumns"
       class="mt-7"
+    />
+
+    <!-- Confirmation Modal -->
+    <ConfirmModal
+      :show="isConfirmModalOpen"
+      v-bind="confirmModalProps"
+      @cancel="closeConfirmModal"
+      @confirm="executeConfirm"
     />
   </div>
 </template>

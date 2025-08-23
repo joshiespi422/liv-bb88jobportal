@@ -12,6 +12,8 @@ use App\Models\Task;
 use App\Models\Accomplishment;
 use App\Models\TimeLog;
 use App\Http\Requests\StoreTimeInRequest;
+use App\Http\Requests\CheckTimeOutRequest;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
@@ -224,6 +226,28 @@ class DashboardController extends Controller
             
             return $attendanceList->values()->all();
     }
+
+    /**
+     * Check if a user can time out and get the specific log ID.
+     */
+    public function check(CheckTimeOutRequest $request)
+    {
+        // Validation passed, now find the specific log to get its ID
+        $openLog = $request->user()->timeLogs()
+            ->where('date', Carbon::today()->toDateString())
+            ->whereNull('time_out')
+            ->latest('time_in')
+            ->first();
+
+        $currentTime = now()->format('h:i A');
+        $baseMessage = "This will be your final time out for today. You won't be able to time in again. Are you sure you want to proceed?";
+
+        return response()->json([
+            'needsConfirmation' => true,
+            'message' => "It's {$currentTime}. {$baseMessage}",
+            'timeLogId' => $openLog->id,
+        ]);
+    }
     
     /**
      * Show the form for creating a new resource.
@@ -271,9 +295,18 @@ class DashboardController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
-    {
-        //
+    public function update(Request $request, TimeLog $timeLog)
+    {        
+        // Authorization check
+        if ($timeLog->user_id !== Auth::id()) {
+            abort(403, 'not authorized');
+        } elseif ($timeLog->time_out !== null) {
+            abort(403, 'already timed out');
+        }
+       
+        $timeLog->update(['time_out' => now()]);
+
+        return back()->with('success', 'You have been timed out successfully.');
     }
 
     /**
