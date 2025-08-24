@@ -11,8 +11,8 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\AttendanceController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
 // Guest routes
 Route::middleware('guest')->group(function () {
@@ -46,15 +46,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     
     Route::middleware('user.type:super_admin')->group(function () {
-        Route::prefix('attendance')->name('attendance.')->group(function () {
-            Route::get('/today', function () {
-                return Inertia::render('TodayView');
-            })->name('today');
-
-            Route::get('/timelogs', function () {
-                return Inertia::render('TimeLogsView');
-            })->name('timelogs');
-        });
+        Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance');
     });
     
     Route::get('/task', [TaskController::class, 'index'])->name('task');

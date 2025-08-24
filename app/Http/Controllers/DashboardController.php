@@ -22,7 +22,7 @@ class DashboardController extends Controller
      */
     public function index(Request $request)
     {
-        $user = $request->user()->load(['userType']);
+        $user = $request->user()->loadMissing(['userType']);
         $userType = $user->userType->type_name;
 
         $props = [];
@@ -306,7 +306,7 @@ class DashboardController extends Controller
        
         $timeLog->update(['time_out' => now()]);
 
-        return back()->with('success', 'You have been timed out successfully.');
+        return back()->with('success', 'You have been timed out successfully!');
     }
 
     /**

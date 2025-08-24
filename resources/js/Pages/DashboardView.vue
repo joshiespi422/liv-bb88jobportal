@@ -1,9 +1,12 @@
 <script setup>
 import { computed, h, onMounted, onUnmounted, ref, watch, reactive } from "vue";
 import { usePage, router, useForm } from "@inertiajs/vue3";
-import { formatDate } from "../Composables/useDateFormatter";
 import DataTable from "../Components/DataTable.vue";
-import { formatTime, shortDate } from "../Composables/useDateFormatter";
+import {
+  formatDate,
+  formatTime,
+  shortDate,
+} from "../Composables/useDateFormatter";
 import LocationMap from "../Components/LocationMap.vue";
 import Combobox from "../Components/forms/ComboBox.vue";
 import ConfirmModal from "../Components/ConfirmModal.vue";
@@ -76,14 +79,14 @@ const handleTimeIn = () => {
       },
       (geolocationError) => {
         if (geolocationError.code === geolocationError.PERMISSION_DENIED) {
-          error("Location access is required for time in.");
+          error("Location access is required for time in");
         } else {
           error("Error getting location: " + geolocationError.message);
         }
       }
     );
   } else {
-    error("Geolocation is not supported by your browser.");
+    error("Geolocation is not supported by your browser");
   }
 };
 
@@ -120,10 +123,6 @@ const handleTimeOut = () => {
           title: "Time Out",
           message: response.data.message,
           confirmText: "Time Out",
-          confirmButtonBg: "bg-blue-600 hover:bg-blue-700",
-          iconName: "pi pi-check-square",
-          iconColor: "text-blue-600",
-          iconBgColor: "bg-blue-100",
         });
         pendingAction.value = () => {
           confirmTimeOut(response.data.timeLogId);
@@ -138,7 +137,7 @@ const handleTimeOut = () => {
         const firstError = Object.values(err.response.data.errors)[0][0];
         error(firstError);
       } else {
-        error("An unexpected error occurred.");
+        error("An unexpected error occurred");
       }
     });
 };

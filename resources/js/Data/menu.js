@@ -9,19 +9,7 @@ export const menuItems = [
     name: "ATTENDANCE",
     icon: "pi pi-address-book",
     userType: ["super_admin"],
-    hasSubmenu: true,
-    submenu: [
-      {
-        name: "TODAY", // Inherits parent permission
-        icon: "pi pi-book",
-        routeName: "attendance.today",
-      },
-      {
-        name: "TIME LOGS", // Inherits parent permission
-        icon: "pi pi-book",
-        routeName: "attendance.timelogs",
-      },
-    ],
+    routeName: "attendance",
   },
   {
     name: "USERS",
