@@ -47,6 +47,8 @@ Route::middleware('auth')->group(function () {
     
     Route::middleware('user.type:super_admin')->group(function () {
         Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance');
+        Route::get('/attendance/user/{id}/{date}', [AttendanceController::class, 'show'])->name('attendance.show');
+        Route::get('/attendance/dept/{deptId}/{date}', [AttendanceController::class, 'showDeptLog'])->name('attendance.show.dept');
     });
     
     Route::get('/task', [TaskController::class, 'index'])->name('task');

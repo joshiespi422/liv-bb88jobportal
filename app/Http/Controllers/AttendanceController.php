@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Department;
 use App\Models\TimeLog;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -48,8 +49,8 @@ class AttendanceController extends Controller
             fn($q) => $q->whereDate('date', today())
         )
         ->with([
-            'user.employeeDetails.department:id,dept_name',
-            'user.internDetails.department:id,dept_name',
+            'employeeDetails.department:id,dept_name',
+            'internDetails.department:id,dept_name',
         ])
         ->get()
         ->map(fn($user)=> [
@@ -59,7 +60,7 @@ class AttendanceController extends Controller
                 optional(optional($user->employeeDetails)->department)->dept_name
                 ?? optional(optional($user->internDetails)->department)->dept_name
                 ?? 'No Department',
-            'position' => $user->position,
+            'position' => $user->position ?? 'N/A',
             'date' => now()->format('Y-m-d'),
         ])
         ->values(); // Reset the array keys to ensure it's a clean JSON array
@@ -102,6 +103,34 @@ class AttendanceController extends Controller
             ->get();
     }
 
+    public function showDeptLog(string $deptId, string $date)
+    {
+        $userList = User::whereHas(
+            'timeLogs',  
+            fn($q) => $q->whereDate('date', $date)
+        )
+        ->where(function ($q) use ($deptId) {
+            $q->whereHas('employeeDetails.department', fn($sub) => 
+                $sub->where('id', $deptId)
+            )
+            ->orWhereHas('internDetails.department', fn($sub) => 
+                $sub->where('id', $deptId)
+            );
+        })
+        ->get()
+        ->map(fn($user) => [
+            'id' => $user->id,
+            'name' => $user->name,
+        ])
+        ->values(); 
+
+        return response()->json([
+            'department' => Department::findOrFail($deptId)->dept_name,
+            'date' => $date,
+            'users' => $userList
+        ]);
+    }
+
     /**
      * Show the form for creating a new resource.
      */
@@ -121,9 +150,41 @@ class AttendanceController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(string $id, string $date)
     {
-        //
+        // fetch all logs for the user on the given date, ordered by time_in
+        $logs = TimeLog::where('user_id', $id)
+            ->where('date', $date)
+            ->orderBy('time_in', 'asc')
+            ->get();
+
+        // get user details. We can get it from the first log's relationship.
+        $user = $logs->first()->user->loadMissing(['employeeDetails.department', 'internDetails.department']);
+
+        // determine department name
+        $departmentName = optional(optional($user->employeeDetails)->department)->dept_name
+                        ?? optional(optional($user->internDetails)->department)->dept_name
+                        ?? 'No Department';
+
+        // return a structured JSON response
+        return response()->json([
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'position' => $user->position ?? 'N/A',
+                'department' => $departmentName,
+            ],
+            'date' => $date,
+            'logs' => $logs->map(function ($log) {
+                return [
+                    'time_in' => $log->time_in,
+                    'time_out' => $log->time_out,
+                    'ip_address' => $log->ip_address,
+                    'latitude' => $log->latitude,
+                    'longitude' => $log->longitude,
+                ];
+            }),
+        ]);
     }
 
     /**

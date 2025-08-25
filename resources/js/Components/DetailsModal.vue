@@ -137,7 +137,7 @@ const focusElement = ref(null);
               </div>
 
               <!-- Content Slot -->
-              <div v-else-if="item && fields.length > 0">
+              <div v-else-if="item">
                 <slot
                   name="content"
                   :item="item"
