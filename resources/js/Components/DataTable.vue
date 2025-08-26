@@ -16,6 +16,8 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
 } from "@tanstack/vue-table";
+import { startOfDay, endOfDay, isWithinInterval } from "date-fns";
+import { parseDateString } from "../Composables/useDateFormatter";
 
 const props = defineProps({
   data: {
@@ -37,23 +39,60 @@ const props = defineProps({
     default: "table",
     validator: (value) => ["table", "card"].includes(value),
   },
+  dateFilter: {
+    type: Array,
+    default: null,
+  },
+  filterKey: {
+    type: String,
+    default: "created_at",
+  },
   // add more props here for other table features
 });
 
 const { data: propsData, columns: propsColumns } = toRefs(props);
 
 // Computed properties for reactivity if props change
-const tableData = computed(() => propsData.value);
+// const tableData = computed(() => propsData.value); // deprecated since we are using filteredTableData
 const tableColumns = computed(() => propsColumns.value);
 
 // Reactive state for table features
 const sorting = ref([]);
 const globalFilter = ref("");
 
+// configure table to include date filtering
+const filteredTableData = computed(() => {
+  let data = propsData.value;
+
+  // Apply date filter if it exists
+  if (
+    props.dateFilter &&
+    Array.isArray(props.dateFilter) &&
+    props.dateFilter.length === 2
+  ) {
+    const [startDate, endDate] = props.dateFilter;
+
+    if (startDate && endDate) {
+      data = data.filter((row) => {
+        const rowDate = parseDateString(row[props.filterKey]);
+
+        if (!rowDate) return false; // skip invalid dates
+
+        return isWithinInterval(rowDate, {
+          start: startOfDay(startDate),
+          end: endOfDay(endDate),
+        });
+      });
+    }
+  }
+
+  return data;
+});
+
 const table = useVueTable({
   // Provide reactive getters for data and columns
   get data() {
-    return tableData.value;
+    return filteredTableData.value;
   },
   get columns() {
     return tableColumns.value;

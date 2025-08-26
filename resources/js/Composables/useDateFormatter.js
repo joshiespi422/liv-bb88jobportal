@@ -38,3 +38,22 @@ export const longDateTime = (dateString) =>
 
 export const shortDateTime = (dateString) =>
   formatDate(dateString, "MMM d, yyyy, h:mm a");
+
+// for parsing date strings
+export function parseDateString(dateString) {
+  if (!dateString) return null;
+
+  // Try ISO parse first
+  let parsed = parseISO(dateString);
+  if (!isNaN(parsed)) return parsed;
+
+  // Try MySQL DATETIME (without T/Z)
+  parsed = parse(dateString, "yyyy-MM-dd HH:mm:ss", new Date());
+  if (!isNaN(parsed)) return parsed;
+
+  // Try MySQL DATE
+  parsed = parse(dateString, "yyyy-MM-dd", new Date());
+  if (!isNaN(parsed)) return parsed;
+
+  return null;
+}

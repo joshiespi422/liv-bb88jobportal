@@ -116,7 +116,7 @@ class ProfileController extends Controller
         $user->password = Hash::make($request->password);
         $user->save();
 
-        return back()->with('success', 'Password updated successfully.');
+        return back()->with('success', 'Password updated successfully!');
     }
 
     public function updateDetails(Request $request)

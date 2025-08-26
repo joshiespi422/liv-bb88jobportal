@@ -10,6 +10,8 @@ import FormModal from "../Components/FormModal.vue";
 import ConfirmModal from "../Components/ConfirmModal.vue";
 import TextInput from "../Components/forms/TextInput.vue";
 import FileInput from "../Components/forms/FileInput.vue";
+import VueDatePicker from "@vuepic/vue-datepicker";
+import "@vuepic/vue-datepicker/dist/main.css";
 
 const props = defineProps({
   accomplishments: {
@@ -318,6 +320,7 @@ function setTab(tabId) {
   );
 }
 
+// table columns tankstack definition
 const accomplishTableColumns = computed(() => {
   const columns = [];
 
@@ -364,6 +367,13 @@ const accomplishTableColumns = computed(() => {
 
   return columns;
 });
+// for date picker
+const showDateFilter = ref(false);
+const dateRange = ref(null);
+// toggle date filter
+const handleDateFilter = () => {
+  showDateFilter.value = !showDateFilter.value;
+};
 
 const capitalizedType = computed(() => {
   if (!props.currentType) return "";
@@ -452,7 +462,29 @@ const showEditButton = computed(() => {
     <DataTable
       :data="props.accomplishments"
       :columns="accomplishTableColumns"
-    />
+      :date-filter="dateRange"
+      :filter-key="'created_at'"
+    >
+      <template #custom-actions>
+        <!-- date picker -->
+        <div v-if="showDateFilter">
+          <VueDatePicker
+            v-model="dateRange"
+            range
+            :enable-time-picker="false"
+            placeholder="Select date range"
+            class="shadow-lg"
+          />
+        </div>
+        <button
+          @click="handleDateFilter"
+          class="btn rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
+        >
+          <i class="pi pi-calendar-clock"></i>
+          Date
+        </button>
+      </template>
+    </DataTable>
 
     <!-- Edit Accomplishment Modal -->
     <FormModal
