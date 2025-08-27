@@ -196,7 +196,7 @@ onBeforeUnmount(() => {
 <template>
   <div
     ref="tableRef"
-    class="overflow-x-auto rounded-3xl border-4 border-green-primary-1 bg-base-100 p-5 shadow-xl"
+    class="overflow-x-clip rounded-3xl border-4 border-green-primary-1 bg-base-100 p-5 shadow-xl"
   >
     <!-- Header Controls -->
     <div
@@ -213,20 +213,20 @@ onBeforeUnmount(() => {
           </option>
         </select>
       </div>
-      <div class="flex gap-2 w-full sm:w-auto">
+      <div class="flex gap-2 w-full sm:w-auto relative">
         <input
           type="text"
           v-model="globalFilter"
           placeholder="Search"
-          class="block w-52 sm:w-64 px-3 py-2 border-2 text-sm border-base-content rounded-xl shadow-md focus:outline-none focus:ring-green-primary-1 focus:border-green-primary-1"
+          class="block w-52 h-10 sm:w-64 px-3 py-2 border-2 text-sm border-base-content rounded-xl shadow-md focus:outline-none focus:border-green-primary-1"
         />
         <!-- custom actions here -->
-        <slot name="custom-actions"></slot>
+        <slot name="custom-actions" />
       </div>
     </div>
 
     <!-- Table View -->
-    <div v-if="displayMode === 'table'">
+    <div v-if="displayMode === 'table'" class="overflow-x-auto">
       <table
         class="table text-center font-semibold my-5"
         style="table-layout: fixed"

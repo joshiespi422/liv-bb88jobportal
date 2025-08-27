@@ -467,20 +467,26 @@ const showEditButton = computed(() => {
     >
       <template #custom-actions>
         <!-- date picker -->
-        <div v-if="showDateFilter">
+        <div v-if="showDateFilter" class="absolute top-12 my-datepicker">
           <VueDatePicker
             v-model="dateRange"
             range
+            :auto-position="'bottom'"
+            :ui="{
+              input:
+                ' !py-2 !bg-base-100 !border-2 !rounded-xl !text-sm !text-base-content !border-base-content !shadow-md hover:!border-green-primary-1',
+              menu: '!bg-base-100 !border-2 !border-base-content !rounded-xl !text-sm !shadow-md hover:!border-green-primary-1',
+            }"
             :enable-time-picker="false"
             placeholder="Select date range"
-            class="shadow-lg"
           />
         </div>
         <button
           @click="handleDateFilter"
           class="btn rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
+          :class="showDateFilter ? 'mb-6' : ''"
         >
-          <i class="pi pi-calendar-clock"></i>
+          <i :class="showDateFilter ? 'pi pi-times' : 'pi pi-calendar-clock'" />
           Date
         </button>
       </template>
@@ -531,3 +537,56 @@ const showEditButton = computed(() => {
     />
   </div>
 </template>
+
+<!-- <style scoped>
+.dp__theme_light {
+  --dp-background-color: var(--color-base-100);
+  --dp-border-color: var(--color-base-content);
+  --dp-text-color: var(--color-base-content);
+  --dp-icon-color: var(--color-white-primary);
+}
+</style> -->
+
+<style scoped>
+:deep(.dp__cell_inner),
+:deep(.dp__calendar_header_item),
+:deep(.dp__month_year_select) {
+  color: var(--color-base-content);
+}
+:deep(.dp__cell_inner):hover,
+:deep(.dp__action_cancel):hover,
+:deep(.dp__month_year_select):hover {
+  background-color: var(--color-base-300);
+}
+:deep(.dp__cell_offset),
+:deep(.dp__selection_preview) {
+  color: var(--color-slate-500);
+}
+:deep(.dp__range_between) {
+  background-color: var(--color-green-primary-1);
+  color: var(--color-white);
+  border: 0;
+}
+:deep(.dp__range_start),
+:deep(.dp__range_end) {
+  color: var(--color-white);
+}
+:deep(.dp__today) {
+  background-color: var(--color-indigo-500);
+  color: var(--color-white);
+  border: 0;
+}
+:deep(.dp__action_cancel) {
+  color: var(--color-base-content);
+  border: 0;
+}
+:deep(.dp__action_select) {
+  background-color: var(--color-indigo-500);
+}
+:deep(.dp__action_select):hover {
+  background-color: var(--color-indigo-600);
+}
+:deep(.dp__overlay) {
+  border-radius: 12px;
+}
+</style>
