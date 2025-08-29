@@ -23,6 +23,8 @@
         "@vuepic/vue-datepicker": "^11.0.2",
         "@vueuse/core": "^13.5.0",
         "date-fns": "^4.1.0",
+        "exceljs": "^4.4.0",
+        "file-saver": "^2.0.5",
         "leaflet": "^1.9.4",
         "pinia": "^3.0.2",
         "primeicons": "^7.0.0",

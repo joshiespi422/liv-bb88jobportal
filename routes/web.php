@@ -62,6 +62,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/accomplishment', [AccomplishmentController::class, 'index'])->name('accomplishment');
     Route::get('/accomplishment/{id}', [AccomplishmentController::class, 'show']);
     Route::patch('/accomplishment/{accomplishment}', [AccomplishmentController::class, 'update'])->name('accomplishment.update');
+    Route::post('/accomplishment/export', [AccomplishmentController::class, 'export'])->name('accomplishment.export');
 
     Route::get('/project', [ProjectController::class, 'index'])->name('project');
     Route::get('/project/{id}', [ProjectController::class, 'show'])->name('project.show');

@@ -3,6 +3,9 @@ import { ref, h, computed, reactive } from "vue";
 import { useForm, usePage, router } from "@inertiajs/vue3";
 import { formatDate, longDateTime } from "../Composables/useDateFormatter";
 import { useUrlParameter } from "../Composables/useUrlParameter";
+import { useExcelExporter } from "../Composables/useExcelExporter";
+import { onClickOutside } from "@vueuse/core";
+import { useToast } from "../Composables/useToast";
 import DataTable from "../Components/DataTable.vue";
 import ListBox from "../Components/ListBox.vue";
 import DetailsModal from "../Components/DetailsModal.vue";
@@ -33,6 +36,7 @@ const props = defineProps({
   activeTab: String,
 });
 
+const { error } = useToast();
 // logged in user data
 const page = usePage();
 const authUser = computed(() => page.props.auth.user);
@@ -421,6 +425,67 @@ const showEditButton = computed(() => {
 
   return true;
 });
+
+// date filter
+const dateFilterRef = ref(null);
+const buttonFilterRef = ref(null);
+onClickOutside(
+  dateFilterRef,
+  () => {
+    showDateFilter.value = false;
+  },
+  { ignore: [buttonFilterRef] }
+);
+
+// excel export
+const dataTableRef = ref(null);
+const { exportToExcel } = useExcelExporter();
+
+const handleExport = async () => {
+  // Access the tanstack table instance from the child component
+  const table = dataTableRef.value?.table;
+  if (!table) {
+    console.error("DataTable instance not found.");
+    error("No table available to export");
+    return;
+  }
+  // Get the rows that are currently visible after all filters (search, date, etc.)
+  const filteredRows = table.getFilteredRowModel().rows;
+  if (filteredRows.length === 0) {
+    error("No filtered data available to export");
+    return;
+  }
+  // Extract the original IDs from the visible rows
+  const accomplishmentIds = filteredRows.map((row) => row.original.id);
+  try {
+    // 6. Fetch the full data for ONLY the visible accomplishments
+    const response = await axios.post(route("accomplishment.export"), {
+      ids: accomplishmentIds,
+    });
+    const fullDataToExport = response.data;
+
+    // 7. Define the columns and their properties for the Excel file
+    const exportColumns = [
+      { header: "User", key: "user_name", width: 25 },
+      { header: "Project", key: "project_name", width: 25 },
+      { header: "Accomplish Title", key: "accomplish_title", width: 30 },
+      { header: "Date", key: "date_report", width: 25 },
+      { header: "Description", key: "description", width: 45 },
+      { header: "Link", key: "link", width: 40 },
+      { header: "Attachment", key: "attachment_url", width: 40 },
+    ];
+
+    // 8. Call the reusable exporter function
+    await exportToExcel(
+      fullDataToExport,
+      exportColumns,
+      "accomplishment_reports",
+      "Accomplishment Reports"
+    );
+  } catch (error) {
+    console.error("Failed to export data:", error);
+  }
+};
 </script>
 
 <template>
@@ -460,6 +525,7 @@ const showEditButton = computed(() => {
 
     <!-- Accomplishment Table -->
     <DataTable
+      ref="dataTableRef"
       :data="props.accomplishments"
       :columns="accomplishTableColumns"
       :date-filter="dateRange"
@@ -467,7 +533,7 @@ const showEditButton = computed(() => {
     >
       <template #custom-actions>
         <!-- date picker -->
-        <div v-if="showDateFilter" class="absolute top-12 my-datepicker">
+        <div v-if="showDateFilter" ref="dateFilterRef" class="absolute top-12">
           <VueDatePicker
             v-model="dateRange"
             range
@@ -483,11 +549,20 @@ const showEditButton = computed(() => {
         </div>
         <button
           @click="handleDateFilter"
+          ref="buttonFilterRef"
           class="btn rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
           :class="showDateFilter ? 'mb-6' : ''"
         >
           <i :class="showDateFilter ? 'pi pi-times' : 'pi pi-calendar-clock'" />
           Date
+        </button>
+
+        <button
+          class="btn rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
+          @click="handleExport"
+        >
+          <i class="pi pi-download"></i>
+          Export
         </button>
       </template>
     </DataTable>

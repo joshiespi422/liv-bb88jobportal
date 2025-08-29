@@ -111,6 +111,40 @@ class AccomplishmentController extends Controller
     }
 
     /**
+     * Export specific accomplishments by their IDs.
+     */
+    public function export(Request $request)
+    {
+        // 1. Validate the incoming request to ensure 'ids' is an array
+        $validated = $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'integer|exists:accomplishments,id', // Ensure all IDs exist
+        ]);
+
+        $accomplishmentIds = $validated['ids'];
+
+        // 2. Fetch only the requested accomplishments with their relations
+        $accomplishments = Accomplishment::with(['user:id,name', 'tasks:id,title'])
+            ->whereIn('id', $accomplishmentIds)
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($accomplishment) {
+                // 3. Map to the desired JSON structure for the exporter
+                return [
+                    'user_name' => $accomplishment->user->name,
+                    'project_name' => optional($accomplishment->tasks->first())->title,
+                    'accomplish_title' => $accomplishment->title,
+                    'date_report' => Carbon::parse($accomplishment->created_at)->format('M j, Y, g:i a'),
+                    'description' => $accomplishment->description,
+                    'link' => $accomplishment->link,
+                    'attachment_url' => $accomplishment->attachment ? asset(Storage::url($accomplishment->attachment)) : null
+                ];
+            });
+
+        return response()->json($accomplishments);
+    }
+    
+    /**
      * Show the form for creating a new resource. 
      */
     public function create()

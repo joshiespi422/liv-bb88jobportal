@@ -191,6 +191,8 @@ onBeforeUnmount(() => {
   });
   tooltipInstances.value = [];
 });
+
+defineExpose({ table });
 </script>
 
 <template>
@@ -226,7 +228,7 @@ onBeforeUnmount(() => {
     </div>
 
     <!-- Table View -->
-    <div v-if="displayMode === 'table'" class="overflow-x-auto">
+    <div v-if="displayMode === 'table'" class="overflow-x-auto table-scroll">
       <table
         class="table text-center font-semibold my-5"
         style="table-layout: fixed"
@@ -390,3 +392,16 @@ onBeforeUnmount(() => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.table-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+.table-scroll::-webkit-scrollbar-thumb {
+  border-radius: 3px;
+  background-color: var(--color-slate-500);
+}
+.table-scroll::-webkit-scrollbar-track {
+  margin: 50px;
+}
+</style>
