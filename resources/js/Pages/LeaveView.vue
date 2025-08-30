@@ -11,6 +11,7 @@ import ConfirmModal from "../Components/ConfirmModal.vue";
 import SelectInput from "../Components/forms/SelectInput.vue";
 import TextInput from "../Components/forms/TextInput.vue";
 import FileInput from "../Components/forms/FileInput.vue";
+import TextArea from "../Components/forms/TextArea.vue";
 
 const props = defineProps({
   leaves: {
@@ -162,7 +163,7 @@ const requestFormFields = computed(() => {
     {
       key: "reason",
       label: "Reason",
-      component: TextInput,
+      component: TextArea,
       attrs: {
         required: true,
         placeholder: "Example reason",
@@ -258,7 +259,7 @@ const validateFormFields = computed(() => {
     fields.push({
       key: "reject_reason",
       label: "Reason",
-      component: TextInput,
+      component: TextArea,
       attrs: {
         required: true,
         placeholder: "Reason for rejection",

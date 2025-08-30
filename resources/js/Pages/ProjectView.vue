@@ -13,6 +13,7 @@ import FormModal from "../Components/FormModal.vue";
 import ConfirmModal from "../Components/ConfirmModal.vue";
 import TextInput from "../Components/forms/TextInput.vue";
 import ComboBox from "../Components/forms/ComboBox.vue";
+import TextArea from "../Components/forms/TextArea.vue";
 
 const props = defineProps({
   projects: {
@@ -110,7 +111,7 @@ const newProjectFormFields = computed(() => {
     {
       key: "description",
       label: "Description",
-      component: TextInput,
+      component: TextArea,
       attrs: { required: true, placeholder: "Example Description" },
     },
     {
@@ -157,7 +158,7 @@ const addIssueFormFields = computed(() => {
     {
       key: "description",
       label: "Description",
-      component: TextInput,
+      component: TextArea,
       attrs: { required: true, placeholder: "Example Description" },
     },
   ];
@@ -206,7 +207,7 @@ const resolveIssueFormFields = computed(() => {
     {
       key: "solution",
       label: "Solution",
-      component: TextInput,
+      component: TextArea,
       attrs: { required: true, placeholder: "Example Solution" },
     },
   ];

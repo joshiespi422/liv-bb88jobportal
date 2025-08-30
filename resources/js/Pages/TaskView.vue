@@ -16,6 +16,7 @@ import TextInput from "../Components/forms/TextInput.vue";
 import SelectInput from "../Components/forms/SelectInput.vue";
 import FileInput from "../Components/forms/FileInput.vue";
 import ComboBox from "../Components/forms/ComboBox.vue";
+import TextArea from "../Components/forms/TextArea.vue";
 
 const props = defineProps({
   tasks: {
@@ -115,18 +116,6 @@ const newTaskFormFields = computed(() => {
       attrs: { required: true, placeholder: "Example Task" },
     },
     {
-      key: "description",
-      label: "Description",
-      component: TextInput,
-      attrs: { required: true, placeholder: "Example Description" },
-    },
-    {
-      key: "collateral",
-      label: "Collateral",
-      component: TextInput,
-      attrs: { required: true, placeholder: "Example Collateral" },
-    },
-    {
       key: "department_id",
       label: "Department",
       component:
@@ -147,13 +136,10 @@ const newTaskFormFields = computed(() => {
             },
     },
     {
-      key: "project",
-      label: "Project (optional)",
-      component: ComboBox,
-      attrs: {
-        options: projectsList.value,
-        placeholder: "Select a project",
-      },
+      key: "collateral",
+      label: "Collateral",
+      component: TextInput,
+      attrs: { required: true, placeholder: "Example Collateral" },
     },
     {
       key: "assignees",
@@ -166,11 +152,27 @@ const newTaskFormFields = computed(() => {
       },
     },
     {
+      key: "project",
+      label: "Project (optional)",
+      component: ComboBox,
+      attrs: {
+        options: projectsList.value,
+        placeholder: "Select a project",
+      },
+    },
+    {
       key: "deadline",
       label: "Deadline",
       component: TextInput,
       attrs: { type: "date", required: true, min: today.value },
     },
+    {
+      key: "description",
+      label: "Description",
+      component: TextArea,
+      attrs: { required: true, placeholder: "Example Description" },
+    },
+
     {
       key: "priority",
       label: "Priority",
