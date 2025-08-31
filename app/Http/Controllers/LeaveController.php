@@ -269,6 +269,7 @@ class LeaveController extends Controller
             'category' => $leave->leaveCategory->name,
             'status' => $leave->status->status_name,
             'reason' => $leave->reason,
+            'reject_reason' => $leave->reject_reason,
             'request_date' => $requestDateDisplay,
             'proof' => $leave->proof
                 ? [

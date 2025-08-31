@@ -552,6 +552,8 @@ const isDetailsModalOpen = ref(false);
 const selectedDetails = ref(null);
 const isDetailsLoading = ref(false);
 const isDetailsError = ref(false);
+// state for showing revision reason
+const showReviseReason = ref(false);
 
 // formatter for assignees
 const formatAssignees = (assignees) => {
@@ -597,10 +599,35 @@ onMountedHandleParameter("open", fetchTaskDetails);
 
 // Handler for viewing task details and details modal function
 const handleViewDetails = (task) => {
+  showReviseReason.value = false;
   fetchTaskDetails(task.id);
 };
 const closeDetailsModal = () => {
   isDetailsModalOpen.value = false;
+  showReviseReason.value = false;
+};
+const statusClassMap = {
+  done: "text-success",
+  revision: "text-error",
+  "in progress": "text-accent",
+  pending: "text-info",
+};
+const priorityClassMap = {
+  low: "text-info",
+  medium: "text-accent",
+  high: "text-error",
+};
+function getFieldClass(field, item) {
+  if (field.key === "status") {
+    return statusClassMap[item.status] || "";
+  }
+  if (field.key === "priority") {
+    return priorityClassMap[item.priority] || "";
+  }
+  return "";
+}
+const toggleReviseReason = () => {
+  showReviseReason.value = !showReviseReason.value;
 };
 
 // Accomplishment Details state
@@ -1122,14 +1149,62 @@ const showNewButton = computed(() => {
             <div
               v-for="field in taskDetailFields"
               :key="field.key"
-              class="grid grid-cols-[1fr_4fr] gap-2 items-center"
+              class="grid grid-cols-[1fr_4fr] gap-2"
             >
-              <label class="block text-sm font-bold">
+              <label class="block text-sm font-bold mt-2">
                 {{ field.label }}
               </label>
 
+              <!-- Status field with click handler -->
+              <div v-if="field.key === 'status'">
+                <div
+                  class="text-sm bg-base-200 rounded-xl px-3 py-2 font-medium truncate flex justify-between"
+                >
+                  <span :class="statusClassMap[item.status]">{{
+                    item.status || "N/A"
+                  }}</span>
+                  <i
+                    v-if="item.status === 'revision'"
+                    class="pi pi-info-circle text-xl text-error cursor-pointer ml-2"
+                    @click="toggleReviseReason"
+                  ></i>
+                </div>
+                <!-- Revision reason row (appears below status) -->
+                <transition
+                  enter-active-class="transition-all duration-300 ease-out"
+                  leave-active-class="transition-all duration-200 ease-in"
+                  enter-from-class="opacity-0 max-h-0"
+                  enter-to-class="opacity-100 max-h-20"
+                  leave-from-class="opacity-100 max-h-20"
+                  leave-to-class="opacity-0 max-h-0"
+                >
+                  <div
+                    v-if="
+                      item && item.status === 'revision' && showReviseReason
+                    "
+                    class="grid grid-cols-1 gap-4 items-center overflow-hidden"
+                  >
+                    <div
+                      class="text-sm bg-base-200 rounded-xl px-3 py-2 mt-2 overflow-hidden space-y-2"
+                    >
+                      <label class="block text-sm font-bold">
+                        Reason for Revision:
+                      </label>
+                      <p class="truncate font-medium text-error">
+                        {{ item.revise_reason || "No reason provided" }}
+                      </p>
+                    </div>
+                  </div>
+                </transition>
+              </div>
+
+              <!-- Other fields -->
               <p
-                class="text-sm bg-base-200 rounded-xl px-3 py-2 font-medium text-wrap truncate"
+                v-else
+                :class="[
+                  'text-sm bg-base-200 rounded-xl px-3 py-2 font-medium text-wrap truncate',
+                  getFieldClass(field, item),
+                ]"
               >
                 {{ getFieldValue(item, field) }}
               </p>

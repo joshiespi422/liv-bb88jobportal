@@ -364,6 +364,8 @@ const isDetailsModalOpen = ref(false);
 const selectedDetails = ref(null);
 const isDetailsLoading = ref(false);
 const isDetailsError = ref(false);
+// state for showing rejection reason
+const showRejectReason = ref(false);
 
 const attachFormatter = (attachment) => {
   if (!attachment) return "N/A";
@@ -434,12 +436,23 @@ const fetchLeaveDetails = async (leaveId) => {
 };
 // Auto-handle 'open' parameter on mount
 onMountedHandleParameter("open", fetchLeaveDetails);
+// Function to toggle rejection reason
+const toggleRejectReason = () => {
+  showRejectReason.value = !showRejectReason.value;
+};
 // Handler for viewing leave details and details modal function
 const handleViewDetails = (leaveId) => {
+  showRejectReason.value = false;
   fetchLeaveDetails(leaveId);
 };
 const closeDetailsModal = () => {
   isDetailsModalOpen.value = false;
+  showRejectReason.value = false;
+};
+const statusClassMap = {
+  approved: "text-success",
+  rejected: "text-error",
+  pending: "text-accent",
 };
 
 // core logic for the super_admin filter
@@ -568,7 +581,7 @@ const leaveTableColumns = [
 ];
 const statusColor = {
   pending: "badge-accent",
-  approved: "badge-info",
+  approved: "badge-success",
   rejected: "badge-error",
 };
 
@@ -692,6 +705,76 @@ const showValidateButton = computed(() => {
     :fields="leaveDetailFields"
     @close="closeDetailsModal"
   >
+    <!-- custom content slot  -->
+    <template #content="{ item, getFieldValue }">
+      <div class="space-y-4 my-5">
+        <div
+          v-for="field in leaveDetailFields"
+          :key="field.key"
+          class="grid grid-cols-[1fr_4fr] gap-4"
+        >
+          <label class="block text-sm font-bold mt-2">
+            {{ field.label }}:
+          </label>
+
+          <!-- Status field with click handler -->
+          <div v-if="field.key === 'status'">
+            <div
+              class="text-sm bg-base-200 rounded-xl px-3 py-2 font-medium truncate flex justify-between"
+            >
+              <span :class="statusClassMap[item.status]">{{
+                item.status || "N/A"
+              }}</span>
+              <i
+                v-if="item.status === 'rejected'"
+                class="pi pi-info-circle text-xl text-error cursor-pointer ml-2"
+                @click="toggleRejectReason"
+              ></i>
+            </div>
+            <!-- Rejection reason row (appears below status) -->
+            <transition
+              enter-active-class="transition-all duration-300 ease-out"
+              leave-active-class="transition-all duration-200 ease-in"
+              enter-from-class="opacity-0 max-h-0"
+              enter-to-class="opacity-100 max-h-20"
+              leave-from-class="opacity-100 max-h-20"
+              leave-to-class="opacity-0 max-h-0"
+            >
+              <div
+                v-if="item && item.status === 'rejected' && showRejectReason"
+                class="grid grid-cols-1 gap-4 items-center overflow-hidden"
+              >
+                <div
+                  class="text-sm bg-base-200 rounded-xl px-3 py-2 mt-2 overflow-hidden space-y-2"
+                >
+                  <label class="block text-sm font-bold">
+                    Reason for Rejection:
+                  </label>
+                  <p class="truncate font-medium text-error">
+                    {{ item.reject_reason || "No reason provided" }}
+                  </p>
+                </div>
+              </div>
+            </transition>
+          </div>
+
+          <!-- Other fields -->
+          <div
+            v-else-if="field.html"
+            class="text-sm bg-base-200 rounded-xl px-3 py-2 font-medium truncate"
+            v-html="getFieldValue(item, field)"
+          ></div>
+
+          <p
+            v-else
+            class="text-sm bg-base-200 rounded-xl px-3 py-2 font-medium text-wrap truncate"
+          >
+            {{ getFieldValue(item, field) }}
+          </p>
+        </div>
+      </div>
+    </template>
+
     <template #custom-buttons>
       <button
         v-if="showValidateButton"

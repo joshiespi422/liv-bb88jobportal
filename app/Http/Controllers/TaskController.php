@@ -350,6 +350,7 @@ class TaskController extends Controller
             'deadline' => $task->deadline,
             'priority' => $task->priority,
             'status' => $task->status->status_name,
+            'revise_reason' => $task->revise_reason,
             'assignees' => $task->users->map(fn ($user) => [
                 'id' => $user->id,
                 'name' => $user->name
