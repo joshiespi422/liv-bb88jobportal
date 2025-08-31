@@ -292,7 +292,7 @@ const isLeaderTab = computed(
     props.currentType === "employee"
 );
 const tabs = computed(() => {
-  const items = [{ id: "all_accomplishments", label: "All Accomplishments" }];
+  const items = [{ id: "all", label: "All Accomplishments" }];
 
   if (
     isRegularTab.value ||
@@ -300,7 +300,7 @@ const tabs = computed(() => {
     authUser.value.userType === "intern"
   ) {
     items.unshift({
-      id: "your_accomplishments",
+      id: "own",
       label: "Your Accomplishments",
     });
   }
@@ -329,10 +329,33 @@ const accomplishTableColumns = computed(() => {
   const columns = [];
 
   // Conditionally add "FROM" column for All Accomplishments tab
-  if (props.activeTab === "all_accomplishments") {
+  if (props.activeTab === "all") {
     columns.push({
-      accessorKey: "user_name",
+      id: "employee",
       header: "FROM",
+      accessorFn: (row) => row.user.name,
+      cell: ({ cell }) => {
+        const userPicture = cell.row.original.user.picture;
+        return h(
+          "span",
+          {
+            class: "flex items-center justify-center gap-2",
+          },
+          [
+            h("img", {
+              src: userPicture || "/profile-images/default.png",
+              class: "avatar w-10 rounded-full",
+            }),
+            h(
+              "span",
+              {
+                class: "truncate",
+              },
+              cell.getValue()
+            ),
+          ]
+        );
+      },
     });
   }
 
@@ -404,8 +427,8 @@ const showEditButton = computed(() => {
     return false;
   }
 
-  // 3. Must be in "your_accomplishments" tab
-  if (props.activeTab !== "your_accomplishments") {
+  // 3. Must be in "own" tab
+  if (props.activeTab !== "own") {
     return false;
   }
 

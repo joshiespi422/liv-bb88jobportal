@@ -57,23 +57,23 @@ class AccomplishmentController extends Controller
 
         // Determine active tab
         if ($userType === 'employee' && $user->employeeDetails->hierarchy === 'Leader' && $accomplishmentType === 'intern') {
-            $defaultTab = 'all_accomplishments';
+            $defaultTab = 'all';
         } else {
             $defaultTab = in_array($userType, ['employee', 'intern']) 
-                ? 'your_accomplishments' 
-                : 'all_accomplishments';
+                ? 'own' 
+                : 'all';
         }
-        $activeTab = in_array($request->tab, ['your_accomplishments', 'all_accomplishments']) 
+        $activeTab = in_array($request->tab, ['own', 'all']) 
             ? $request->tab 
             : $defaultTab;
         
         $accomplishmentsQuery = Accomplishment::with([
-                'user:id,name',
+                'user:id,name,picture',
                 'tasks:id,title'
         ]);
 
         // Apply tab-specific filters
-        if ($activeTab === 'your_accomplishments' && $userType === $accomplishmentType) {
+        if ($activeTab === 'own' && $userType === $accomplishmentType) {
             // Show only current user's accomplishments
             $accomplishmentsQuery->where('user_id', $user->id);
         } else {
@@ -95,7 +95,12 @@ class AccomplishmentController extends Controller
                 'title' => $accomplishment->title,
                 'task_title' => $accomplishment->tasks->first()->title,
                 'created_at' => $accomplishment->created_at,
-                'user_name' => $accomplishment->user->name
+                'user' => [
+                        'name' => $accomplishment->user->name,
+                        'picture' => $accomplishment->user->picture 
+                            ? Storage::url($accomplishment->user->picture)  // Generates full URL for stored image
+                            : Storage::url('profile-images/default.png'),  // Fallback to default image
+                    ],
             ];
         });
 
