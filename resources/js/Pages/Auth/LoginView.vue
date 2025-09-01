@@ -5,7 +5,7 @@ export default {
 </script>
 
 <script setup>
-import { useForm } from "@inertiajs/vue3";
+import { useForm, Link } from "@inertiajs/vue3";
 
 const form = useForm({
   email: null,
@@ -30,7 +30,11 @@ const handleLogin = () => {
       <div class="w-2/3 flex flex-col items-center pl-5">
         <!-- Logo -->
         <div class="w-full flex justify-center">
-          <img src="../../assets/img/bb88-logo.png" alt="" class="w-1/2 my-5" />
+          <img
+            src="../../../assets/img/bb88-logo.png"
+            alt=""
+            class="w-1/2 my-5"
+          />
         </div>
 
         <!-- Title -->
@@ -91,9 +95,12 @@ const handleLogin = () => {
               </div>
 
               <div class="text-right">
-                <a href="#" class="text-gray-primary mb-2 font-bold"
-                  >Forgot Password?</a
+                <Link
+                  :href="route('password.request')"
+                  class="text-gray-primary mb-2 font-bold"
                 >
+                  Forgot Password?
+                </Link>
               </div>
               <div class="text-center">
                 <button
@@ -116,7 +123,7 @@ const handleLogin = () => {
       <!-- Right Image -->
       <div class="w-96 flex items-center">
         <img
-          src="../../assets/img/login-inner-img.png"
+          src="../../../assets/img/login-inner-img.png"
           alt=""
           class="w-[85%] h-60"
         />
