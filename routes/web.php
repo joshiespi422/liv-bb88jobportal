@@ -15,6 +15,9 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AttendanceController;
 use Illuminate\Support\Facades\Route;
 
+// Profile info for the qr code
+Route::get('/info', [ProfileController::class, 'showInfo'])->name('info');
+
 // Guest routes
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');

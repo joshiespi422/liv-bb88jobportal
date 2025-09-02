@@ -1,10 +1,12 @@
 <script setup>
 import { ref, reactive, computed } from "vue";
 import { useForm } from "@inertiajs/vue3";
+import QrcodeVue from "qrcode.vue";
 import { formatDate } from "../Composables/useDateFormatter";
 import PictureModal from "../Components/PictureModal.vue";
 import ConfirmModal from "../Components/ConfirmModal.vue";
 import FormModal from "../Components/FormModal.vue";
+import DetailsModal from "../Components/DetailsModal.vue";
 import PasswordInput from "../Components/forms/PasswordInput.vue";
 import TextInput from "../Components/forms/TextInput.vue";
 import SelectInput from "../Components/forms/SelectInput.vue";
@@ -44,7 +46,7 @@ const displayValue = (field, value) => {
 const isPictureModalOpen = ref(false);
 const isConfirmModalOpen = ref(false);
 const isPasswordModalOpen = ref(false);
-const isDetailsModalOpen = ref(false);
+const isEditDetailsModalOpen = ref(false);
 // Holds the action to be executed on confirmation
 const pendingAction = ref(null);
 
@@ -182,8 +184,8 @@ const openPictureModal = () => {
   isPictureModalOpen.value = true;
 };
 
-const openDetailsModal = () => {
-  isDetailsModalOpen.value = true;
+const openEditDetailsModal = () => {
+  isEditDetailsModalOpen.value = true;
 };
 
 const closeConfirmModal = () => {
@@ -194,7 +196,7 @@ const closeAllModals = () => {
   isPictureModalOpen.value = false;
   isConfirmModalOpen.value = false;
   isPasswordModalOpen.value = false;
-  isDetailsModalOpen.value = false;
+  isEditDetailsModalOpen.value = false;
 };
 
 const resetPasswordForm = () => {
@@ -300,6 +302,24 @@ const executeConfirm = () => {
     pendingAction.value();
   }
 };
+
+// Qr Modal state
+const isQrModalOpen = ref(false);
+// Create the full URL for the QR code dynamically
+const qrUrl = computed(() => {
+  // Only generate a URL if the user has a qr_code ID
+  if (props.profile.qr_code) {
+    return `${window.location.origin}/info?id=${props.profile.qr_code}`;
+  }
+  return null; // Return null if no ID exists
+});
+
+const openQrModal = () => {
+  isQrModalOpen.value = true;
+};
+const closeQrModal = () => {
+  isQrModalOpen.value = false;
+};
 </script>
 
 <template>
@@ -332,13 +352,22 @@ const executeConfirm = () => {
           </div>
         </div>
 
-        <button
-          @click="openDetailsModal"
-          class="btn rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
-        >
-          <i class="pi pi-pen-to-square mr-2" />
-          Edit
-        </button>
+        <div class="flex items-center gap-2">
+          <button
+            @click="openEditDetailsModal"
+            class="btn rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
+          >
+            <i class="pi pi-pen-to-square mr-1" />
+            Edit
+          </button>
+          <button
+            @click="openQrModal"
+            class="btn rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
+          >
+            <i class="pi pi-qrcode mr-1" />
+            QR Code
+          </button>
+        </div>
       </div>
 
       <!-- User information -->
@@ -385,6 +414,41 @@ const executeConfirm = () => {
       </div>
     </div>
 
+    <!-- QR Modal -->
+    <DetailsModal
+      :isOpen="isQrModalOpen"
+      :item="{ qr: qrUrl }"
+      :loading="false"
+      :error="false"
+      title="SCAN QR CODE"
+      @close="closeQrModal"
+    >
+      <!-- Custom Content Layout -->
+      <template #content>
+        <div class="flex flex-col items-center justify-center p-4">
+          <div
+            v-if="qrUrl"
+            class="p-4 bg-white rounded-xl shadow-[0_0_10px_rgba(0,0,0,0.3)]"
+          >
+            <QrcodeVue :value="qrUrl" :size="200" level="H" />
+          </div>
+
+          <div
+            v-else
+            role="alert"
+            class="alert alert-soft alert-error mt-10 mb-5 w-full"
+          >
+            <i class="pi pi-exclamation-circle text-2xl" />
+            <p class="font-semibold">No available QR Code</p>
+          </div>
+
+          <p v-if="qrUrl" class="mt-6 text-sm text-gray-500 text-center">
+            Scan this code to view public profile information.
+          </p>
+        </div>
+      </template>
+    </DetailsModal>
+
     <!-- Profile Picture Modal -->
     <PictureModal
       :isOpen="isPictureModalOpen"
@@ -411,7 +475,7 @@ const executeConfirm = () => {
 
     <!-- Details Edit Modal -->
     <FormModal
-      :isOpen="isDetailsModalOpen"
+      :isOpen="isEditDetailsModalOpen"
       :inert="isConfirmModalOpen"
       title="EDIT PROFILE DETAILS"
       :form="detailsForm"

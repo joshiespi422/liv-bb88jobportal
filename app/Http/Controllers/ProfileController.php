@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -133,6 +133,37 @@ class ProfileController extends Controller
         $user->update($validated);
 
         return back()->with('success', 'Profile details updated successfully!');
+    }
+
+    public function showInfo(Request $request)
+    {
+        $id = $request->query('id');
+    
+        // Return null if no ID parameter or empty value
+        if (!$id) {
+            return Inertia::render('UserInfoView', [
+                'userInfo' => null
+            ]);
+        }
+
+        // Find user by matching qr_code with the ID parameter
+        $user = User::where('qr_code', $id)->first();
+
+        $publicData = null;
+        if ($user) {
+            $publicData = [
+                'name' => $user->name,
+                'position' => $user->position,
+                'picture' => $user->picture
+                    ? Storage::url($user->picture)
+                    : Storage::url('profile-images/default.png'),
+            ];
+        }
+
+        return Inertia::render('UserInfoView', [
+            'userInfo' => $publicData
+        ]);
+    
     }
 
     /**

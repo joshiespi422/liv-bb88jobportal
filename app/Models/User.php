@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 
 class User extends Authenticatable
 {
@@ -147,4 +148,18 @@ class User extends Authenticatable
     {
         return $this->userType && $this->userType->type_name === $typeName;
     }
+
+    /**
+     * The "booted" method of the model.
+     * This will automatically run when the model is used.
+     */
+    // protected static function booted(): void
+    // {
+    //     // Use the 'creating' event to assign the UUID before saving a new user
+    //     static::creating(function (User $user) {
+    //         if (empty($user->qr_code)) {
+    //             $user->qr_code = (string) Str::uuid();
+    //         }
+    //     });
+    // }
 }
