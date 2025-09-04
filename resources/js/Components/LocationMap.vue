@@ -50,7 +50,7 @@ watch(
 </script>
 
 <template>
-  <div class="h-[400px] w-full rounded-lg overflow-hidden">
+  <div class="h-[400px] w-full rounded-lg overflow-hidden -scale-z-50">
     <l-map
       ref="map"
       :center="props.center"

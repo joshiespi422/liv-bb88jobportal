@@ -16,11 +16,11 @@ class ProfileController extends Controller
      */
     public function index()
     {
-        /** @var \App\Models\User $user */ 
+        /** @var \App\Models\User $user */
         $user = Auth::user();
 
         // Always load userType
-        $user->load('userType');
+        $user->loadMissing('userType');
         $role = $user->userType->type_name;
 
         // Conditionally load relationships
@@ -30,7 +30,7 @@ class ProfileController extends Controller
         ];
 
         if ($relation = ($relations[$role] ?? null)) {
-            $user->load($relation);
+            $user->loadMissing($relation);
         }
 
         // Base data common to all users
@@ -107,7 +107,7 @@ class ProfileController extends Controller
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
-        
+
         $request->validate([
             'current_password' => ['required', 'current_password'],
             'password' => ['required', 'confirmed', 'min:8'],
@@ -138,7 +138,7 @@ class ProfileController extends Controller
     public function showInfo(Request $request)
     {
         $id = $request->query('id');
-    
+
         // Return null if no ID parameter or empty value
         if (!$id) {
             return Inertia::render('UserInfoView', [
@@ -149,11 +149,32 @@ class ProfileController extends Controller
         // Find user by matching qr_code with the ID parameter
         $user = User::where('qr_code', $id)->first();
 
+        // Always load userType
+        $user->loadMissing('userType');
+        $role = $user->userType->type_name;
+
+        // Conditionally load relationships
+        $relations = [
+            'employee' => 'employeeDetails.department',
+            'intern' => 'internDetails.department'
+        ];
+
+        if ($relation = ($relations[$role] ?? null)) {
+            $user->loadMissing($relation);
+        }
+
         $publicData = null;
         if ($user) {
             $publicData = [
                 'name' => $user->name,
+                'email' => $user->email,
+                'department' => $user->employeeDetails->department->dept_name ?? null,
                 'position' => $user->position,
+                'qrCode' => $user->qr_code,
+                'role' => $role,
+                'gender' => $user->gender,
+                'bday' => $user->bday,
+                'address' => $user->address,
                 'picture' => $user->picture
                     ? Storage::url($user->picture)
                     : Storage::url('profile-images/default.png'),
@@ -163,7 +184,6 @@ class ProfileController extends Controller
         return Inertia::render('UserInfoView', [
             'userInfo' => $publicData
         ]);
-    
     }
 
     /**

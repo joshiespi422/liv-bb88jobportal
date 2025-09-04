@@ -493,7 +493,7 @@ watch(selectedUser, (newUser) => {
       >
         <div class="flex items-center justify-between mb-4">
           <h1 class="text-2xl lg:text-3xl font-bold mx-2">Map Coordinates</h1>
-          <div class="w-full max-w-xs z-[1001]">
+          <div class="w-full max-w-xs">
             <Combobox
               v-model="selectedUser"
               :options="props.usersForMapFilter"
