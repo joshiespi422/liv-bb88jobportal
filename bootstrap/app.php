@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'user.type' => \App\Http\Middleware\CheckUserType::class, 
+            'employee.hierarchy' => \App\Http\Middleware\CheckEmployeeHierarchy::class
         ]);
 
     })

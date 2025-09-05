@@ -44,7 +44,7 @@ Route::middleware('auth')->group(function () {
         });
     });
 
-    Route::middleware('user.type:super_admin,intern')->group(function () {
+    Route::middleware(['user.type:super_admin,intern,employee', 'employee.hierarchy:Leader'])->group(function () {
         Route::prefix('team')->name('team.')->group(function () {
             Route::get('/interns', [InternController::class, 'index'])->name('interns');
             Route::get('/interns/{id}', [InternController::class, 'show'])->name('interns.show');

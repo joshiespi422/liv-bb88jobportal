@@ -161,7 +161,7 @@ const generateRoute = (item) => {
 
 <template>
   <div
-    class="h-[97%] ml-2 my-2 relative bg-gradient-to-b from-green-primary-1 to-green-secondary rounded-3xl flex flex-col"
+    class="min-h-[97%] ml-2 my-2 relative bg-gradient-to-b from-green-primary-1 to-green-secondary rounded-3xl flex flex-col"
   >
     <div class="ml-2 mr-4 py-3 h-20" v-if="!sidebarStore.isCollapsed">
       <img src="../../assets/img/bb88-logo.png" alt="" />
