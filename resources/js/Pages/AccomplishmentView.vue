@@ -553,6 +553,7 @@ const handleExport = async () => {
       :columns="accomplishTableColumns"
       :date-filter="dateRange"
       :filter-key="'created_at'"
+      :enable-view-toggle="true"
     >
       <template #custom-actions>
         <!-- date picker -->

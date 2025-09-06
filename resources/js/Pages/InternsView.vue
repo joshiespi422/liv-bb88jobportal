@@ -275,7 +275,11 @@ const internTableColumns = [
     </div>
 
     <!-- Intern Table -->
-    <DataTable :data="props.interns" :columns="internTableColumns">
+    <DataTable
+      :data="props.interns"
+      :columns="internTableColumns"
+      :enable-view-toggle="true"
+    >
       <template #custom-actions>
         <button
           @click="handleAddNewIntern"

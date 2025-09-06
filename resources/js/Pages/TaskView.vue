@@ -1005,7 +1005,12 @@ const showNewButton = computed(() => {
     </div>
 
     <!-- Task Table -->
-    <DataTable :data="props.tasks" :columns="taskTableColumns" enable-tooltips>
+    <DataTable
+      :data="props.tasks"
+      :columns="taskTableColumns"
+      enable-tooltips
+      :enable-view-toggle="true"
+    >
       <template #custom-actions>
         <button
           @click="handleNewTask"

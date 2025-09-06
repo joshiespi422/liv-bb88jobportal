@@ -244,6 +244,7 @@ const attendanceTitle = computed(() => {
       v-if="activeTab === 'today'"
       :data="props.todayList"
       :columns="todayListColumns"
+      :enable-view-toggle="true"
     />
 
     <!-- All Table -->
@@ -251,6 +252,7 @@ const attendanceTitle = computed(() => {
       v-if="activeTab === 'all'"
       :data="props.deptAttendance"
       :columns="deptAttendanceColumns"
+      :enable-view-toggle="true"
     />
 
     <!-- Log Details Modal -->

@@ -47,6 +47,10 @@ const props = defineProps({
     type: String,
     default: "created_at",
   },
+  enableViewToggle: {
+    type: Boolean,
+    default: false,
+  },
   // add more props here for other table features
 });
 
@@ -174,13 +178,53 @@ const debouncedInitTooltips = () => {
   initTimeout = setTimeout(initTooltips, 150);
 };
 
-onMounted(() => props.enableTooltips && debouncedInitTooltips());
+// --- LOGIC FOR VIEW TOGGLE ---
+const currentViewMode = ref(props.displayMode);
+const isMobileView = ref(false);
+// v-model for the checkbox toggle.
+const isCardViewSelected = computed({
+  get: () => currentViewMode.value === "card",
+  set: (isCard) => {
+    currentViewMode.value = isCard ? "card" : "table";
+  },
+});
+// core logic, It forces 'card' view on mobile, otherwise respects the user's choice.
+const activeDisplayMode = computed(() => {
+  if (isMobileView.value) {
+    return "card";
+  }
+  return currentViewMode.value;
+});
+// Logic to check screen size
+let mediaQueryList = null;
+const checkScreenSize = () => {
+  if (mediaQueryList) {
+    isMobileView.value = mediaQueryList.matches;
+  }
+};
+
+onMounted(() => {
+  // Tailwind's 'sm' breakpoint is 640px, check for anything below that.
+  mediaQueryList = window.matchMedia("(max-width: 639px)");
+  checkScreenSize();
+  mediaQueryList.addEventListener("change", checkScreenSize);
+
+  // for tooltips intialize
+  if (props.enableTooltips) {
+    debouncedInitTooltips();
+  }
+});
 onUpdated(() => props.enableTooltips && debouncedInitTooltips());
 
 // Proper cleanup
 onBeforeUnmount(() => {
-  clearTimeout(initTimeout);
+  // clean for view mode
+  if (mediaQueryList) {
+    mediaQueryList.removeEventListener("change", checkScreenSize);
+  }
 
+  // clean for tooltips
+  clearTimeout(initTimeout);
   // Destroy all tooltip instances
   tooltipInstances.value.forEach((instance) => {
     try {
@@ -192,6 +236,7 @@ onBeforeUnmount(() => {
   tooltipInstances.value = [];
 });
 
+// for importing table data to excel
 defineExpose({ table });
 </script>
 
@@ -215,7 +260,19 @@ defineExpose({ table });
           </option>
         </select>
       </div>
-      <div class="flex gap-2 w-full sm:w-auto relative">
+      <div class="flex items-center gap-3 w-full sm:w-auto relative">
+        <label
+          v-if="props.enableViewToggle"
+          class="cursor-pointer label hidden sm:flex items-center gap-2 p-0"
+        >
+          <i class="pi pi-table text-xl"></i>
+          <input
+            type="checkbox"
+            class="toggle toggle-lg"
+            v-model="isCardViewSelected"
+          />
+          <i class="pi pi-id-card text-xl"></i>
+        </label>
         <input
           type="text"
           v-model="globalFilter"
@@ -228,7 +285,10 @@ defineExpose({ table });
     </div>
 
     <!-- Table View -->
-    <div v-if="displayMode === 'table'" class="overflow-x-auto table-scroll">
+    <div
+      v-if="activeDisplayMode === 'table'"
+      class="overflow-x-auto table-scroll"
+    >
       <table
         class="table text-center font-semibold my-5"
         style="table-layout: fixed"
@@ -295,7 +355,7 @@ defineExpose({ table });
     </div>
 
     <!-- Card View -->
-    <div v-else-if="displayMode === 'card'" class="my-5">
+    <div v-else-if="activeDisplayMode === 'card'" class="my-5">
       <div v-if="table.getRowModel().rows.length === 0" class="py-4">
         <div
           role="alert"

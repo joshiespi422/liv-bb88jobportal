@@ -292,7 +292,11 @@ const employeeTableColumns = [
     </div>
 
     <!-- Employee Table -->
-    <DataTable :data="props.employees" :columns="employeeTableColumns">
+    <DataTable
+      :data="props.employees"
+      :columns="employeeTableColumns"
+      :enable-view-toggle="true"
+    >
       <template #custom-actions>
         <button
           @click="handleAddNewEmployee"

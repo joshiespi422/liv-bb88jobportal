@@ -655,7 +655,11 @@ const showValidateButton = computed(() => {
     </div>
 
     <!-- Task Table -->
-    <DataTable :data="props.leaves" :columns="leaveTableColumns">
+    <DataTable
+      :data="props.leaves"
+      :columns="leaveTableColumns"
+      :enable-view-toggle="true"
+    >
       <template #custom-actions>
         <button
           @click="handleRequestLeave"

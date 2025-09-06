@@ -487,7 +487,11 @@ watch(selectedUser, (newUser) => {
 
     <div v-if="authUser?.userType === 'super_admin'" class="mt-7">
       <h1 class="text-2xl lg:text-3xl font-bold mx-4 mb-3">Online Users</h1>
-      <DataTable :data="props.onlineUsers" :columns="onlineUsersColumns" />
+      <DataTable
+        :data="props.onlineUsers"
+        :columns="onlineUsersColumns"
+        :enable-view-toggle="true"
+      />
       <div
         class="p-4 mt-7 rounded-2xl shadow-md border-4 border-green-primary-1"
       >
