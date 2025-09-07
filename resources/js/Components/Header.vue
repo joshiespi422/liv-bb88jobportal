@@ -97,7 +97,7 @@ const themeStore = useThemeStore();
         <div
           v-if="showDropdown"
           ref="dropdownRef"
-          class="absolute right-5 mt-2 w-100 bg-base-100 shadow-lg rounded-md z-50 border-3 border-green-primary-1"
+          class="absolute right-5 mt-2 w-100 bg-base-100 shadow-lg rounded-md z-20 border-3 border-green-primary-1"
         >
           <div
             class="p-3 border-b-2 border-green-primary-1 font-bold flex justify-between items-center"

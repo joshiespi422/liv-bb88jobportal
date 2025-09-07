@@ -79,7 +79,7 @@ const focusElement = ref(null);
   <TransitionRoot appear :show="isOpen" as="template">
     <Dialog
       as="div"
-      class="relative z-10"
+      class="relative z-50"
       :inert="inert"
       @close="!inert && requestDialogClose()"
       :initial-focus="inert ? undefined : focusElement"

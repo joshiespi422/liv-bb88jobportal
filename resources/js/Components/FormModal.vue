@@ -39,7 +39,7 @@ const focusElement = ref(null);
   <TransitionRoot as="template" :show="isOpen">
     <Dialog
       as="div"
-      class="relative z-10"
+      class="relative z-50"
       :inert="inert"
       @close="!inert && $emit('close')"
       :initial-focus="inert ? undefined : focusElement"
@@ -56,7 +56,7 @@ const focusElement = ref(null);
         <div class="fixed inset-0 bg-black/30 transition-opacity" />
       </TransitionChild>
 
-      <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+      <div class="fixed inset-0 w-screen overflow-y-auto">
         <div class="flex min-h-full items-center justify-center p-4 sm:p-0">
           <TransitionChild
             as="template"
