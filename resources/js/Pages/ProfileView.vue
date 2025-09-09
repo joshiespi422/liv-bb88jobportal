@@ -323,22 +323,22 @@ const closeQrModal = () => {
 </script>
 
 <template>
-  <div class="p-4 md:p-8 lg:p-12 xl:p-16">
+  <div class="p-4 md:p-8 lg:p-10 xl:p-12">
     <div
-      class="border-4 border-green-primary-1 max-w-6xl mx-auto rounded-3xl shadow-xl/20"
+      class="border-4 border-green-primary-1 max-w-6xl mx-auto rounded-3xl shadow-xl/20 overflow-hidden"
     >
       <div
         class="h-20 bg-gradient-to-b from-green-primary-1 to-green-secondary rounded-t-2xl"
       />
       <!-- Clickable profile picture -->
       <div
-        class="flex flex-col items-center md:flex-row md:justify-between p-6 mx-6"
+        class="flex flex-col items-center @3xl:flex-row @3xl:justify-between p-6 mx-6"
       >
-        <div class="flex items-center gap-4">
+        <div class="flex flex-col items-center @3xl:flex-row gap-4">
           <div class="relative group cursor-pointer" @click="openPictureModal">
             <img
               :src="profile.picture || '/profile-images/default.png'"
-              class="w-28 h-28 rounded-full object-cover shadow-xl/20"
+              class="w-24 h-24 @md:w-28 @md:h-28 rounded-full object-cover shadow-xl/20"
             />
             <div
               class="absolute inset-0 bg-black/30 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
@@ -346,23 +346,29 @@ const closeQrModal = () => {
               <span class="text-white font-medium">Edit</span>
             </div>
           </div>
-          <div>
-            <h3 class="text-2xl font-bold">{{ profile.name }}</h3>
-            <p class="text-gray-500 font-semibold">{{ profile.email }}</p>
+          <div class="overflow-hidden text-center">
+            <h3 class="text-lg @md:text-2xl font-bold truncate">
+              {{ profile.name }}
+            </h3>
+            <p
+              class="text-sm @md:text-base text-gray-500 font-semibold truncate"
+            >
+              {{ profile.email }}
+            </p>
           </div>
         </div>
 
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 mt-6 @3xl:mt-0">
           <button
             @click="openEditDetailsModal"
-            class="btn rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
+            class="btn btn-sm @sm:btn-md rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
           >
             <i class="pi pi-pen-to-square mr-1" />
             Edit
           </button>
           <button
             @click="openQrModal"
-            class="btn rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
+            class="btn btn-sm @sm:btn-md rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
           >
             <i class="pi pi-qrcode mr-1" />
             QR Code
@@ -371,31 +377,48 @@ const closeQrModal = () => {
       </div>
 
       <!-- User information -->
-      <div class="grid md:grid-cols-2 gap-4 mx-6">
-        <div v-for="field in visibleFields" :key="field.key" class="w-full">
-          <p class="text-sm font-semibold ms-5">{{ field.label }}</p>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mx-0 md:mx-6">
+        <div
+          v-for="field in visibleFields"
+          :key="field.key"
+          class="flex flex-col items-center md:items-start"
+        >
+          <div class="block w-full ps-2 md:ps-0">
+            <p class="text-sm font-semibold ms-5">
+              {{ field.label }}
+            </p>
+          </div>
+
           <input
             :value="displayValue(field, profile[field.key])"
-            type="text"
+            type="text text-xs"
             class="input font-bold w-[95%] rounded-full px-5"
             disabled
           />
         </div>
       </div>
 
-      <div class="grid md:grid-cols-2 gap-4 p-6 mx-6">
-        <div>
-          <h3 class="text-lg font-semibold mb-1">My Email Address</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 m-6">
+        <div class="overflow-hidden">
+          <h3 class="text-base @md:text-lg font-semibold mb-1">
+            My Email Address
+          </h3>
           <div class="flex items-center gap-2">
             <i
-              class="pi pi-envelope rounded-full p-2.5 text-lg text-white-primary bg-green-primary-1"
+              class="pi pi-envelope rounded-full p-2.5 text-base @md:text-lg text-white-primary bg-green-primary-1"
             />
-            <p class="font-semibold">{{ profile.email }}</p>
+            <p class="text-sm @md:text-base font-semibold truncate">
+              {{ profile.email }}
+            </p>
           </div>
         </div>
         <div>
-          <h3 class="text-lg font-semibold mb-1">Change Password</h3>
-          <div class="flex items-center gap-2">
+          <h3 class="text-base @md:text-lg font-semibold mb-1">
+            Change Password
+          </h3>
+          <div
+            class="flex flex-col items-start @sm:flex-row @2xl:items-center gap-2"
+          >
             <input
               value="**********"
               type="text"
@@ -404,7 +427,7 @@ const closeQrModal = () => {
             />
             <button
               @click="openPasswordModal"
-              class="btn rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
+              class="btn btn-sm @sm:btn-md rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
             >
               <i class="pi pi-lock mr-2" />
               Change

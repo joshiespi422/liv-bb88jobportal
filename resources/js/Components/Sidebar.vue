@@ -176,7 +176,7 @@ const isBelowSm = useMediaQuery("(max-width: 639px)");
     <div
       class="h-full ml-2 relative bg-gradient-to-b from-green-primary-1 to-green-secondary rounded-3xl flex flex-col"
     >
-      <div class="ml-2 mr-4 py-3 h-20" v-if="!sidebarStore.isCollapsed">
+      <div class="ml-2 mr-4 py-3 h-15 md:h-20" v-if="!sidebarStore.isCollapsed">
         <img src="../../assets/img/bb88-logo.png" alt="" />
       </div>
       <div class="flex justify-center py-3" v-else>

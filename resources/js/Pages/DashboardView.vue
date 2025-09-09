@@ -311,38 +311,43 @@ watch(selectedUser, (newUser) => {
 </script>
 
 <template>
-  <div class="p-4 md:p-8 lg:p-12 xl:p-16">
+  <div class="p-4 md:p-8 lg:p-10 xl:p-12">
     <div
       v-if="authUser?.userType !== 'super_admin'"
       class="p-4 rounded-2xl shadow-md bg-base-200 border-4 border-green-primary-1 space-y-5"
     >
-      <div class="flex items-center justify-between">
-        <h1 class="text-xl xl:text-2xl font-bold flex-none">
-          Attendance Today ({{ formatDate(props.userDetails?.date) }})
+      <div class="flex flex-col @2xl:flex-row items-center justify-between">
+        <h1
+          class="text-lg @sm:text-2xl @4xl:text-3xl font-bold flex-none text-center"
+        >
+          Attendance Today
+          <span class="block @md:inline">
+            ({{ formatDate(props.userDetails?.date) }})</span
+          >
         </h1>
-        <div>
+        <div class="mt-3 @2xl:mt-0">
           <button
             @click="handleTimeIn"
             :disabled="isTimeLoading"
-            class="btn bg-emerald-600 text-white border-2 border-white rounded-full hover:scale-105 transition-all duration-200 ease-in-out me-3"
+            class="btn btn-sm @sm:btn-md bg-emerald-600 text-white border-2 border-white rounded-full hover:scale-105 transition-all duration-200 ease-in-out me-3"
           >
             Time In
           </button>
           <button
             @click="handleTimeOut"
             :disabled="isTimeLoading"
-            class="btn bg-rose-600 text-white border-2 border-white rounded-full hover:scale-105 transition-all duration-200 ease-in-out"
+            class="btn btn-sm @sm:btn-md bg-rose-600 text-white border-2 border-white rounded-full hover:scale-105 transition-all duration-200 ease-in-out"
           >
             Time Out
           </button>
         </div>
       </div>
 
-      <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 @2xl:grid-cols-2 gap-4">
         <div class="flex items-center gap-5 p-4 rounded-3xl bg-base-100">
           <div class="avatar">
             <div
-              class="ring-indigo-500 ring-offset-base-300 w-24 rounded-full ring-3 ring-offset-2"
+              class="w-18 @xl:w-20 @4xl:w-24 ring-indigo-500 ring-offset-base-300 rounded-full ring-3 ring-offset-2"
             >
               <img
                 :src="
@@ -351,18 +356,20 @@ watch(selectedUser, (newUser) => {
               />
             </div>
           </div>
-          <div>
-            <h3 class="text-lg font-bold">
+          <div class="overflow-hidden">
+            <h3 class="text-base @3xl:text-lg font-bold truncate">
               {{ props.userDetails?.name }}
             </h3>
-            <p class="text-slate-500 font-semibold">
+            <p
+              class="text-sm @3xl:text-base text-slate-500 font-semibold truncate"
+            >
               {{ props.userDetails?.department }}
             </p>
           </div>
         </div>
         <div class="flex items-center gap-4 p-4 rounded-3xl bg-base-100">
           <div class="avatar">
-            <div class="w-24">
+            <div class="w-18 @xl:w-20 @4xl:w-24">
               <img
                 v-if="props.userDetails?.status === 'Online'"
                 src="../../assets/img/status-icon-on.png"
@@ -371,10 +378,10 @@ watch(selectedUser, (newUser) => {
             </div>
           </div>
           <div>
-            <h3 class="text-lg font-bold">STATUS</h3>
+            <h3 class="text-base @3xl:text-lg font-bold">STATUS</h3>
             <p
               :class="[
-                'font-semibold',
+                'text-sm @3xl:text-base font-semibold',
                 {
                   'text-red-600': props.userDetails?.status === 'Offline',
                   'text-green-600': props.userDetails?.status === 'Online',
@@ -387,15 +394,15 @@ watch(selectedUser, (newUser) => {
         </div>
 
         <div class="flex items-center gap-4 p-4 rounded-3xl bg-base-100">
-          <div class="w-24 flex-none">
+          <div class="w-18 @xl:w-20 @4xl:w-24 flex-none">
             <img src="../../assets/img/timein-icon.png" />
           </div>
 
           <div>
-            <h3 class="text-lg font-bold">TIME IN</h3>
+            <h3 class="text-base @3xl:text-lg font-bold">TIME IN</h3>
             <div
               v-if="props.userDetails?.time_in?.length"
-              class="text-slate-500 font-semibold leading-5"
+              class="text-sm @3xl:text-base text-slate-500 font-semibold leading-5"
             >
               <div
                 v-for="(time, index) in props.userDetails.time_in"
@@ -409,13 +416,15 @@ watch(selectedUser, (newUser) => {
         </div>
 
         <div class="flex items-center gap-4 p-4 rounded-3xl bg-base-100">
-          <div class="w-24 flex-none">
+          <div class="w-18 @xl:w-20 @4xl:w-24 flex-none">
             <img src="../../assets/img/timeout-icon.png" />
           </div>
 
           <div>
-            <h3 class="text-lg font-bold">TIME OUT</h3>
-            <div class="text-slate-500 font-semibold leading-5">
+            <h3 class="text-base @3xl:text-lg font-bold">TIME OUT</h3>
+            <div
+              class="text-sm @3xl:text-base text-slate-500 font-semibold leading-5"
+            >
               <div v-if="props.userDetails?.time_out?.length">
                 <div
                   v-for="(time, index) in props.userDetails.time_out"
@@ -445,48 +454,58 @@ watch(selectedUser, (newUser) => {
 
     <div
       v-if="authUser?.userType === 'super_admin'"
-      class="grid grid-cols-3 p-4 rounded-2xl shadow-md bg-base-200 space-x-4"
+      class="grid grid-cols-1 @4xl:grid-cols-3 p-4 rounded-2xl shadow-md bg-base-200 gap-4"
     >
       <div class="flex items-center gap-4 p-4 rounded-3xl bg-base-100">
-        <div class="w-24 flex-none">
+        <div class="w-20 @2xl:w-24 flex-none">
           <img src="../../assets/img/total-employee-icon.png" />
         </div>
 
         <div class="flex flex-col space-y-2 truncate">
-          <h3 class="text-3xl font-bold">
+          <h3 class="text-2xl @2xl:text-3xl font-bold">
             {{ props.totalCounts?.users }}
           </h3>
-          <p class="text-slate-500 font-semibold">Total Users</p>
+          <p class="text-sm @2xl:text-base text-slate-500 font-semibold">
+            Total Users
+          </p>
         </div>
       </div>
       <div class="flex items-center gap-4 p-4 rounded-3xl bg-base-100">
-        <div class="w-24 flex-none">
+        <div class="w-20 @2xl:w-24 flex-none">
           <img src="../../assets/img/total-task-icon.png" />
         </div>
 
         <div class="flex flex-col space-y-2 truncate">
-          <h3 class="text-3xl font-bold">
+          <h3 class="text-2xl @2xl:text-3xl font-bold">
             {{ props.totalCounts?.tasks }}
           </h3>
-          <p class="text-slate-500 font-semibold">Total Tasks</p>
+          <p class="text-sm @2xl:text-base text-slate-500 font-semibold">
+            Total Tasks
+          </p>
         </div>
       </div>
       <div class="flex items-center gap-4 p-4 rounded-3xl bg-base-100">
-        <div class="w-24 flex-none">
+        <div class="w-20 @2xl:w-24 flex-none">
           <img src="../../assets/img/total-accomplish-icon.png" />
         </div>
 
         <div class="flex flex-col space-y-2 truncate">
-          <h3 class="text-3xl font-bold">
+          <h3 class="text-2xl @2xl:text-3xl font-bold">
             {{ props.totalCounts?.accomplishments }}
           </h3>
-          <p class="text-slate-500 font-semibold">Total Accomplishments</p>
+          <p class="text-sm @2xl:text-base text-slate-500 font-semibold">
+            Total Accomplishments
+          </p>
         </div>
       </div>
     </div>
 
     <div v-if="authUser?.userType === 'super_admin'" class="mt-7">
-      <h1 class="text-2xl lg:text-3xl font-bold mx-4 mb-3">Online Users</h1>
+      <h1
+        class="text-lg @sm:text-2xl @4xl:text-3xl font-bold text-center mx-4 mb-3 @lg:text-start"
+      >
+        Online Users
+      </h1>
       <DataTable
         :data="props.onlineUsers"
         :columns="onlineUsersColumns"

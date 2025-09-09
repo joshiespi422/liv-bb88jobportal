@@ -292,7 +292,7 @@ const isLeaderTab = computed(
     props.currentType === "employee"
 );
 const tabs = computed(() => {
-  const items = [{ id: "all", label: "All Accomplishments" }];
+  const items = [{ id: "all", label: "All Accomplish" }];
 
   if (
     isRegularTab.value ||
@@ -301,7 +301,7 @@ const tabs = computed(() => {
   ) {
     items.unshift({
       id: "own",
-      label: "Your Accomplishments",
+      label: "Your Accomplish",
     });
   }
 
@@ -512,11 +512,11 @@ const handleExport = async () => {
 </script>
 
 <template>
-  <div class="p-4 md:p-8 lg:p-12 xl:p-16">
+  <div class="p-4 md:p-8 lg:p-10 xl:p-12">
     <div
       class="flex flex-col items-center gap-2 sm:flex-row sm:justify-between sm:gap-0 mx-4 mb-5"
     >
-      <h1 class="text-2xl lg:text-3xl font-bold">
+      <h1 class="text-lg @sm:text-2xl @4xl:text-3xl font-bold">
         {{ capitalizedType }} Accomplishments
       </h1>
       <div
@@ -532,7 +532,7 @@ const handleExport = async () => {
     </div>
 
     <!-- Tabs -->
-    <div class="tabs tabs-box my-3">
+    <div class="tabs tabs-box my-3 tabs-sm @sm:tabs-md">
       <a
         v-for="tab in tabs"
         :key="tab.id"

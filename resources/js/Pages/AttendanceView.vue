@@ -33,7 +33,7 @@ const props = defineProps({
 const tabs = computed(() => {
   return [
     { id: "today", label: "Today" },
-    { id: "all", label: "All" },
+    { id: "all", label: "All Logs" },
   ];
 });
 // handle tab navigation
@@ -220,12 +220,14 @@ const attendanceTitle = computed(() => {
 </script>
 
 <template>
-  <div class="p-4 md:p-8 lg:p-12 xl:p-16">
-    <h1 class="text-2xl lg:text-3xl font-bold mb-5">
+  <div class="p-4 md:p-8 lg:p-10 xl:p-12">
+    <h1
+      class="text-lg @sm:text-2xl @4xl:text-3xl font-bold text-center @2xl:text-start mb-3 @2xl:mb-5"
+    >
       {{ attendanceTitle }}
     </h1>
     <!-- Tabs -->
-    <div class="tabs tabs-box my-3">
+    <div class="tabs tabs-box my-3 tabs-sm @sm:tabs-md">
       <a
         v-for="tab in tabs"
         :key="tab.id"

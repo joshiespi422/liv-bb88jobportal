@@ -50,7 +50,7 @@ const showOverlay = computed(() => {
     >
       <Header
         :class="{
-          'ml-[250px] md:ml-[288px]': !sidebarStore.isCollapsed,
+          'ml-0 sm:ml-[250px] md:ml-[288px]': !sidebarStore.isCollapsed,
           'ml-0 sm:ml-[80px]': sidebarStore.isCollapsed,
         }"
       />
@@ -61,7 +61,9 @@ const showOverlay = computed(() => {
           'ml-0': sidebarStore.isCollapsed,
         }"
       >
-        <slot />
+        <div class="@container">
+          <slot />
+        </div>
         <ToastContainer />
       </main>
     </div>

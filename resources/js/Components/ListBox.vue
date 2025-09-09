@@ -40,7 +40,7 @@ const selectedLabel = computed(() => {
   >
     <div class="relative">
       <ListboxButton
-        class="relative w-full cursor-pointer rounded-xl py-2 pl-3 pr-10 text-left border-2 border-green-primary-1 shadow-xl"
+        class="relative text-sm @sm:text-base w-full cursor-pointer rounded-xl py-2 pl-3 pr-10 text-left border-2 border-green-primary-1 shadow-xl"
       >
         <span class="block truncate font-semibold">{{ selectedLabel }}</span>
         <span
@@ -59,7 +59,7 @@ const selectedLabel = computed(() => {
         leave-to-class="opacity-0"
       >
         <ListboxOptions
-          class="absolute mt-2 max-h-60 w-full overflow-auto rounded-md bg-base-100 py-1 text-base ring-2 ring-green-primary-1 ring-opacity-5 focus:outline-none sm:text-sm z-10"
+          class="text-sm @sm:text-base absolute mt-2 max-h-64 w-full overflow-auto rounded-md bg-base-100 py-1 ring-2 ring-green-primary-1 ring-opacity-5 focus:outline-none sm:text-sm z-10 list-scroll"
         >
           <ListboxOption
             v-for="option in props.options"
@@ -71,7 +71,7 @@ const selectedLabel = computed(() => {
             <li
               :class="[
                 active ? 'bg-green-primary-2 text-white' : '',
-                'relative cursor-pointer select-none py-2 pl-10 pr-4',
+                'py-1 @sm:py-2 relative cursor-pointer select-none  pl-10 pr-4',
               ]"
             >
               <span
@@ -97,3 +97,17 @@ const selectedLabel = computed(() => {
     </div>
   </Listbox>
 </template>
+
+<style scoped>
+.list-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.list-scroll::-webkit-scrollbar-thumb {
+  border-radius: 3px;
+  background-color: var(--color-green-primary-1);
+}
+.list-scroll::-webkit-scrollbar-track {
+  margin: 6px;
+  background-color: transparent;
+}
+</style>
