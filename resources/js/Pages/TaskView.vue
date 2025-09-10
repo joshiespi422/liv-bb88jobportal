@@ -823,7 +823,7 @@ const taskTableColumns = [
               },
               [
                 h("div", { class: "avatar" }, [
-                  h("div", { class: "w-12 bg-neutral" }, [
+                  h("div", { class: "w-10 @sm:w-12 bg-neutral" }, [
                     h("img", {
                       src: assignee.picture || "/profile-images/default.png",
                       alt: assignee.name,
@@ -838,13 +838,15 @@ const taskTableColumns = [
                 "div",
                 {
                   class:
-                    "avatar cursor-pointer hover:z-10 hover:scale-110 avatar-placeholder",
+                    "avatar cursor-pointer hover:z-10 hover:scale-110 avatar-placeholder flex-none",
                   "data-tippy-content": `${hiddenAssigneesCount} more`,
                 },
                 [
-                  h("div", { class: "w-12 bg-neutral text-neutral-content" }, [
-                    `+${hiddenAssigneesCount}`,
-                  ]),
+                  h(
+                    "div",
+                    { class: "w-10 @sm:w-12 bg-neutral text-neutral-content" },
+                    [`+${hiddenAssigneesCount}`]
+                  ),
                 ]
               )
             : null,
@@ -884,7 +886,7 @@ const taskTableColumns = [
         {
           onClick: () => handleViewDetails(row.original),
           class:
-            "btn rounded-full bg-green-primary-1 text-white hover:bg-green-primary-3",
+            "btn btn-sm @sm:btn-md rounded-full bg-green-primary-1 text-white hover:bg-green-primary-3",
         },
         "View Details"
       ),
@@ -972,7 +974,7 @@ const showNewButton = computed(() => {
 </script>
 
 <template>
-  <div class="p-4 md:p-8 lg:p-10 xl:p-12">
+  <div class="p-2 @lg:p-4 @3xl:p-8 @5xl:p-10 @7xl:p-12">
     <div
       class="flex flex-col items-center gap-2 sm:flex-row sm:justify-between sm:gap-0 mx-4 mb-5"
     >
@@ -1017,7 +1019,7 @@ const showNewButton = computed(() => {
         <button
           @click="handleNewTask"
           v-if="showNewButton"
-          class="btn rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
+          class="btn btn-sm @sm:btn-md rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
         >
           New Task
         </button>

@@ -311,7 +311,7 @@ watch(selectedUser, (newUser) => {
 </script>
 
 <template>
-  <div class="p-4 md:p-8 lg:p-10 xl:p-12">
+  <div class="p-2 @lg:p-4 @3xl:p-8 @5xl:p-10 @7xl:p-12">
     <div
       v-if="authUser?.userType !== 'super_admin'"
       class="p-4 rounded-2xl shadow-md bg-base-200 border-4 border-green-primary-1 space-y-5"
@@ -514,9 +514,15 @@ watch(selectedUser, (newUser) => {
       <div
         class="p-4 mt-7 rounded-2xl shadow-md border-4 border-green-primary-1"
       >
-        <div class="flex items-center justify-between mb-4">
-          <h1 class="text-2xl lg:text-3xl font-bold mx-2">Map Coordinates</h1>
-          <div class="w-full max-w-xs">
+        <div
+          class="flex flex-col @lg:flex-row justify-between items-center mb-4"
+        >
+          <h1
+            class="text-lg @xl:text-2xl @4xl:text-3xl font-bold mx-2 mb-1.5 @lg:mb-0"
+          >
+            Map Coordinates
+          </h1>
+          <div class="w-60 @3xl:w-xs -py-2">
             <Combobox
               v-model="selectedUser"
               :options="props.usersForMapFilter"

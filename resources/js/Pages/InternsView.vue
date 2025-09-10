@@ -247,7 +247,7 @@ const internTableColumns = [
         {
           onClick: () => handleViewDetails(row.original),
           class:
-            "btn rounded-full bg-green-primary-1 text-white hover:bg-green-primary-3",
+            "btn btn-sm @sm:btn-md rounded-full bg-green-primary-1 text-white hover:bg-green-primary-3",
         },
         "View Details"
       ),
@@ -257,7 +257,7 @@ const internTableColumns = [
 </script>
 
 <template>
-  <div class="p-4 md:p-8 lg:p-10 xl:p-12">
+  <div class="p-2 @lg:p-4 @3xl:p-8 @5xl:p-10 @7xl:p-12">
     <div
       class="flex flex-col items-center gap-2 sm:flex-row sm:justify-between sm:gap-0 mx-4 mb-5"
     >
@@ -285,7 +285,7 @@ const internTableColumns = [
       <template #custom-actions>
         <button
           @click="handleAddNewIntern"
-          class="btn rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
+          class="btn btn-sm @sm:btn-md rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
         >
           Add Intern
         </button>

@@ -323,7 +323,7 @@ const closeQrModal = () => {
 </script>
 
 <template>
-  <div class="p-4 md:p-8 lg:p-10 xl:p-12">
+  <div class="p-2 @lg:p-4 @3xl:p-8 @5xl:p-10 @7xl:p-12">
     <div
       class="border-4 border-green-primary-1 max-w-6xl mx-auto rounded-3xl shadow-xl/20 overflow-hidden"
     >

@@ -79,7 +79,7 @@ const todayListColumns = [
         {
           onClick: () => handleViewToday(row.original.id, row.original.date),
           class:
-            "btn rounded-full bg-green-primary-1 text-white hover:bg-green-primary-3",
+            "btn btn-sm @sm:btn-md rounded-full bg-green-primary-1 text-white hover:bg-green-primary-3",
         },
         "View Details"
       ),
@@ -170,7 +170,7 @@ const deptAttendanceColumns = [
         {
           onClick: () => handleViewAllDept(row.original.id, row.original.date),
           class:
-            "btn rounded-full bg-green-primary-1 text-white hover:bg-green-primary-3",
+            "btn btn-sm @sm:btn-md rounded-full bg-green-primary-1 text-white hover:bg-green-primary-3",
         },
         "View Details"
       ),
@@ -220,7 +220,7 @@ const attendanceTitle = computed(() => {
 </script>
 
 <template>
-  <div class="p-4 md:p-8 lg:p-10 xl:p-12">
+  <div class="p-2 @lg:p-4 @3xl:p-8 @5xl:p-10 @7xl:p-12">
     <h1
       class="text-lg @sm:text-2xl @4xl:text-3xl font-bold text-center @2xl:text-start mb-3 @2xl:mb-5"
     >

@@ -90,7 +90,7 @@ const handleSelection = () => {
 // Compute the wrapper classes with error state
 const wrapperClasses = computed(() => {
   const baseClasses =
-    "relative block w-full rounded-lg px-2 py-0.5 mt-0.5 shadow-md text-sm font-semibold ring focus-within:outline-none focus-within:ring-2 overflow-hidden";
+    "relative block w-full rounded-lg px-2 py-0 @sm:py-0.5 mt-0.5 shadow-md text-sm font-semibold ring focus-within:outline-none focus-within:ring-2 overflow-hidden";
   const conditionalClasses = {
     "bg-base-200 cursor-not-allowed ring-0": props.disabled,
     "ring-indigo-600": open.value && !props.class.includes("ring-error"),

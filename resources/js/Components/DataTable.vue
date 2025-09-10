@@ -243,13 +243,11 @@ defineExpose({ table });
 <template>
   <div
     ref="tableRef"
-    class="overflow-x-clip rounded-3xl border-4 border-green-primary-1 bg-base-100 p-5 shadow-xl"
+    class="overflow-x-clip rounded-3xl border-4 border-green-primary-1 bg-base-100 p-2 @lg:p-5 shadow-xl"
   >
     <!-- Header Controls -->
-    <div
-      class="flex flex-col sm:flex-row sm:items-center justify-between items-start gap-2 p-2"
-    >
-      <div class="w-auto">
+    <div class="flex flex-wrap items-center justify-between gap-2 p-2">
+      <div class="flex items-center gap-4">
         <select
           :value="table.getState().pagination.pageSize"
           @change="table.setPageSize(Number($event.target.value))"
@@ -259,8 +257,6 @@ defineExpose({ table });
             Show {{ size }}
           </option>
         </select>
-      </div>
-      <div class="flex items-center gap-3 w-full sm:w-auto relative">
         <label
           v-if="props.enableViewToggle"
           class="cursor-pointer label hidden sm:flex items-center gap-2 p-0"
@@ -273,11 +269,13 @@ defineExpose({ table });
           />
           <i class="pi pi-id-card text-xl"></i>
         </label>
+      </div>
+      <div class="flex flex-wrap items-center gap-1 @lg:gap-3">
         <input
           type="text"
           v-model="globalFilter"
           placeholder="Search"
-          class="block w-52 h-10 sm:w-64 px-3 py-2 border-2 text-sm border-base-content rounded-xl shadow-md focus:outline-none focus:border-green-primary-1"
+          class="w-44 @md:w-52 @2xl:w-60 h-9 @sm:h-10 px-3 py-2 border-2 text-sm border-base-content rounded-xl shadow-md focus:outline-none focus:border-green-primary-1"
         />
         <!-- custom actions here -->
         <slot name="custom-actions" />
@@ -383,16 +381,16 @@ defineExpose({ table });
             <div
               class="card shadow-lg border-2 border-base-300 hover:shadow-xl transition-shadow"
             >
-              <div class="card-body">
+              <div class="card-body p-3 @md:p-6">
                 <div
                   v-for="cell in row.getVisibleCells()"
                   :key="cell.id"
-                  class="flex justify-between items-center py-2 border-b border-base-200 last:border-b-0"
+                  class="flex justify-between items-center py-2 border-b border-base-200 last:border-b-0 overflow-hidden"
                 >
-                  <span class="font-semibold text-base-content/70">
+                  <span class="font-mono text-base-content/70">
                     {{ cell.column.columnDef.header }}:
                   </span>
-                  <span class="ms-7 truncate">
+                  <span class="ms-6 truncate">
                     <FlexRender
                       :render="cell.column.columnDef.cell"
                       :props="cell.getContext()"
@@ -423,30 +421,30 @@ defineExpose({ table });
         <button
           @click="table.setPageIndex(0)"
           :disabled="!table.getCanPreviousPage()"
-          class="btn btn-circle border-2 border-base-content bg-green-primary-1 shadow-md hover:bg-green-primary-3 not-disabled:text-white"
+          class="btn btn-sm @sm:btn-md btn-circle border-2 border-base-content bg-green-primary-1 shadow-md hover:bg-green-primary-3 not-disabled:text-white"
         >
-          <i class="pi pi-angle-double-left text-xl"></i>
+          <i class="pi pi-angle-double-left text-lg @sm:text-xl"></i>
         </button>
         <button
           @click="table.previousPage()"
           :disabled="!table.getCanPreviousPage()"
-          class="btn btn-circle border-2 border-base-content bg-green-primary-1 shadow-md hover:bg-green-primary-3 not-disabled:text-white"
+          class="btn btn-sm @sm:btn-md btn-circle border-2 border-base-content bg-green-primary-1 shadow-md hover:bg-green-primary-3 not-disabled:text-white"
         >
-          <i class="pi pi-angle-left text-xl"></i>
+          <i class="pi pi-angle-left text-lg @sm:text-xl"></i>
         </button>
         <button
           @click="table.nextPage()"
           :disabled="!table.getCanNextPage()"
-          class="btn btn-circle border-2 border-base-content bg-green-primary-1 shadow-md hover:bg-green-primary-3 not-disabled:text-white"
+          class="btn btn-sm @sm:btn-md btn-circle border-2 border-base-content bg-green-primary-1 shadow-md hover:bg-green-primary-3 not-disabled:text-white"
         >
-          <i class="pi pi-angle-right text-xl"></i>
+          <i class="pi pi-angle-right text-lg @sm:text-xl"></i>
         </button>
         <button
           @click="table.setPageIndex(table.getPageCount() - 1)"
           :disabled="!table.getCanNextPage()"
-          class="btn btn-circle border-2 border-base-content bg-green-primary-1 shadow-md hover:bg-green-primary-3 not-disabled:text-white"
+          class="btn btn-sm @sm:btn-md btn-circle border-2 border-base-content bg-green-primary-1 shadow-md hover:bg-green-primary-3 not-disabled:text-white"
         >
-          <i class="pi pi-angle-double-right text-xl"></i>
+          <i class="pi pi-angle-double-right text-lg @sm:text-xl"></i>
         </button>
       </div>
     </div>

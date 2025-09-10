@@ -708,7 +708,7 @@ const showResolveButton = computed(() => {
 </script>
 
 <template>
-  <div class="p-4 md:p-8 lg:p-10 xl:p-12">
+  <div class="p-2 @lg:p-4 @3xl:p-8 @5xl:p-10 @7xl:p-12">
     <div
       class="flex flex-col items-center gap-2 sm:flex-row sm:justify-between sm:gap-0 mx-4 mb-5"
     >
@@ -739,7 +739,7 @@ const showResolveButton = computed(() => {
 
             <!-- Title and Description -->
             <div class="flex flex-col">
-              <h3 class="card-title text-lg font-bold text-gray-800 truncate">
+              <h3 class="card-title font-bold text-gray-800 truncate">
                 {{ row.title }}
               </h3>
               <p class="text-sm font-medium text-gray-600 truncate mb-4">
@@ -755,7 +755,7 @@ const showResolveButton = computed(() => {
                   <div
                     v-for="dept in row.departments"
                     :key="dept"
-                    class="badge badge-ghost text-sm"
+                    class="badge badge-sm @sm:badge-md badge-ghost font-semibold"
                   >
                     {{ dept }}
                   </div>
@@ -777,7 +777,7 @@ const showResolveButton = computed(() => {
                     <div
                       v-for="assignee in renderAssignees(row.assignees)
                         .visibleAssignees"
-                      class="avatar border-0 bg-neutral w-11 h-11 cursor-pointer hover:z-10 hover:scale-110 transition-transform"
+                      class="avatar border-0 bg-neutral w-9 h-9 @sm:w-11 @sm:h-11 cursor-pointer hover:z-10 hover:scale-110 transition-transform"
                       :data-tippy-content="assignee.name"
                     >
                       <div>
@@ -793,13 +793,14 @@ const showResolveButton = computed(() => {
                     <!-- Counter for hidden assignees -->
                     <div
                       v-if="renderAssignees(row.assignees).hiddenCount > 0"
-                      class="avatar w-11 h-11 border-0 placeholder cursor-pointer hover:z-10 hover:scale-110 transition-transform"
+                      class="avatar w-9 h-9 @sm:w-11 @sm:h-11 border-0 placeholder cursor-pointer hover:z-10 hover:scale-110 transition-transform"
                       :data-tippy-content="`${
                         renderAssignees(row.assignees).hiddenCount
                       } more assignees`"
                     >
                       <div class="bg-neutral text-neutral-content">
-                        <span class="font-bold flex mt-2.5 justify-center"
+                        <span
+                          class="font-bold flex mt-1.5 @sm:mt-2.5 justify-center"
                           >+{{
                             renderAssignees(row.assignees).hiddenCount
                           }}</span
@@ -832,14 +833,14 @@ const showResolveButton = computed(() => {
         <button
           v-if="authUser?.userType === 'super_admin'"
           @click="handleNewProject"
-          class="btn rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
+          class="btn btn-sm @sm:btn-md rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
         >
           New Project
         </button>
         <button
           v-if="authUser?.userType !== 'super_admin'"
           @click="handleAddIssue"
-          class="btn rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
+          class="btn btn-sm @sm:btn-md rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
         >
           Add Issue
         </button>

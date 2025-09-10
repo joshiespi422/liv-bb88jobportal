@@ -324,7 +324,7 @@ function setTab(tabId) {
   );
 }
 
-// table columns tankstack definition
+// table columns tanstack definition
 const accomplishTableColumns = computed(() => {
   const columns = [];
 
@@ -384,7 +384,7 @@ const accomplishTableColumns = computed(() => {
           {
             onClick: () => handleViewDetails(row.original),
             class:
-              "btn rounded-full bg-green-primary-1 text-white hover:bg-green-primary-3",
+              "btn btn-sm @sm:btn-md rounded-full bg-green-primary-1 text-white hover:bg-green-primary-3",
           },
           "View Details"
         ),
@@ -449,7 +449,7 @@ const showEditButton = computed(() => {
   return true;
 });
 
-// date filter
+// for closing date filter when clicked outside
 const dateFilterRef = ref(null);
 const buttonFilterRef = ref(null);
 onClickOutside(
@@ -512,7 +512,7 @@ const handleExport = async () => {
 </script>
 
 <template>
-  <div class="p-4 md:p-8 lg:p-10 xl:p-12">
+  <div class="p-2 @lg:p-4 @3xl:p-8 @5xl:p-10 @7xl:p-12">
     <div
       class="flex flex-col items-center gap-2 sm:flex-row sm:justify-between sm:gap-0 mx-4 mb-5"
     >
@@ -557,15 +557,15 @@ const handleExport = async () => {
     >
       <template #custom-actions>
         <!-- date picker -->
-        <div v-if="showDateFilter" ref="dateFilterRef" class="absolute top-12">
+        <div v-if="showDateFilter" ref="dateFilterRef">
           <VueDatePicker
             v-model="dateRange"
             range
             :auto-position="'bottom'"
             :ui="{
               input:
-                ' !py-2 !bg-base-100 !border-2 !rounded-xl !text-sm !text-base-content !border-base-content !shadow-md hover:!border-green-primary-1',
-              menu: '!bg-base-100 !border-2 !border-base-content !rounded-xl !text-sm !shadow-md hover:!border-green-primary-1',
+                ' !w-40 @md:!w-52 @sm:!py-2.5 !py-2 !bg-base-100 !border-2 !rounded-xl !text-xs !text-base-content !border-base-content !shadow-md hover:!border-green-primary-1',
+              menu: '!p-0 !bg-base-100 !border-2 !border-base-content !rounded-xl !text-xs @sm:!text-sm !shadow-md hover:!border-green-primary-1',
             }"
             :enable-time-picker="false"
             placeholder="Select date range"
@@ -574,15 +574,14 @@ const handleExport = async () => {
         <button
           @click="handleDateFilter"
           ref="buttonFilterRef"
-          class="btn rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
-          :class="showDateFilter ? 'mb-6' : ''"
+          class="btn btn-sm @sm:btn-md rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
         >
           <i :class="showDateFilter ? 'pi pi-times' : 'pi pi-calendar-clock'" />
           Date
         </button>
 
         <button
-          class="btn rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
+          class="btn btn-sm @sm:btn-md rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
           @click="handleExport"
         >
           <i class="pi pi-download"></i>
