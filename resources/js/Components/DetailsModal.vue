@@ -79,7 +79,7 @@ const focusElement = ref(null);
   <TransitionRoot appear :show="isOpen" as="template">
     <Dialog
       as="div"
-      class="relative z-50"
+      class="relative z-50 @container"
       :inert="inert"
       @close="!inert && requestDialogClose()"
       :initial-focus="inert ? undefined : focusElement"
@@ -97,9 +97,7 @@ const focusElement = ref(null);
       </TransitionChild>
 
       <div class="fixed inset-0 overflow-y-auto">
-        <div
-          class="flex min-h-full items-center justify-center p-4 text-center"
-        >
+        <div class="flex min-h-full items-center justify-center p-4 pb-10">
           <TransitionChild
             as="template"
             enter="duration-300 ease-out"
@@ -111,11 +109,14 @@ const focusElement = ref(null);
           >
             <DialogPanel
               :class="[
-                'bg-base-100 transform overflow-hidden rounded-2xl p-6 text-left align-middle shadow-xl transition-all',
+                'bg-base-100 transform overflow-hidden rounded-lg p-4 sm:p-6 shadow-xl transition-all',
                 panelClass,
               ]"
             >
-              <DialogTitle as="h3" class="text-2xl font-bold">
+              <DialogTitle
+                as="h3"
+                class="text-xl @sm:text-2xl font-bold text-center @sm:text-start"
+              >
                 {{ title }}
               </DialogTitle>
 
@@ -127,10 +128,10 @@ const focusElement = ref(null);
                     <div
                       v-for="i in skeletonFieldCount"
                       :key="`skeleton-field-${i}`"
-                      class="grid grid-cols-[1fr_3fr] gap-2 items-center"
+                      class="grid grid-cols-1 @sm:grid-cols-[1fr_3fr] gap-1 @sm:gap-2 items-center"
                     >
-                      <div class="skeleton h-7 w-full"></div>
-                      <div class="skeleton h-7 w-full"></div>
+                      <div class="skeleton h-5 @sm:h-7 w-1/3 @sm:w-full"></div>
+                      <div class="skeleton h-6 @sm:h-7 w-full"></div>
                     </div>
                   </div>
                 </slot>
@@ -148,9 +149,11 @@ const focusElement = ref(null);
                     <div
                       v-for="field in fields"
                       :key="field.key"
-                      class="grid grid-cols-[1fr_4fr] gap-4 items-center"
+                      class="grid grid-cols-1 @sm:grid-cols-[1fr_4fr] gap-1 @sm:gap-4 items-center"
                     >
-                      <label class="block text-sm font-bold">
+                      <label
+                        class="block text-sm ps-2 @sm:ps-0 font-semibold @sm:font-bold"
+                      >
                         {{ field.label }}:
                       </label>
                       <!-- HTML Content -->
@@ -199,7 +202,7 @@ const focusElement = ref(null);
                 <button
                   v-if="!hideCloseBtn"
                   type="button"
-                  class="btn btn-soft rounded-full"
+                  class="btn btn-sm @sm:btn-md btn-soft rounded-full"
                   @click="requestDialogClose"
                 >
                   Close

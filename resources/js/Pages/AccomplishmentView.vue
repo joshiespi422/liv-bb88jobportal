@@ -611,7 +611,7 @@ const handleExport = async () => {
       :item="selectedDetails"
       :loading="isDetailsLoading"
       :error="isDetailsError"
-      title="ACCOMPLISHMENT DETAILS"
+      title="ACCOMPLISH DETAILS"
       :fields="accomplishDetailFields"
       @close="closeDetailsModal"
     >
@@ -619,7 +619,7 @@ const handleExport = async () => {
         <button
           v-if="showEditButton"
           @click="handleEditAccomplish"
-          class="btn rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3 me-2"
+          class="btn btn-sm @sm:btn-md rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3 me-2"
         >
           Edit
         </button>

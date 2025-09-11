@@ -271,16 +271,16 @@ const attendanceTitle = computed(() => {
       <!-- Custom Skeleton Loader -->
       <template #skeleton>
         <div class="my-2">
-          <div class="grid grid-cols-2 gap-3 rounded-lg p-3">
+          <div class="grid grid-cols-1 @md:grid-cols-2 gap-3 rounded-lg p-3">
             <div v-for="n in 4" :key="n">
               <div class="skeleton h-6 w-1/2 mb-1" />
-              <div class="skeleton h-8 w-full" />
+              <div class="skeleton h-7 @md:h-8 w-full" />
             </div>
           </div>
 
           <div class="rounded-lg p-3 space-y-3">
             <div v-for="n in 3" :key="n">
-              <div class="skeleton h-8 w-full" />
+              <div class="skeleton h-7 @md:h-8 w-full" />
             </div>
           </div>
         </div>
@@ -289,22 +289,32 @@ const attendanceTitle = computed(() => {
       <!-- Custom Content Layout -->
       <template #content="{ item }">
         <div class="my-5 space-y-4">
-          <div class="grid grid-cols-2 gap-4 rounded-lg bg-base-200 p-4">
+          <div
+            class="grid grid-cols-1 @md:grid-cols-2 gap-2 @md:gap-4 rounded-lg bg-base-200 p-3 @sm:p-4"
+          >
             <div>
               <p class="text-slate-500 text-sm">Name:</p>
-              <p class="font-semibold">{{ item.user.name }}</p>
+              <p class="font-semibold text-sm @sm:text-base">
+                {{ item.user.name }}
+              </p>
             </div>
             <div>
               <p class="text-slate-500 text-sm">Date:</p>
-              <p class="font-semibold">{{ formatDate(item.date) }}</p>
+              <p class="font-semibold text-sm @sm:text-base">
+                {{ formatDate(item.date) }}
+              </p>
             </div>
             <div>
               <p class="text-slate-500 text-sm">Position:</p>
-              <p class="font-semibold">{{ item.user.position }}</p>
+              <p class="font-semibold text-sm @sm:text-base">
+                {{ item.user.position }}
+              </p>
             </div>
             <div>
               <p class="text-slate-500 text-sm">Department:</p>
-              <p class="font-semibold">{{ item.user.department }}</p>
+              <p class="font-semibold text-sm @sm:text-base">
+                {{ item.user.department }}
+              </p>
             </div>
           </div>
 
@@ -334,17 +344,17 @@ const attendanceTitle = computed(() => {
             <div
               v-for="(log, index) in item.logs"
               :key="index"
-              class="rounded-lg bg-base-200 p-3"
+              class="rounded-lg bg-base-200 p-2 @sm:p-3"
             >
               <div class="flex items-center justify-between">
                 <p>
                   <span class="text-slate-500 text-sm">Time In: </span>
-                  <span class="font-mono font-semibold">{{
+                  <span class="font-mono font-semibold text-sm @sm:text-base">{{
                     formatTime(log.time_in)
                   }}</span>
                   <span class="mx-2">-</span>
                   <span class="text-slate-500 text-sm">Time Out: </span>
-                  <span class="font-mono font-semibold">{{
+                  <span class="font-mono font-semibold text-sm @sm:text-base">{{
                     formatTime(log.time_out) ?? "N/A"
                   }}</span>
                 </p>
@@ -370,9 +380,10 @@ const attendanceTitle = computed(() => {
                 >
                   <p class="truncate">
                     <span class="text-slate-500 text-sm">IP Address: </span>
-                    <span class="font-mono font-semibold text-blue-500">{{
-                      log.ip_address ?? "N/A"
-                    }}</span>
+                    <span
+                      class="font-mono font-semibold text-blue-500 text-sm @sm:text-base"
+                      >{{ log.ip_address ?? "N/A" }}</span
+                    >
                   </p>
                 </div>
               </Transition>
@@ -384,7 +395,7 @@ const attendanceTitle = computed(() => {
       <template #custom-buttons>
         <button
           v-if="showBackButtonInLog"
-          class="btn btn-soft rounded-full me-2"
+          class="btn btn-sm @sm:btn-md btn-soft rounded-full me-2"
           @click="handleBackFromLog"
         >
           <i class="pi pi-arrow-left me-1" /> Back
@@ -393,7 +404,7 @@ const attendanceTitle = computed(() => {
         <button
           v-if="mapLocations.length > 0"
           @click="showMap = !showMap"
-          class="btn rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3 me-2"
+          class="btn btn-sm @sm:btn-md rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3 me-2"
         >
           <i
             :class="showMap ? 'pi pi-map-marker' : 'pi pi-map'"

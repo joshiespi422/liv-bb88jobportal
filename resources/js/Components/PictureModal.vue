@@ -78,7 +78,7 @@ const focusElement = ref(null);
   <TransitionRoot appear :show="isOpen" as="template">
     <Dialog
       as="div"
-      class="relative z-50"
+      class="relative z-50 @container"
       :inert="inert"
       @close="!inert && $emit('close')"
       :initial-focus="inert ? undefined : focusElement"
@@ -96,9 +96,7 @@ const focusElement = ref(null);
       </TransitionChild>
 
       <div class="fixed inset-0 overflow-y-auto">
-        <div
-          class="flex min-h-full items-center justify-center p-4 text-center"
-        >
+        <div class="flex min-h-full items-center justify-center p-4 pb-10">
           <TransitionChild
             as="template"
             enter="duration-300 ease-out"
@@ -111,7 +109,10 @@ const focusElement = ref(null);
             <DialogPanel
               class="w-full max-w-md transform overflow-hidden rounded-2xl bg-base-100 p-6 text-left align-middle shadow-xl transition-all"
             >
-              <DialogTitle as="h3" class="text-2xl font-bold">
+              <DialogTitle
+                as="h3"
+                class="text-xl @sm:text-2xl font-bold text-center @sm:text-start"
+              >
                 {{ selectedImage ? "ADJUST PICTURE" : "PROFILE PICTURE" }}
               </DialogTitle>
 
@@ -129,7 +130,7 @@ const focusElement = ref(null);
                 <img
                   v-else
                   :src="pictureUrl || '/profile-images/default.png'"
-                  class="w-52 h-52 rounded-full object-cover my-5 shadow-xl/20"
+                  class="w-36 h-36 @sm:w-44 @sm:h-44 @lg:w-52 @lg:h-52 rounded-full object-cover my-5 shadow-xl/20"
                 />
               </div>
 
@@ -154,7 +155,7 @@ const focusElement = ref(null);
                 <template v-if="selectedImage">
                   <button
                     type="button"
-                    class="btn btn-soft btn-info shadow-lg rounded-full"
+                    class="btn btn-sm @sm:btn-md btn-soft btn-info shadow-lg rounded-full"
                     @click="saveCrop"
                   >
                     Save Changes
@@ -162,7 +163,7 @@ const focusElement = ref(null);
 
                   <button
                     type="button"
-                    class="btn btn-soft btn-error shadow-lg rounded-full"
+                    class="btn btn-sm @sm:btn-md btn-soft btn-error shadow-lg rounded-full"
                     @click="cancelCrop"
                   >
                     Cancel
@@ -171,7 +172,7 @@ const focusElement = ref(null);
                 <template v-else>
                   <button
                     type="button"
-                    class="btn btn-soft btn-success shadow-lg rounded-full"
+                    class="btn btn-sm @sm:btn-md btn-soft btn-success shadow-lg rounded-full"
                     @click="triggerFileInput"
                   >
                     Change
@@ -179,7 +180,7 @@ const focusElement = ref(null);
 
                   <button
                     type="button"
-                    class="btn btn-soft btn-error shadow-lg rounded-full"
+                    class="btn btn-sm @sm:btn-md btn-soft btn-error shadow-lg rounded-full"
                     @click="requestDelete"
                   >
                     Delete

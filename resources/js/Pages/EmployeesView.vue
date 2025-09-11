@@ -349,11 +349,11 @@ const employeeTableColumns = [
       <!-- Custom Skeleton -->
       <template #skeleton="{ skeletonFieldCount }">
         <div class="space-y-6 mx-4 my-8">
-          <div class="flex items-center gap-4">
-            <div class="skeleton w-28 h-28 rounded-full"></div>
-            <div class="flex-1 space-y-2">
-              <div class="skeleton h-6 w-3/4"></div>
-              <div class="skeleton h-4 w-full"></div>
+          <div class="flex flex-col @md:flex-row items-center gap-4">
+            <div class="flex-none skeleton w-28 h-28 rounded-full"></div>
+            <div class="w-full md:flex-1 space-y-2">
+              <div class="skeleton h-6 w-3/4 mx-auto @md:mx-0"></div>
+              <div class="skeleton h-4 w-11/12 mx-auto @md:mx-0"></div>
             </div>
           </div>
           <div class="grid grid-cols-2 gap-4">
@@ -362,7 +362,7 @@ const employeeTableColumns = [
               :key="`custom-skel-${i}`"
               class="space-y-2"
             >
-              <div class="skeleton h-4 w-1/3"></div>
+              <div class="skeleton h-4 w-1/2"></div>
               <div class="skeleton h-6 w-full"></div>
             </div>
           </div>
@@ -372,30 +372,36 @@ const employeeTableColumns = [
       <!-- Custom Content Layout -->
       <template #content="{ item, getFieldValue }">
         <div class="space-y-6 mx-4 my-8">
-          <div class="flex items-center gap-4">
+          <div
+            class="flex flex-col @md:flex-row text-center @md:text-start items-center gap-4"
+          >
             <img
               :src="
                 getFieldValue(item, customDetails.picture) ||
                 '/profile-images/default.png'
               "
-              class="w-28 h-28 rounded-full object-cover shadow-xl/20"
+              class="w-24 h-24 @md:w-28 @md:h-28 rounded-full object-cover shadow-xl/20"
             />
             <div class="truncate">
-              <h3 class="text-2xl font-bold truncate">
+              <h3 class="text-xl @md:text-2xl font-bold truncate">
                 {{ getFieldValue(item, customDetails.name) }}
               </h3>
-              <p class="text-gray-500 font-semibold truncate">
+              <p
+                class="text-sm @md:text-base text-gray-500 font-semibold truncate"
+              >
                 {{ getFieldValue(item, customDetails.email) }}
               </p>
             </div>
           </div>
 
-          <div class="grid grid-cols-2 gap-4 mx-6">
+          <div class="grid grid-cols-2 gap-4 mx-0 @md:mx-6">
             <div v-for="field in customDetails.others" :key="field.key">
               <label class="block text-sm text-neutral-500 opacity-50">
                 {{ field.label }}
               </label>
-              <p class="font-semibold text-shadow-md truncate text-wrap">
+              <p
+                class="font-semibold text-sm @md:text-base text-shadow-md truncate text-wrap"
+              >
                 {{ getFieldValue(item, field) }}
               </p>
             </div>

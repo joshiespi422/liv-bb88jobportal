@@ -60,7 +60,7 @@ function handleFileChange(event) {
     v-bind="inputAttrs"
     :accept="accept"
     @change="handleFileChange"
-    class="file-input file-input-neutral block w-full shadow-md rounded-xl text-sm font-semibold border-0 ring focus:outline-none focus:ring-2"
+    class="file-input h-8.5 @sm:h-10 file-input-neutral block w-full shadow-md rounded-xl !text-sm font-semibold border-0 ring focus:outline-none focus:ring-2"
   />
   <small class="font-semibold text-gray-500 ms-3">
     Max size: {{ formattedMaxSize }} • Accepted: {{ formattedAcceptTypes }}

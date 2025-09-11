@@ -1069,7 +1069,7 @@ const showNewButton = computed(() => {
       @submit="handleNewTaskSubmit"
     >
       <template #custom-fields="{ fields, form }">
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 @2xl:grid-cols-2 gap-4">
           <div v-for="field in fields" :key="field.key">
             <label :for="field.key" class="block text-sm font-bold ms-3">
               {{ field.label }}
@@ -1111,15 +1111,17 @@ const showNewButton = computed(() => {
     >
       <!-- Custom Skeleton -->
       <template #skeleton="{ skeletonFieldCount }">
-        <div class="grid grid-cols-[2fr_1.5fr] gap-4 py-6 px-3">
+        <div
+          class="grid grid-cols-1 @2xl:grid-cols-[1.5fr_2.5fr] @3xl:grid-cols-[2fr_2fr] gap-4 py-6 px-0 @2xl:px-3"
+        >
           <div class="space-y-3">
             <div
               v-for="i in skeletonFieldCount"
               :key="`custom-skel-${i}`"
               class="grid grid-cols-[1fr_3fr] gap-2 items-center"
             >
-              <div class="skeleton h-8 w-full" />
-              <div class="skeleton h-8 w-full" />
+              <div class="skeleton h-6 @2xl:h-8 w-full" />
+              <div class="skeleton h-6 @2xl:h-8 w-full" />
             </div>
           </div>
           <div class="rounded-xl bg-base-200 p-3">
@@ -1128,11 +1130,11 @@ const showNewButton = computed(() => {
             >
               <input type="radio" name="my-accordion-1" checked="checked" />
               <div class="collapse-title text-sm font-medium">
-                <div class="skeleton h-8 w-full" />
+                <div class="skeleton h-6 @2xl:h-8 w-full" />
               </div>
               <div class="collapse-content space-y-1">
-                <div class="skeleton h-8 w-full" />
-                <div class="skeleton h-8 w-full" />
+                <div class="skeleton h-6 @2xl:h-8 w-full" />
+                <div class="skeleton h-6 @2xl:h-8 w-full" />
               </div>
             </div>
             <div
@@ -1140,11 +1142,11 @@ const showNewButton = computed(() => {
             >
               <input type="radio" name="my-accordion-2" checked="checked" />
               <div class="collapse-title text-sm font-medium">
-                <div class="skeleton h-8 w-full" />
+                <div class="skeleton h-6 @2xl:h-8 w-full" />
               </div>
               <div class="collapse-content space-y-1">
-                <div class="skeleton h-8 w-full" />
-                <div class="skeleton h-8 w-full" />
+                <div class="skeleton h-6 @2xl:h-8 w-full" />
+                <div class="skeleton h-6 @2xl:h-8 w-full" />
               </div>
             </div>
           </div>
@@ -1153,14 +1155,16 @@ const showNewButton = computed(() => {
 
       <!-- Custom Content Layout -->
       <template #content="{ item, getFieldValue }">
-        <div class="grid grid-cols-[2fr_2fr] gap-4 py-6 px-3">
+        <div
+          class="grid grid-cols-1 @2xl:grid-cols-[1.5fr_2.5fr] @3xl:grid-cols-[2fr_2fr] gap-4 py-6 px-0 @2xl:px-3"
+        >
           <div class="space-y-3">
             <div
               v-for="field in taskDetailFields"
               :key="field.key"
-              class="grid grid-cols-[1fr_4fr] gap-2"
+              class="grid grid-cols-1 @3xl:grid-cols-[1fr_4fr] gap-1 @3xl:gap-2"
             >
-              <label class="block text-sm font-bold mt-2">
+              <label class="block text-sm font-bold mt-0 @3xl:mt-2">
                 {{ field.label }}
               </label>
 
@@ -1219,13 +1223,13 @@ const showNewButton = computed(() => {
               </p>
             </div>
           </div>
-          <div class="rounded-xl bg-base-200 p-3">
+          <div class="rounded-xl bg-base-200 @sm:p-2 @3xl:p-3">
             <div
               class="collapse collapse-plus bg-base-100 border border-base-300"
             >
               <input type="radio" name="my-accordion-3" checked="checked" />
               <div class="collapse-title font-semibold">History Updates</div>
-              <div class="collapse-content text-sm">
+              <div class="collapse-content text-sm px-2 @sm:px-4">
                 <ul
                   class="list bg-base-200 rounded-box shadow-md overflow-y-auto max-h-60 list-scroll"
                   v-if="item.accomplishments && item.accomplishments.length"
@@ -1233,7 +1237,7 @@ const showNewButton = computed(() => {
                   <li
                     v-for="accomplishment in item.accomplishments"
                     :key="accomplishment.id"
-                    class="list-row hover:bg-base-300 hover:cursor-pointer"
+                    class="list-row gap-0 hover:bg-base-300 hover:cursor-pointer"
                     @click="handleViewAccomplish(accomplishment.id)"
                   >
                     <div>
@@ -1262,7 +1266,7 @@ const showNewButton = computed(() => {
             >
               <input type="radio" name="my-accordion-3" />
               <div class="collapse-title font-semibold">Comments</div>
-              <div class="collapse-content text-sm">
+              <div class="collapse-content text-sm px-2 @sm:px-4">
                 <ul
                   class="list bg-base-200 rounded-box shadow-md overflow-y-auto max-h-60 list-scroll"
                 >
@@ -1270,11 +1274,11 @@ const showNewButton = computed(() => {
                   <li
                     v-for="comment in selectedDetails.comments"
                     :key="comment.id"
-                    class="list-row p-2 pe-0"
+                    class="list-row gap-0 p-2 pe-0"
                   >
                     <div class="chat chat-start">
                       <div class="chat-image avatar">
-                        <div class="w-10 rounded-full">
+                        <div class="w-8 @4xl:w-10 rounded-full">
                           <img
                             :src="comment.user_picture"
                             :alt="comment.user_name"
@@ -1297,14 +1301,14 @@ const showNewButton = computed(() => {
                       v-model="commentForm.message"
                       @keydown="handleEnterKey"
                       placeholder="Write a comment..."
-                      class="textarea textarea-primary min-h-4 textarea-sm"
+                      class="textarea textarea-primary min-h-4 w-full textarea-sm"
                       required
                     ></textarea>
                     <div class="flex justify-center items-center">
                       <button
                         @click="handleCommentSubmit"
                         :disabled="!commentForm.message.trim()"
-                        class="btn btn-circle btn-primary"
+                        class="btn btn-sm @md:btn-md btn-circle btn-primary"
                       >
                         <i class="pi pi-send text-lg" />
                       </button>
@@ -1321,14 +1325,14 @@ const showNewButton = computed(() => {
         <button
           v-if="showUpdateButton"
           @click="handleUpdateTask"
-          class="btn rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3 me-2"
+          class="btn btn-sm @sm:btn-md rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3 me-2"
         >
           Update
         </button>
         <button
           v-if="showValidateButton"
           @click="handleValidateTask"
-          class="btn rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3 me-2"
+          class="btn btn-sm @sm:btn-md rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3 me-2"
         >
           Validate
         </button>
@@ -1348,7 +1352,7 @@ const showNewButton = computed(() => {
       <template #custom-buttons>
         <button
           v-if="showBackButtonInAccomplish"
-          class="btn btn-soft rounded-full me-2"
+          class="btn btn-sm @sm:btn-md btn-soft rounded-full me-2"
           @click="handleBackFromAccomplish"
         >
           <i class="pi pi-arrow-left me-1" /> Back

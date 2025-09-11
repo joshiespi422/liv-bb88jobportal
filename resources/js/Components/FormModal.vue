@@ -39,7 +39,7 @@ const focusElement = ref(null);
   <TransitionRoot as="template" :show="isOpen">
     <Dialog
       as="div"
-      class="relative z-50"
+      class="relative z-50 @container"
       :inert="inert"
       @close="!inert && $emit('close')"
       :initial-focus="inert ? undefined : focusElement"
@@ -56,8 +56,8 @@ const focusElement = ref(null);
         <div class="fixed inset-0 bg-black/30 transition-opacity" />
       </TransitionChild>
 
-      <div class="fixed inset-0 w-screen overflow-y-auto">
-        <div class="flex min-h-full items-center justify-center p-4 sm:p-0">
+      <div class="fixed inset-0 overflow-y-auto">
+        <div class="flex min-h-full items-center justify-center p-4 pb-10">
           <TransitionChild
             as="template"
             enter="ease-out duration-300"
@@ -69,13 +69,16 @@ const focusElement = ref(null);
           >
             <DialogPanel
               :class="[
-                'relative transform overflow-hidden bg-base-100 rounded-lg px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:p-6',
+                'transform overflow-hidden bg-base-100 rounded-lg text-left shadow-xl transition-all sm:w-full p-4 sm:p-6',
                 panelClass,
               ]"
             >
               <form @submit.prevent="$emit('submit')">
                 <div>
-                  <DialogTitle as="h3" class="text-2xl font-bold">
+                  <DialogTitle
+                    as="h3"
+                    class="text-xl @sm:text-2xl font-bold text-center @sm:text-start"
+                  >
                     {{ title }}
                   </DialogTitle>
 
@@ -87,7 +90,7 @@ const focusElement = ref(null);
                       <div v-for="field in fields" :key="field.key">
                         <label
                           :for="field.key"
-                          class="block text-sm font-bold ms-3"
+                          class="block text-sm font-semibold @sm:font-bold ms-3"
                         >
                           {{ field.label }}
                         </label>
@@ -117,7 +120,7 @@ const focusElement = ref(null);
                   <button
                     v-if="showBackButton"
                     type="button"
-                    class="btn btn-ghost font-bold rounded-full text-green-primary-1 border-2"
+                    class="btn btn-sm @sm:btn-md btn-ghost font-bold rounded-full text-green-primary-1 border-2"
                     @click="$emit('back')"
                   >
                     <i class="pi pi-arrow-left me-1" /> Back
@@ -125,7 +128,7 @@ const focusElement = ref(null);
                   <button
                     v-if="!disabledButton"
                     type="button"
-                    class="btn btn-ghost rounded-full text-green-primary-1 border-2"
+                    class="btn btn-sm @sm:btn-md btn-ghost rounded-full text-green-primary-1 border-2"
                     @click="$emit('close')"
                   >
                     Cancel
@@ -134,7 +137,7 @@ const focusElement = ref(null);
                     ref="focusElement"
                     type="submit"
                     :disabled="form.processing"
-                    class="btn btn-soft px-7 rounded-full text-white bg-green-primary-1 hover:bg-green-primary-3 border-2 border-base-content shadow-md"
+                    class="btn btn-sm @sm:btn-md btn-soft px-7 rounded-full text-white bg-green-primary-1 hover:bg-green-primary-3 border-2 border-base-content shadow-md"
                   >
                     {{ submitText }}
                   </button>

@@ -717,9 +717,11 @@ const showValidateButton = computed(() => {
         <div
           v-for="field in leaveDetailFields"
           :key="field.key"
-          class="grid grid-cols-[1fr_4fr] gap-4"
+          class="grid grid-cols-1 @sm:grid-cols-[1fr_4fr] gap-1 @sm:gap-4"
         >
-          <label class="block text-sm font-bold mt-2">
+          <label
+            class="block text-sm ps-2 @sm:ps-0 font-semibold @sm:font-bol mt-0 @sm:mt-2"
+          >
             {{ field.label }}:
           </label>
 
@@ -785,7 +787,7 @@ const showValidateButton = computed(() => {
       <button
         v-if="showValidateButton"
         @click="handleValidateLeave"
-        class="btn rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3 me-2"
+        class="btn btn-sm @sm:btn-md rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3 me-2"
       >
         Validate
       </button>
