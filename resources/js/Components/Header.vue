@@ -53,7 +53,7 @@ const themeStore = useThemeStore();
 
 <template>
   <div
-    class="h-18 flex items-center transition-all duration-300 ease-in-out relative header"
+    class="@container h-18 flex items-center transition-all duration-300 ease-in-out relative header"
   >
     <div class="w-2/3">
       <i
@@ -97,16 +97,16 @@ const themeStore = useThemeStore();
         <div
           v-if="showDropdown"
           ref="dropdownRef"
-          class="absolute right-5 mt-2 w-100 bg-base-100 shadow-lg rounded-md z-20 border-3 border-green-primary-1"
+          class="absolute right-2 @sm:right-5 mt-2 w-[95vw] @sm:w-[350px] @md:w-96 @xl:w-100 bg-base-100 shadow-lg rounded-md z-20 border-3 border-green-primary-1"
         >
           <div
-            class="p-3 border-b-2 border-green-primary-1 font-bold flex justify-between items-center"
+            class="p-3 border-b-2 border-green-primary-1 text-sm @md:text-base font-semibold @md:font-bold flex justify-between items-center"
           >
             Notifications
 
             <button
               @click="markAllAsRead"
-              class="text-blue-500 underline text-sm hover:text-blue-600 cursor-pointer me-1"
+              class="text-blue-500 underline text-sm font-semibold @md:font-bold hover:text-blue-600 cursor-pointer me-1"
             >
               Mark all as read
             </button>
@@ -119,7 +119,7 @@ const themeStore = useThemeStore();
                 :key="notification.id"
                 @click="handleNotificationClick(notification)"
                 :class="[
-                  'p-3 border-b border-dashed border-gray-400 cursor-pointer text-sm font-semibold',
+                  'p-1.5 @md:p-3 border-b border-dashed border-gray-400 cursor-pointer text-sm font-semibold',
                   { 'bg-indigo-100 text-black': !notification.read },
                 ]"
               >
@@ -135,15 +135,18 @@ const themeStore = useThemeStore();
                 </div>
               </div>
             </template>
-            <div v-else class="p-3 font-semibold text-center opacity-70">
+            <div
+              v-else
+              class="py-6 font-semibold italic text-sm @md:text-base text-center opacity-70"
+            >
               No notifications
             </div>
           </div>
 
-          <div class="p-3 border-t text-center">
+          <div class="p-1.5 @sm:p-2.5 border-t text-center">
             <button
               @click="gotoNotifications"
-              class="text-blue-500 hover:underline font-medium cursor-pointer"
+              class="text-blue-500 hover:underline text-sm @md:text-base font-medium cursor-pointer"
             >
               Show all notifications ({{ notificationStore.total }})
             </button>
