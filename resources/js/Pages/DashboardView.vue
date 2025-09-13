@@ -92,13 +92,12 @@ const handleTimeIn = () => {
 
 // State for the confirmation modal
 const isConfirmModalOpen = ref(false);
+const pendingAction = ref(null);
 // Holds the properties for the confirmation modal
 const confirmModalProps = reactive({
   title: "",
   message: "",
   confirmText: "",
-  confirmButtonBg: "",
-  iconName: "",
 });
 // Executes the action on confirmation
 const executeConfirm = () => {
