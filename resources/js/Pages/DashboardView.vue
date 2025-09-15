@@ -68,11 +68,8 @@ const handleTimeIn = () => {
               error(firstError);
             }
           },
-          onSuccess: () => {
-            timeInform.reset();
-            router.reload();
-          },
           onFinish: () => {
+            timeInform.reset();
             isTimeLoading.value = false;
           },
         });
@@ -142,19 +139,17 @@ const handleTimeOut = () => {
 };
 // second request to confirm time-out
 const confirmTimeOut = (timeLogId) => {
-  router.patch(route("time-out.update", { timeLog: timeLogId }), {
-    preserveScroll: true,
-    onError: (errors) => {
-      const firstError = Object.values(errors)[0];
-      if (firstError) {
-        error(firstError);
-      }
-    },
-    onFinish: () => {
-      isConfirmModalOpen.value = false;
-      isTimeLoading.value = false;
-    },
-  });
+  router.patch(
+    route("time-out.update", { timeLog: timeLogId }),
+    {},
+    {
+      preserveScroll: true,
+      onFinish: () => {
+        isConfirmModalOpen.value = false;
+        isTimeLoading.value = false;
+      },
+    }
+  );
 };
 
 // Tanstack Table columns definition for attendance

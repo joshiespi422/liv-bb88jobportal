@@ -10,8 +10,15 @@ class TimeLog extends Model
 {
     use HasFactory;
 
+    public $timestamps = false;
+
     protected $fillable = [
-        //
+        'time_in',
+        'time_out',
+        'date',
+        'ip_address',
+        'latitude',
+        'longitude',
     ];
 
     // Define a one-to-many relationship between time_logs and users
