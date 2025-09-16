@@ -32,9 +32,9 @@ Route::middleware('guest')->group(function () {
 // Authenticated routes
 Route::middleware('auth')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
-    Route::post('/time-in', [DashboardController::class, 'store'])->name('time-in');
-    Route::post('/time-out/check', [DashboardController::class, 'check'])->name('time-out.check');
-    Route::patch('/time-out/{timeLog}', [DashboardController::class, 'update'])->name('time-out.update');
+    Route::post('/time-in', [DashboardController::class, 'store'])->name('timein');
+    Route::post('/time-out/check', [DashboardController::class, 'check'])->name('timeout.check');
+    Route::patch('/time-out/{timeLog}', [DashboardController::class, 'update'])->name('timeout.update');
 
     Route::middleware('user.type:super_admin,employee')->group(function () {
         Route::prefix('team')->name('team.')->group(function () {

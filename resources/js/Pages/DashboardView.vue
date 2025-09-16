@@ -59,7 +59,7 @@ const handleTimeIn = () => {
         timeInform.latitude = position.coords.latitude;
         timeInform.longitude = position.coords.longitude;
         // Now send the form data to the backend
-        timeInform.post(route("time-in"), {
+        timeInform.post(route("timein"), {
           preserveScroll: true,
           onError: (errors) => {
             // The onError handler receives errors from the backend
@@ -111,7 +111,7 @@ const closeConfirmModal = () => {
 const handleTimeOut = () => {
   isTimeLoading.value = true;
   axios
-    .post(route("time-out.check"))
+    .post(route("timeout.check"))
     .then((response) => {
       // Backend determined that confirmation is needed
       if (response.data.needsConfirmation) {
@@ -140,7 +140,7 @@ const handleTimeOut = () => {
 // second request to confirm time-out
 const confirmTimeOut = (timeLogId) => {
   router.patch(
-    route("time-out.update", { timeLog: timeLogId }),
+    route("timeout.update", { timeLog: timeLogId }),
     {},
     {
       preserveScroll: true,
