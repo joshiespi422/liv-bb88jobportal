@@ -41,7 +41,6 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  inert: Boolean,
 });
 
 const emit = defineEmits(["close"]);
@@ -80,9 +79,8 @@ const focusElement = ref(null);
     <Dialog
       as="div"
       class="relative z-50 @container"
-      :inert="inert"
-      @close="!inert && requestDialogClose()"
-      :initial-focus="inert ? undefined : focusElement"
+      @close="requestDialogClose()"
+      :initial-focus="focusElement"
     >
       <TransitionChild
         as="template"
@@ -212,6 +210,8 @@ const focusElement = ref(null);
           </TransitionChild>
         </div>
       </div>
+
+      <slot></slot>
     </Dialog>
   </TransitionRoot>
 </template>

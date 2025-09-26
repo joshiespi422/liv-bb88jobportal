@@ -593,7 +593,6 @@ const handleExport = async () => {
     <!-- Edit Accomplishment Modal -->
     <FormModal
       :isOpen="isFormModalOpen"
-      :inert="isConfirmModalOpen"
       :showBackButton="showBackButtonInEdit"
       title="EDIT ACCOMPLISHMENT"
       :form="editAccomplishForm"
@@ -603,7 +602,15 @@ const handleExport = async () => {
       @close="closeAllModal"
       @back="handleBackFromEdit"
       @submit="handleEditSubmit"
-    />
+    >
+      <!-- Confirmation Modal -->
+      <ConfirmModal
+        :show="isConfirmModalOpen"
+        v-bind="confirmModalProps"
+        @cancel="closeConfirmModal"
+        @confirm="executeConfirm"
+      />
+    </FormModal>
 
     <!-- Accomplishment Details Modal -->
     <DetailsModal
@@ -625,14 +632,6 @@ const handleExport = async () => {
         </button>
       </template>
     </DetailsModal>
-
-    <!-- Confirmation Modal -->
-    <ConfirmModal
-      :show="isConfirmModalOpen"
-      v-bind="confirmModalProps"
-      @cancel="closeConfirmModal"
-      @confirm="executeConfirm"
-    />
   </div>
 </template>
 

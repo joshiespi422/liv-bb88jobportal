@@ -312,28 +312,27 @@ const employeeTableColumns = [
     <!-- Add Employee Modal -->
     <FormModal
       :isOpen="isFormModalOpen"
-      :inert="showConfirmModal"
       title="ADD NEW EMPLOYEE"
       :form="addForm"
       :fields="formFields"
       submitText="Add"
       @close="closeFormModal"
       @submit="handleFormSubmit"
-    />
-
-    <!-- Confirmation Modal -->
-    <ConfirmModal
-      :show="showConfirmModal"
-      title="Confirm Employee Creation"
-      message="`Are you sure you want to add an employee?`"
-      iconName="pi pi-user-plus"
-      iconColor="text-blue-600"
-      iconBgColor="bg-blue-100"
-      confirmButtonBg="bg-blue-600 hover:bg-blue-700"
-      confirmText="Yes, Add Employee"
-      @confirm="submitAddForm"
-      @cancel="closeConfirmModal"
-    />
+    >
+      <!-- Confirmation Modal -->
+      <ConfirmModal
+        :show="showConfirmModal"
+        title="Confirm Employee Creation"
+        message="`Are you sure you want to add an employee?`"
+        iconName="pi pi-user-plus"
+        iconColor="text-blue-600"
+        iconBgColor="bg-blue-100"
+        confirmButtonBg="bg-blue-600 hover:bg-blue-700"
+        confirmText="Yes, Add Employee"
+        @confirm="submitAddForm"
+        @cancel="closeConfirmModal"
+      />
+    </FormModal>
 
     <!-- Employee Details Modal -->
     <DetailsModal

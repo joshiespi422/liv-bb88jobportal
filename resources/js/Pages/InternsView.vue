@@ -295,28 +295,27 @@ const internTableColumns = [
     <!-- Add Intern Modal -->
     <FormModal
       :isOpen="isFormModalOpen"
-      :inert="showConfirmModal"
       title="ADD NEW INTERN"
       :form="addForm"
       :fields="formFields"
       submitText="Add"
       @close="closeFormModal"
       @submit="handleFormSubmit"
-    />
-
-    <!-- Confirmation Modal -->
-    <ConfirmModal
-      :show="showConfirmModal"
-      title="Confirm Intern Creation"
-      message="`Are you sure you want to add an intern?`"
-      iconName="pi pi-user-plus"
-      iconColor="text-blue-600"
-      iconBgColor="bg-blue-100"
-      confirmButtonBg="bg-blue-600 hover:bg-blue-700"
-      confirmText="Yes, Add Intern"
-      @confirm="submitAddForm"
-      @cancel="closeConfirmModal"
-    />
+    >
+      <!-- Confirmation Modal -->
+      <ConfirmModal
+        :show="showConfirmModal"
+        title="Confirm Intern Creation"
+        message="`Are you sure you want to add an intern?`"
+        iconName="pi pi-user-plus"
+        iconColor="text-blue-600"
+        iconBgColor="bg-blue-100"
+        confirmButtonBg="bg-blue-600 hover:bg-blue-700"
+        confirmText="Yes, Add Intern"
+        @confirm="submitAddForm"
+        @cancel="closeConfirmModal"
+      />
+    </FormModal>
 
     <!-- Intern Details Modal -->
     <DetailsModal

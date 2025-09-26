@@ -1058,7 +1058,6 @@ const showResolveButton = computed(() => {
     <!-- Task Details Modal -->
     <DetailsModal
       :isOpen="isTaskDetailsOpen"
-      :inert="isConfirmModalOpen"
       :item="selectedTask"
       :loading="isTaskLoading"
       :error="isTaskError"
@@ -1287,6 +1286,14 @@ const showResolveButton = computed(() => {
           <i class="pi pi-arrow-left me-1" /> Back
         </button>
       </template>
+
+      <!-- Confirmation Modal -->
+      <ConfirmModal
+        :show="isConfirmModalOpen"
+        v-bind="confirmModalProps"
+        @cancel="closeConfirmModal"
+        @confirm="executeConfirm"
+      />
     </DetailsModal>
 
     <!-- Accomplishment Details Modal -->
@@ -1313,31 +1320,44 @@ const showResolveButton = computed(() => {
     <!-- New Project Modal -->
     <FormModal
       :isOpen="isNewProjectModalOpen"
-      :inert="isConfirmModalOpen"
       title="ADD PROJECT"
       :form="newProjectForm"
       :fields="newProjectFormFields"
       submitText="Add"
       @close="closeAllModal"
       @submit="handleNewProjectSubmit"
-    />
+    >
+      <!-- Confirmation Modal -->
+      <ConfirmModal
+        :show="isConfirmModalOpen"
+        v-bind="confirmModalProps"
+        @cancel="closeConfirmModal"
+        @confirm="executeConfirm"
+      />
+    </FormModal>
 
     <!-- Add Issue Modal -->
     <FormModal
       :isOpen="isAddIssueModalOpen"
-      :inert="isConfirmModalOpen"
       title="ADD ISSUE"
       :form="addIssueForm"
       :fields="addIssueFormFields"
       submitText="Add"
       @close="closeAllModal"
       @submit="handleAddIssueSubmit"
-    />
+    >
+      <!-- Confirmation Modal -->
+      <ConfirmModal
+        :show="isConfirmModalOpen"
+        v-bind="confirmModalProps"
+        @cancel="closeConfirmModal"
+        @confirm="executeConfirm"
+      />
+    </FormModal>
 
     <!-- Resolve Issue Modal -->
     <FormModal
       :isOpen="isResolveModalOpen"
-      :inert="isConfirmModalOpen"
       :showBackButton="showBackButtonInResolve"
       title="RESOLVE ISSUE"
       :form="resolveIssueForm"
@@ -1347,15 +1367,15 @@ const showResolveButton = computed(() => {
       @back="handleBackFromResolve"
       @close="closeAllModal"
       @submit="handleResolveIssueSubmit"
-    />
-
-    <!-- Confirmation Modal -->
-    <ConfirmModal
-      :show="isConfirmModalOpen"
-      v-bind="confirmModalProps"
-      @cancel="closeConfirmModal"
-      @confirm="executeConfirm"
-    />
+    >
+      <!-- Confirmation Modal -->
+      <ConfirmModal
+        :show="isConfirmModalOpen"
+        v-bind="confirmModalProps"
+        @cancel="closeConfirmModal"
+        @confirm="executeConfirm"
+      />
+    </FormModal>
   </div>
 </template>
 

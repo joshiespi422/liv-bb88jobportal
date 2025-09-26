@@ -1029,7 +1029,6 @@ const showNewButton = computed(() => {
     <!-- Update Task Modal -->
     <FormModal
       :isOpen="isUpdateModalOpen"
-      :inert="isConfirmModalOpen"
       :showBackButton="showBackButtonInUpdate"
       title="UPDATE TASK"
       :form="updateTaskForm"
@@ -1039,12 +1038,19 @@ const showNewButton = computed(() => {
       @close="closeAllModal"
       @back="handleBackFromUpdate"
       @submit="handleUpdateSubmit"
-    />
+    >
+      <!-- Confirmation Modal -->
+      <ConfirmModal
+        :show="isConfirmModalOpen"
+        v-bind="confirmModalProps"
+        @cancel="closeConfirmModal"
+        @confirm="executeConfirm"
+      />
+    </FormModal>
 
     <!-- Validate Task Modal -->
     <FormModal
       :isOpen="isValidateModalOpen"
-      :inert="isConfirmModalOpen"
       :showBackButton="showBackButtonInValidate"
       title="VALIDATE TASK"
       :form="validateTaskForm"
@@ -1054,12 +1060,19 @@ const showNewButton = computed(() => {
       @close="closeAllModal"
       @back="handleBackFromValidate"
       @submit="handleValidateSubmit"
-    />
+    >
+      <!-- Confirmation Modal -->
+      <ConfirmModal
+        :show="isConfirmModalOpen"
+        v-bind="confirmModalProps"
+        @cancel="closeConfirmModal"
+        @confirm="executeConfirm"
+      />
+    </FormModal>
 
     <!-- New Task Modal -->
     <FormModal
       :isOpen="isNewTaskModalOpen"
-      :inert="isConfirmModalOpen"
       title="ADD NEW TASK"
       :form="newTaskForm"
       :fields="newTaskFormFields"
@@ -1095,12 +1108,19 @@ const showNewButton = computed(() => {
           </div>
         </div>
       </template>
+
+      <!-- Confirmation Modal -->
+      <ConfirmModal
+        :show="isConfirmModalOpen"
+        v-bind="confirmModalProps"
+        @cancel="closeConfirmModal"
+        @confirm="executeConfirm"
+      />
     </FormModal>
 
     <!-- Task Details Modal -->
     <DetailsModal
       :isOpen="isDetailsModalOpen"
-      :inert="isConfirmModalOpen"
       :item="selectedDetails"
       :loading="isDetailsLoading"
       :error="isDetailsError"
@@ -1337,6 +1357,14 @@ const showNewButton = computed(() => {
           Validate
         </button>
       </template>
+
+      <!-- Confirmation Modal -->
+      <ConfirmModal
+        :show="isConfirmModalOpen"
+        v-bind="confirmModalProps"
+        @cancel="closeConfirmModal"
+        @confirm="executeConfirm"
+      />
     </DetailsModal>
 
     <!-- Accomplishment Details Modal -->
@@ -1359,14 +1387,6 @@ const showNewButton = computed(() => {
         </button>
       </template>
     </DetailsModal>
-
-    <!-- Confirmation Modal -->
-    <ConfirmModal
-      :show="isConfirmModalOpen"
-      v-bind="confirmModalProps"
-      @cancel="closeConfirmModal"
-      @confirm="executeConfirm"
-    />
   </div>
 </template>
 

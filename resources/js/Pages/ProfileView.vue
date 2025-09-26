@@ -476,44 +476,57 @@ const closeQrModal = () => {
     <PictureModal
       :isOpen="isPictureModalOpen"
       :pictureUrl="profile.picture"
-      :inert="isConfirmModalOpen"
       :error="pictureForm.errors.picture"
       @cancel="cancelCropper"
       @close="closeAllModals(), cancelCropper()"
       @change="handleChangePicture"
       @delete="handleDeletePicture"
-    />
+    >
+      <!-- Confirmation Modal -->
+      <ConfirmModal
+        :show="isConfirmModalOpen"
+        v-bind="confirmModalProps"
+        @cancel="closeConfirmModal"
+        @confirm="executeConfirm"
+      />
+    </PictureModal>
 
     <!-- Password Modal -->
     <FormModal
       :isOpen="isPasswordModalOpen"
-      :inert="isConfirmModalOpen"
       title="CHANGE PASSWORD"
       :form="passwordForm"
       :fields="passwordFields"
       submitText="Submit"
       @close="closeAllModals(), resetPasswordForm()"
       @submit="handlePasswordChange"
-    />
+    >
+      <!-- Confirmation Modal -->
+      <ConfirmModal
+        :show="isConfirmModalOpen"
+        v-bind="confirmModalProps"
+        @cancel="closeConfirmModal"
+        @confirm="executeConfirm"
+      />
+    </FormModal>
 
     <!-- Details Edit Modal -->
     <FormModal
       :isOpen="isEditDetailsModalOpen"
-      :inert="isConfirmModalOpen"
       title="EDIT PROFILE DETAILS"
       :form="detailsForm"
       :fields="detailsFields"
       submitText="Save"
       @close="closeAllModals"
       @submit="handleDetailsEdit"
-    />
-
-    <!-- Confirmation Modal -->
-    <ConfirmModal
-      :show="isConfirmModalOpen"
-      v-bind="confirmModalProps"
-      @cancel="closeConfirmModal"
-      @confirm="executeConfirm"
-    />
+    >
+      <!-- Confirmation Modal -->
+      <ConfirmModal
+        :show="isConfirmModalOpen"
+        v-bind="confirmModalProps"
+        @cancel="closeConfirmModal"
+        @confirm="executeConfirm"
+      />
+    </FormModal>
   </div>
 </template>

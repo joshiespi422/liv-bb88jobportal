@@ -677,19 +677,25 @@ const showValidateButton = computed(() => {
   <!-- Request Leave Modal -->
   <FormModal
     :isOpen="isRequestModalOpen"
-    :inert="isConfirmModalOpen"
     title="REQUEST LEAVE"
     :form="requestForm"
     :fields="requestFormFields"
     submitText="Request"
     @close="closeAllModal"
     @submit="handleRequestSubmit"
-  />
+  >
+    <!-- Confirmation Modal -->
+    <ConfirmModal
+      :show="isConfirmModalOpen"
+      v-bind="confirmModalProps"
+      @cancel="closeConfirmModal"
+      @confirm="executeConfirm"
+    />
+  </FormModal>
 
   <!-- Validate Leave Modal -->
   <FormModal
     :isOpen="isValidateModalOpen"
-    :inert="isConfirmModalOpen"
     :showBackButton="showBackButtonInValidate"
     title="VALIDATE LEAVE"
     :form="validateForm"
@@ -699,7 +705,15 @@ const showValidateButton = computed(() => {
     @close="closeAllModal"
     @back="handleBackFromValidate"
     @submit="handleValidateSubmit"
-  />
+  >
+    <!-- Confirmation Modal -->
+    <ConfirmModal
+      :show="isConfirmModalOpen"
+      v-bind="confirmModalProps"
+      @cancel="closeConfirmModal"
+      @confirm="executeConfirm"
+    />
+  </FormModal>
 
   <!-- Leave Details Modal -->
   <DetailsModal
@@ -793,12 +807,4 @@ const showValidateButton = computed(() => {
       </button>
     </template>
   </DetailsModal>
-
-  <!-- Confirmation Modal -->
-  <ConfirmModal
-    :show="isConfirmModalOpen"
-    v-bind="confirmModalProps"
-    @cancel="closeConfirmModal"
-    @confirm="executeConfirm"
-  />
 </template>

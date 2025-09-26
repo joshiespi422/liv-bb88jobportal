@@ -9,7 +9,6 @@ import {
 import { ref } from "vue";
 const props = defineProps({
   isOpen: Boolean,
-  inert: Boolean,
   title: String,
   form: Object,
   fields: Array,
@@ -40,9 +39,8 @@ const focusElement = ref(null);
     <Dialog
       as="div"
       class="relative z-50 @container"
-      :inert="inert"
-      @close="!inert && $emit('close')"
-      :initial-focus="inert ? undefined : focusElement"
+      @close="$emit('close')"
+      :initial-focus="focusElement"
     >
       <TransitionChild
         as="template"
@@ -147,6 +145,8 @@ const focusElement = ref(null);
           </TransitionChild>
         </div>
       </div>
+
+      <slot></slot>
     </Dialog>
   </TransitionRoot>
 </template>
