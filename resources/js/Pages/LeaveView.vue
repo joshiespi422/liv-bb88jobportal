@@ -12,6 +12,7 @@ import SelectInput from "../Components/forms/SelectInput.vue";
 import TextInput from "../Components/forms/TextInput.vue";
 import FileInput from "../Components/forms/FileInput.vue";
 import TextArea from "../Components/forms/TextArea.vue";
+import DateInput from "../Components/forms/DateInput.vue";
 
 const props = defineProps({
   leaves: {
@@ -132,12 +133,8 @@ const requestFormFields = computed(() => {
     fields.push({
       key: "request_date",
       label: "Request Date",
-      component: TextInput,
-      attrs: {
-        type: "date",
-        required: true,
-        min: today.value,
-      },
+      component: DateInput,
+      attrs: { required: true, min: today.value },
     });
   }
 

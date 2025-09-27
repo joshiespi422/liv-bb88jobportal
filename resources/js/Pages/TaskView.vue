@@ -17,6 +17,7 @@ import SelectInput from "../Components/forms/SelectInput.vue";
 import FileInput from "../Components/forms/FileInput.vue";
 import ComboBox from "../Components/forms/ComboBox.vue";
 import TextArea from "../Components/forms/TextArea.vue";
+import DateInput from "../Components/forms/DateInput.vue";
 
 const props = defineProps({
   tasks: {
@@ -142,14 +143,10 @@ const newTaskFormFields = computed(() => {
       attrs: { required: true, placeholder: "Example Collateral" },
     },
     {
-      key: "assignees",
-      label: "Assignees",
-      component: ComboBox,
-      attrs: {
-        multiple: true,
-        options: assigneesList.value,
-        placeholder: "Select Assignees",
-      },
+      key: "deadline",
+      label: "Deadline",
+      component: DateInput,
+      attrs: { required: true, min: today.value },
     },
     {
       key: "project",
@@ -161,10 +158,14 @@ const newTaskFormFields = computed(() => {
       },
     },
     {
-      key: "deadline",
-      label: "Deadline",
-      component: TextInput,
-      attrs: { type: "date", required: true, min: today.value },
+      key: "assignees",
+      label: "Assignees",
+      component: ComboBox,
+      attrs: {
+        multiple: true,
+        options: assigneesList.value,
+        placeholder: "Select Assignees",
+      },
     },
     {
       key: "description",

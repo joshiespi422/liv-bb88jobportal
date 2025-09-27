@@ -10,6 +10,7 @@ import DetailsModal from "../Components/DetailsModal.vue";
 import PasswordInput from "../Components/forms/PasswordInput.vue";
 import TextInput from "../Components/forms/TextInput.vue";
 import SelectInput from "../Components/forms/SelectInput.vue";
+import DateInput from "../Components/forms/DateInput.vue";
 
 // Props received from Inertia
 const props = defineProps({
@@ -156,8 +157,8 @@ const detailsFields = [
   {
     key: "bday",
     label: "Birthday",
-    component: TextInput,
-    attrs: { type: "date", required: true },
+    component: DateInput,
+    attrs: { required: true },
   },
   {
     key: "gender",

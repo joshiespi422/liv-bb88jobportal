@@ -67,7 +67,7 @@ const focusElement = ref(null);
           >
             <DialogPanel
               :class="[
-                'transform overflow-hidden bg-base-100 rounded-lg text-left shadow-xl transition-all sm:w-full p-4 sm:p-6',
+                'transform bg-base-100 rounded-lg text-left shadow-xl transition-all sm:w-full p-4 sm:p-6',
                 panelClass,
               ]"
             >

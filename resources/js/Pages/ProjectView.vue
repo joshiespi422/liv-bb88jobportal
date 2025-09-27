@@ -14,6 +14,7 @@ import ConfirmModal from "../Components/ConfirmModal.vue";
 import TextInput from "../Components/forms/TextInput.vue";
 import ComboBox from "../Components/forms/ComboBox.vue";
 import TextArea from "../Components/forms/TextArea.vue";
+import DateInput from "../Components/forms/DateInput.vue";
 
 const props = defineProps({
   projects: {
@@ -123,8 +124,8 @@ const newProjectFormFields = computed(() => {
     {
       key: "deadline",
       label: "Deadline",
-      component: TextInput,
-      attrs: { type: "date", required: true, min: today.value },
+      component: DateInput,
+      attrs: { required: true, min: today.value },
     },
   ];
 });
