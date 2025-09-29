@@ -90,7 +90,7 @@ class EmployeeController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'email' => 'required|email|unique:users,email',
+            'email' => 'required|email|unique:users,email|max:255',
             'name' => 'required|string|max:255',
             'qr_code' => 'nullable|string|regex:/^\d{2}-[A-Z]\d{4}-\d{4}$/',
             'position' => 'required|string|max:255',

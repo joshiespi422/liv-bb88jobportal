@@ -124,7 +124,7 @@ class ProjectController extends Controller
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'description' => 'required|string',
+            'description' => 'required|string|max:1000',
             'project_id' => 'required|integer|exists:projects,id',
         ]);
 
@@ -156,7 +156,7 @@ class ProjectController extends Controller
         }
 
         $validated = $request->validate([
-            'solution' => 'required|string',
+            'solution' => 'required|string|max:1000',
         ]);
 
         // Get status
@@ -187,9 +187,9 @@ class ProjectController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'title' => 'required|string',
-            'description' => 'required|string',
-            'client' => 'required|string',
+            'title' => 'required|string|max:255',
+            'description' => 'required|string|max:1000',
+            'client' => 'required|string|max:255',
             'deadline' => ['required','date','after_or_equal:today'],
             'department_ids' => 'required|array|min:1',
             'department_ids.*' => 'exists:departments,id'

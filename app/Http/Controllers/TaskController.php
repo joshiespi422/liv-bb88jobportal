@@ -193,8 +193,8 @@ class TaskController extends Controller
         // 2. Validation
         $request->validate([
             'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'link' => 'nullable|url',
+            'description' => 'required|string|max:1000',
+            'link' => 'nullable|url|max:255',
             'attachment' => 'nullable|file|mimes:jpg,jpeg,png,pdf,docx,doc|max:5120', 
             'status' => 'required|in:in progress,for approval,revision',
         ]);
@@ -291,7 +291,7 @@ class TaskController extends Controller
         // Validate request
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'description' => 'required|string',
+            'description' => 'required|string|max:1000',
             'collateral' => 'required|string|max:255',
             'department_id' => 'required|exists:departments,id',
             'project' => 'nullable|integer|exists:projects,id',

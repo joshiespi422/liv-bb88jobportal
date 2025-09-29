@@ -89,7 +89,7 @@ class InternController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'email' => 'required|email|unique:users,email',
+            'email' => 'required|email|unique:users,email|max:255',
             'name' => 'required|string|max:255',
             'position' => 'required|string|max:255',
             'department_id' => 'required|exists:departments,id',

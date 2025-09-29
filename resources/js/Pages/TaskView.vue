@@ -300,7 +300,7 @@ const updateFormFields = computed(() => {
     {
       key: "description",
       label: "Description",
-      component: TextInput,
+      component: TextArea,
       attrs: { required: true, placeholder: "Example Description" },
     },
     {
@@ -373,7 +373,7 @@ const validateFormFields = computed(() => {
     fields.push({
       key: "revise_reason",
       label: "Reason for Revision",
-      component: TextInput,
+      component: TextArea,
       attrs: {
         required: true,
         placeholder: "Please provide a reason",

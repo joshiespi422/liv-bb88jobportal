@@ -191,6 +191,8 @@ const focusElement = ref(null);
           </TransitionChild>
         </div>
       </div>
+
+      <slot></slot>
     </Dialog>
   </TransitionRoot>
 </template>

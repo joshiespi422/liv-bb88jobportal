@@ -188,7 +188,10 @@ class AccomplishmentController extends Controller
                 ]
                 : null,
             'created_at' => $accomplishment->created_at,
-            'user_name' => $accomplishment->user->name,             
+            'user' => [
+                'id' => $accomplishment->user->id,
+                'name' => $accomplishment->user->name
+            ],            
             'task_title' => $accomplishment->tasks->first()->title, 
         ]);
         
@@ -222,8 +225,8 @@ class AccomplishmentController extends Controller
 
         // 3. Validate input
         $request->validate([
-            'description' => 'required|string',
-            'link' => 'nullable|url',
+            'description' => 'required|string|max:1000',
+            'link' => 'nullable|url|max:255',
             'attachment' => 'nullable|file|mimes:jpg,jpeg,png,pdf,docx,doc|max:5120',
         ]);
 

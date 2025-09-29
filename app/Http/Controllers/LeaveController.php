@@ -214,7 +214,7 @@ class LeaveController extends Controller
             'leave_type_id' => 'required|exists:leave_types,id',
             'leave_category_id' => 'required|exists:leave_categories,id',
             'request_date' => 'nullable|date',
-            'reason' => 'required|string',
+            'reason' => 'required|string|max:1000',
             'proof' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
         ]);
 

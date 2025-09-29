@@ -13,6 +13,7 @@ import FormModal from "../Components/FormModal.vue";
 import ConfirmModal from "../Components/ConfirmModal.vue";
 import TextInput from "../Components/forms/TextInput.vue";
 import FileInput from "../Components/forms/FileInput.vue";
+import TextArea from "../Components/forms/TextArea.vue";
 import VueDatePicker from "@vuepic/vue-datepicker";
 import "@vuepic/vue-datepicker/dist/main.css";
 
@@ -107,7 +108,7 @@ const editFormFields = computed(() => {
     {
       key: "description",
       label: "Description",
-      component: TextInput,
+      component: TextArea,
       attrs: {
         required: true,
         placeholder: "Example Description",
