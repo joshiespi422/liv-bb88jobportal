@@ -60,8 +60,8 @@ const themeStore = useThemeStore();
         :class="[
           'pi p-2 text-3xl ml-5 cursor-pointer relative inline-block transition-all duration-300 ease-in-out hover:scale-125 gradient-text',
           {
-            'pi-angle-double-right': !sidebarStore.isCollapsed,
-            'pi-angle-double-left': sidebarStore.isCollapsed,
+            'pi-angle-double-left': !sidebarStore.isCollapsed,
+            'pi-angle-double-right': sidebarStore.isCollapsed,
           },
         ]"
         @click="sidebarStore.toggleSidebar"
@@ -123,7 +123,7 @@ const themeStore = useThemeStore();
                   { 'bg-indigo-100 text-black': !notification.read },
                 ]"
               >
-                <div>{{ notification.message }}</div>
+                <div class="truncate">{{ notification.message }}</div>
                 <div class="text-xs text-gray-500 mt-0.5">
                   {{ formatTimeAgo(notification.created_at) }}
                   <button

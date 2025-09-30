@@ -347,7 +347,7 @@ const closeQrModal = () => {
               <span class="text-white font-medium">Edit</span>
             </div>
           </div>
-          <div class="overflow-hidden text-center">
+          <div class="overflow-hidden text-center @3xl:text-left">
             <h3 class="text-lg @md:text-2xl font-bold truncate">
               {{ profile.name }}
             </h3>

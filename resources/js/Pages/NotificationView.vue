@@ -16,12 +16,20 @@ const props = defineProps({
 const notificationStore = useNotificationStore();
 
 const handleDelete = (id) => {
-  notificationStore.deleteNotification(id);
+  if (isLoading.value) return;
+  isLoading.value = true;
+
+  notificationStore.deleteNotification(id, {
+    onFinish: () => {
+      isLoading.value = false;
+    },
+  });
 };
 
 // confirmation before deleting
 const isConfirmModalOpen = ref(false);
 const pendingAction = ref(null);
+const isLoading = ref(false);
 // Holds the properties for the confirmation modal
 const confirmModalProps = reactive({
   title: "",
@@ -81,7 +89,9 @@ const handleDeleteAll = () => {
       <div
         v-for="notification in notifications.data"
         :key="notification.id"
-        @click="notificationStore.handleNotificationClick(notification)"
+        @click="
+          !isLoading && notificationStore.handleNotificationClick(notification)
+        "
         class="px-4 py-2 border-2 rounded-lg shadow-md cursor-pointer"
         :class="
           notification.read
@@ -90,12 +100,13 @@ const handleDeleteAll = () => {
         "
       >
         <div class="flex justify-between items-center font-semibold">
-          <p class="text-gray-800">
+          <p class="text-gray-800 truncate">
             {{ notification.message || "No message content." }}
           </p>
           <button
             @click.stop="handleDelete(notification.id)"
             class="btn btn-circle btn-sm btn-error text-white"
+            :disabled="isLoading"
           >
             <i class="pi pi-times" />
           </button>
