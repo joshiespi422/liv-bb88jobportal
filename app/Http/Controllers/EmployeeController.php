@@ -92,7 +92,7 @@ class EmployeeController extends Controller
         $request->validate([
             'email' => 'required|email|unique:users,email|max:255',
             'name' => 'required|string|max:255',
-            'qr_code' => 'nullable|string|regex:/^\d{2}-[A-Z]\d{4}-\d{4}$/',
+            'qr_code' => 'nullable|string|unique:users,qr_code|regex:/^\d{2}-[A-Z]\d{4}-\d{4}$/',
             'position' => 'required|string|max:255',
             'department_id' => 'required|exists:departments,id',
             'hierarchy' => 'required|in:Leader,Member',

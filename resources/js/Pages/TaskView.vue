@@ -586,6 +586,7 @@ const fetchTaskDetails = async (taskId) => {
     // Reset comment form with new task ID
     commentForm.commentable_id = response.data.id;
     commentForm.message = "";
+    commentForm.clearErrors("message");
   } catch (error) {
     console.error("Error fetching task details:", error);
     selectedDetails.value = null;
@@ -686,8 +687,8 @@ const accomplishDetailFields = ref([
       return `
         <div class="flex items-center gap-2">
           <i class="pi pi-paperclip text-sm"></i>
-          <a href="${attachment.url}" 
-             target="_blank" 
+          <a href="${attachment.url}"
+             target="_blank"
              class="text-blue-500 hover:underline truncate"
              download="${attachment.name}">
             ${attachment.name}
@@ -1322,8 +1323,13 @@ const showNewButton = computed(() => {
                       v-model="commentForm.message"
                       @keydown="handleEnterKey"
                       placeholder="Write a comment..."
-                      class="textarea textarea-primary min-h-4 w-full textarea-sm"
+                      class="textarea min-h-4 w-full textarea-sm"
+                      :class="{
+                        'textarea-primary': !commentForm.errors.message,
+                        'textarea-error': commentForm.errors.message,
+                      }"
                       required
+                      @change="commentForm.clearErrors('message')"
                     ></textarea>
                     <div class="flex justify-center items-center">
                       <button
@@ -1335,6 +1341,12 @@ const showNewButton = computed(() => {
                       </button>
                     </div>
                   </div>
+                  <p
+                    v-if="commentForm.errors.message"
+                    class="text-sm mb-2 px-2 font-semibold text-error ms-3"
+                  >
+                    {{ commentForm.errors.message }}
+                  </p>
                 </ul>
               </div>
             </div>

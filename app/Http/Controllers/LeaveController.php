@@ -213,7 +213,7 @@ class LeaveController extends Controller
         $request->validate([
             'leave_type_id' => 'required|exists:leave_types,id',
             'leave_category_id' => 'required|exists:leave_categories,id',
-            'request_date' => 'nullable|date',
+            'request_date' => 'nullable|date|date_format:Y-m-d|after_or_equal:today|before:2100-01-01',
             'reason' => 'required|string|max:1000',
             'proof' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
         ]);

@@ -297,7 +297,7 @@ class TaskController extends Controller
             'project' => 'nullable|integer|exists:projects,id',
             'assignees' => 'required|array|min:1',
             'assignees.*' => 'integer|exists:users,id',
-            'deadline' => ['required','date','after_or_equal:today'],
+            'deadline' => ['required','date','date_format:Y-m-d','after_or_equal:today','before:2100-01-01'],
             'priority' => 'required|in:high,medium,low',
             'type' => 'required|in:employee,intern'
         ]);

@@ -126,7 +126,7 @@ class ProfileController extends Controller
 
         $validated = $request->validate([
             'address' => 'required|string|max:255',
-            'bday' => 'required|date',
+            'bday' => 'required|date|date_format:Y-m-d|before:2100-01-01',
             'gender' => 'required|in:Male,Female,Other,Prefer not to say',
         ]);
 

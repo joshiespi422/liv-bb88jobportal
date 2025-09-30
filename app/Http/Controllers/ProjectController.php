@@ -190,7 +190,7 @@ class ProjectController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required|string|max:1000',
             'client' => 'required|string|max:255',
-            'deadline' => ['required','date','after_or_equal:today'],
+            'deadline' => ['required','date','date_format:Y-m-d','after_or_equal:today','before:2100-01-01'],
             'department_ids' => 'required|array|min:1',
             'department_ids.*' => 'exists:departments,id'
         ]);

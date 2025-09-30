@@ -54,9 +54,9 @@ class CheckTimeOutRequest extends FormRequest
                 return; // Stop further validation if no log exists
             }
 
-            // Validation 2: Ensure manual time out is only after 4:00 PM
-            if ($now->lt(Carbon::createFromTimeString('16:00:00'))) {
-                $validator->errors()->add('time_out', "Manual time out is only available after 4:00 PM");
+            // Validation 2: Ensure manual time out is only after 5:00 PM
+            if ($now->lt(Carbon::createFromTimeString('17:00:00'))) {
+                $validator->errors()->add('time_out', "Manual time out is only available after 5:00 PM");
             }
         });
     }
