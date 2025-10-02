@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Accomplishment;
 use App\Models\Department;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Collection;
 use Carbon\Carbon;
 
 class AccomplishmentController extends Controller
@@ -16,103 +18,115 @@ class AccomplishmentController extends Controller
      */
     public function index(Request $request)
     {
-        $user = $request->user();
-        $userType = $user->userType->type_name;
-        $currentDepartmentId = null;
-        $accomplishmentType = null;
+        $user = $request->user()->loadMissing('userType', 'employeeDetails', 'internDetails');
 
-        // SUPER ADMIN: Handle type and department parameters
-        if ($userType === 'super_admin') {
-            // Validate and set accomplishment type
-            $accomplishmentType = in_array($request->type, ['employee', 'intern']) 
-                ? $request->type 
-                : 'employee';
+        // Determine key parameters based on user role
+        ['accomplishmentType' => $accomplishmentType, 'currentDepartmentId' => $currentDepartmentId] = $this->determineParameters($request, $user);
 
-            // Get or set department from session
-            $currentDepartmentId = $request->dept ?? session('current_department_id');
-            
-            if (!$currentDepartmentId || !Department::find($currentDepartmentId)) {
-                $firstDept = Department::orderBy('id')->first();
-                $currentDepartmentId = $firstDept->id ?? null;
-            }
-            
-            session(['current_department_id' => $currentDepartmentId]);
-        }
-        // EMPLOYEE LEADER: Handle type parameter only
-        elseif ($userType === 'employee' && $user->employeeDetails->hierarchy === 'Leader') {
-            $accomplishmentType = in_array($request->type, ['employee', 'intern']) 
-                ? $request->type 
-                : 'employee';
-                
-            $currentDepartmentId = $user->employeeDetails->department_id;
-        }
-        // REGULAR EMPLOYEE & INTERN: No parameters
-        else {
-            $accomplishmentType = ($userType === 'intern') ? 'intern' : 'employee';
-            
-            $currentDepartmentId = ($userType === 'employee')
-                ? $user->employeeDetails->department_id
-                : $user->internDetails->department_id;
-        }
+        // Determine which tab should be active ('own' or 'all')
+        $activeTab = $this->getActiveTab($request, $user, $accomplishmentType);
 
-        // Determine active tab
-        if ($userType === 'employee' && $user->employeeDetails->hierarchy === 'Leader' && $accomplishmentType === 'intern') {
-            $defaultTab = 'all';
-        } else {
-            $defaultTab = in_array($userType, ['employee', 'intern']) 
-                ? 'own' 
-                : 'all';
-        }
-        $activeTab = in_array($request->tab, ['own', 'all']) 
-            ? $request->tab 
-            : $defaultTab;
-        
-        $accomplishmentsQuery = Accomplishment::with([
-                'user:id,name,picture',
-                'tasks:id,title'
+        // Build the query to fetch accomplishments
+        $query = $this->getAccomplishmentsQuery($user, $activeTab, $accomplishmentType, $currentDepartmentId);
+
+        // Execute the query and format the results for the view
+        $accomplishments = $this->formatAccomplishments($query->get());
+
+        // Render the Inertia view with all necessary props
+        return Inertia::render('AccomplishmentView', [
+            'accomplishments' => $accomplishments,
+            'departments' => $user->userType->type_name === 'super_admin' ? Department::all(['id', 'dept_name']) : [],
+            'currentDepartmentId' => $currentDepartmentId ? (int)$currentDepartmentId : null,
+            'currentType' => $accomplishmentType,
+            'activeTab' => $activeTab,
         ]);
+    }
 
-        // Apply tab-specific filters
-        if ($activeTab === 'own' && $userType === $accomplishmentType) {
-            // Show only current user's accomplishments
-            $accomplishmentsQuery->where('user_id', $user->id);
-        } else {
-            // "All Accomplishments" tab logic
-            if ($accomplishmentType === 'employee') {
-                $accomplishmentsQuery->whereHas('user.employeeDetails', function ($q) use ($currentDepartmentId) {
-                    $q->where('department_id', $currentDepartmentId);
-                });
-            } elseif ($accomplishmentType === 'intern') {
-                $accomplishmentsQuery->whereHas('user.internDetails', function ($q) use ($currentDepartmentId) {
-                    $q->where('department_id', $currentDepartmentId);
-                });
-            }
-        } 
+    /**
+     * Determines the accomplishment type and department ID based on the user's role and request parameters.
+     */
+    private function determineParameters(Request $request, $user): array
+    {
+        $userType = $user->userType->type_name;
 
-        $accomplishments = $accomplishmentsQuery->orderBy('created_at', 'desc')->get()->map(function ($accomplishment) {
+        switch (true) {
+            // SUPER ADMIN: Can view any department and type, 
+            case $userType === 'super_admin':
+                $accomplishmentType = in_array($request->type, ['employee', 'intern']) ? $request->type : 'employee';
+                // get the dept id from url or session, default to 1st, and store in session
+                $departmentId = $request->dept ?? session('current_department_id', Department::orderBy('id')->first()?->id); 
+                session(['current_department_id' => $departmentId]);
+                return ['accomplishmentType' => $accomplishmentType, 'currentDepartmentId' => $departmentId];
+
+            // EMPLOYEE LEADER: Can view their department's employees or interns
+            case $userType === 'employee' && $user->employeeDetails?->hierarchy === 'Leader':
+                $accomplishmentType = in_array($request->type, ['employee', 'intern']) ? $request->type : 'employee';
+                return ['accomplishmentType' => $accomplishmentType, 'currentDepartmentId' => $user->employeeDetails->department_id];
+
+            // REGULAR EMPLOYEE / INTERN: Can only view their own
+            default:
+                $accomplishmentType = ($userType === 'intern') ? 'intern' : 'employee';
+                $departmentId = ($userType === 'employee') ? $user->employeeDetails?->department_id : $user->internDetails?->department_id;
+                return ['accomplishmentType' => $accomplishmentType, 'currentDepartmentId' => $departmentId];
+        }
+    }
+
+    /**
+     * Determines the active tab based on user role and context.
+     */
+    private function getActiveTab(Request $request, $user, string $accomplishmentType): string
+    {
+        // Define the default tab
+        $isLeaderViewingInterns = $user->userType->type_name === 'employee'
+            && $user->employeeDetails?->hierarchy === 'Leader'
+            && $accomplishmentType === 'intern';
+
+        $defaultTab = $isLeaderViewingInterns || $user->userType->type_name === 'super_admin' ? 'all' : 'own';
+
+        // Return the requested tab if valid, otherwise return the default
+        return in_array($request->tab, ['own', 'all']) ? $request->tab : $defaultTab;
+    }
+
+    /**
+     * Builds the Eloquent query for fetching accomplishments with appropriate filters.
+     */
+    private function getAccomplishmentsQuery($user, string $activeTab, string $accomplishmentType, ?int $departmentId): Builder
+    {
+        $query = Accomplishment::with(['user:id,name,picture', 'tasks:id,title'])
+                               ->orderBy('created_at', 'desc');
+
+        // Filter for 'own' tab: show only the logged-in user's accomplishments
+        if ($activeTab === 'own' && $user->userType->type_name === $accomplishmentType) {
+            return $query->where('user_id', $user->id);
+        }
+
+        // Filter for 'all' tab: show accomplishments from a specific department
+        $relation = $accomplishmentType === 'employee' ? 'user.employeeDetails' : 'user.internDetails';
+
+        return $query->whereHas($relation, function ($q) use ($departmentId) {
+            $q->where('department_id', $departmentId);
+        });
+    }
+
+    /**
+     * Formats the collection of accomplishments for the Inertia view.
+     */
+    private function formatAccomplishments(Collection $accomplishments): Collection
+    {
+        return $accomplishments->map(function ($accomplishment) {
             return [
                 'id' => $accomplishment->id,
                 'title' => $accomplishment->title,
-                'task_title' => $accomplishment->tasks->first()->title,
+                'task_title' => $accomplishment->tasks->first()?->title,
                 'created_at' => $accomplishment->created_at,
                 'user' => [
-                        'name' => $accomplishment->user->name,
-                        'picture' => $accomplishment->user->picture 
-                            ? Storage::url($accomplishment->user->picture)  // Generates full URL for stored image
-                            : Storage::url('profile-images/default.png'),  // Fallback to default image
-                    ],
+                    'name' => $accomplishment->user->name,
+                    'picture' => $accomplishment->user->picture
+                        ? Storage::url($accomplishment->user->picture)
+                        : Storage::url('profile-images/default.png'),
+                ],
             ];
         });
-
-        return Inertia::render('AccomplishmentView', [
-            'accomplishments' => $accomplishments,
-            'departments' => ($userType === 'super_admin') 
-                ? Department::all(['id', 'dept_name']) 
-                : [],
-            'currentDepartmentId' => $currentDepartmentId ? (int)$currentDepartmentId : null,
-            'currentType' => $accomplishmentType,
-            'activeTab' => $activeTab
-        ]);       
     }
 
     /**

@@ -7,6 +7,8 @@ use App\Models\Department;
 use App\Models\ProjectIssue;
 use App\Models\Status;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Events\ProjectCreated;
@@ -20,75 +22,75 @@ class ProjectController extends Controller
      */
     public function index(Request $request)
     {
-        $user = $request->user()->load([
-            'userType', 
-            'employeeDetails.department', 
-            'internDetails.department'
-        ]);
+        $user = $request->user()->loadMissing('userType', 'employeeDetails', 'internDetails');
 
-        $projectsQuery = Project::select([
-            'id',
-            'title',
-            'description',
-            'created_at'
-        ])
-        // Eager load departments and the nested users through tasks
-        ->with([
-            'departments:id,dept_name',
-            'tasks.users:id,name,picture' 
-        ]);
+        // Build the query based on user permissions
+        $query = $this->getProjectsQuery($user);
 
+        // Execute the query and format the results
+        $projects = $this->formatProjects($query->get());
+
+        // Render the view with the projects and necessary props
+        return Inertia::render('ProjectView', [
+            'projects' => $projects,
+            'departments' => $user->userType->type_name === 'super_admin'
+                ? Department::all(['id', 'dept_name as name'])
+                : [],
+        ]);
+    
+    }
+
+    /**
+     * Build the Eloquent query for fetching projects, applying user-specific filters.
+     */
+    private function getProjectsQuery($user): Builder
+    {
+        $query = Project::with(['departments:id,dept_name', 'tasks.users:id,name,picture'])
+            ->select('id', 'title', 'description', 'created_at');
+
+        // If the user is not a super_admin, filter projects by their department
         if (in_array($user->userType->type_name, ['employee', 'intern'])) {
             $departmentId = $user->userType->type_name === 'employee'
                 ? $user->employeeDetails?->department_id
                 : $user->internDetails?->department_id;
 
             if ($departmentId) {
-                $projectsQuery->whereHas('departments', function ($query) use ($departmentId) {
-                    $query->where('departments.id', $departmentId);
-                });
-            } else {
-                $projectsQuery->whereRaw('1 = 0');
+                return $query->whereHas('departments', fn($q) => $q->where('departments.id', $departmentId));
             }
+            // If user has no department, they see no projects
+            return $query->whereRaw('1 = 0');
         }
-        
-        $projects = $projectsQuery->get();
 
-        // Transform the collection to create the desired data structure
-        $formattedProjects = $projects->map(function ($project) {
-            // Process assignees to remove the pivot object
-            $assignees = $project->tasks->flatMap(function ($task) {
-                return $task->users;
-            })
-            ->unique('id')
-            ->map(function ($user) { // Using map to be explicit
-                return [
-                    'name' => $user->name,
-                    'picture' => $user->picture
-                        ? Storage::url($user->picture)  // Generates full URL for stored image
-                        : Storage::url('profile-images/default.png'),  // Fallback to default image
-                ];
-            })
-            ->values();
+        // super_admin sees all projects
+        return $query;
+    }
 
-            // Return a new, explicitly structured array for the project
+    /**
+     * Format the collection of projects for the view.
+     */
+    private function formatProjects(Collection $projects): Collection
+    {
+        return $projects->map(function ($project) {
+            // Get a unique list of all users assigned to any task within the project
+            $assignees = $project->tasks->flatMap(fn($task) => $task->users)
+                ->unique('id')
+                ->map(fn($assignee) => [
+                    'name' => $assignee->name,
+                    'picture' => $assignee->picture
+                        ? Storage::url($assignee->picture)
+                        : Storage::url('profile-images/default.png'),
+                ])
+                ->values(); // Reset array keys
+
             return [
                 'id' => $project->id,
                 'title' => $project->title,
                 'description' => $project->description,
                 'created_at' => $project->created_at,
-                'assignees' => $assignees,
                 'departments' => $project->departments->pluck('dept_name'),
+                'assignees' => $assignees,
             ];
         });
-
-
-        return Inertia::render('ProjectView', [
-            'projects' => $formattedProjects,
-            'departments' => ($user->userType->type_name === 'super_admin') 
-                ? Department::all(['id', 'dept_name as name']) : [],
-        ]);
-    
     }
 
     public function showIssue(ProjectIssue $issue)

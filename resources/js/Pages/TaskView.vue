@@ -748,7 +748,7 @@ const isLeaderTab = computed(
 );
 const tabs = computed(() => {
   const items = [
-    { id: "active_tasks", label: "Active Tasks" },
+    { id: "active", label: "Active Tasks" },
     { id: "archived", label: "Archived" },
   ];
 
@@ -757,7 +757,7 @@ const tabs = computed(() => {
     isLeaderTab.value ||
     authUser.value.userType === "intern"
   ) {
-    items.unshift({ id: "your_tasks", label: "Your Tasks" });
+    items.unshift({ id: "own", label: "Your Tasks" });
   }
 
   return items;
@@ -915,8 +915,8 @@ const showUpdateButton = computed(() => {
   // 2. Must have selected task details
   if (!selectedDetails.value) return false;
 
-  // 3. Must be in "your_tasks" tab
-  if (props.activeTab !== "your_tasks") return false;
+  // 3. Must be in "own" tab
+  if (props.activeTab !== "own") return false;
 
   // 4. Must be not in "done" status
   if (selectedDetails.value.status === "done") return false;
@@ -944,8 +944,8 @@ const showValidateButton = computed(() => {
     return false;
   }
 
-  // 3. Must be in "active_tasks" tab
-  if (props.activeTab !== "active_tasks") {
+  // 3. Must be in "active" tab
+  if (props.activeTab !== "active") {
     return false;
   }
 

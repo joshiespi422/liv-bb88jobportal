@@ -12,6 +12,8 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Collection;
+use Illuminate\Database\Eloquent\Builder;
 use App\Events\LeaveRequested;
 use App\Events\LeaveValidated;
 
@@ -23,101 +25,117 @@ class LeaveController extends Controller
     public function index(Request $request)
     {
         // Get the authenticated user and eager load their type and department details
-        $user = $request->user()->load('userType', 'employeeDetails.department');
+        $user = $request->user()->loadMissing('userType', 'employeeDetails.department');
+        $activeTab = in_array($request->tab, ['regular', 'special']) ? $request->tab : 'regular';
         
-        $userType = $user->userType->type_name;
-        $userDepartmentName = $user->employeeDetails?->department?->dept_name;
+        // Determine who can view leaves by department
+        $canViewByDepartment = $this->canViewByDepartment($user);
+        
+        // Get the current department ID if the user has permission
+        $departmentId = $canViewByDepartment ? $this->getCurrentDepartmentId($request) : null;
+        
+        // Build the query based on user permissions and filters
+        $query = $this->getLeavesQuery($user, $activeTab, $canViewByDepartment, $departmentId);
+        
+        // Execute the query and format the results
+        $leaves = $this->formatLeaves($query->latest()->get());
+        
+        // Prepare all props for the Inertia view
+        $props = $this->preparePropsForView($leaves, $user, $activeTab, $canViewByDepartment, $departmentId);
 
-        // Determine active tab from query parameter (default: 'regular')
-        $tab = $request->query('tab', 'regular');
-        $allowedTabs = ['regular', 'special'];
-        $activeTab = in_array($tab, $allowedTabs) ? $tab : 'regular';
-        // Map tab to leave type name
+        // Render the view
+        return Inertia::render('LeaveView', $props);
+    }
+
+    /**
+     * Check if the user has permissions to view leaves across departments.
+     */
+    private function canViewByDepartment($user): bool
+    {
+        $userType = $user->userType->type_name;
+        $departmentName = $user->employeeDetails?->department?->dept_name;
+
+        return $userType === 'super_admin' || ($userType === 'employee' && $departmentName === 'Admin');
+    }
+
+    /**
+     * Get the current department ID from the request or session.
+     */
+    private function getCurrentDepartmentId(Request $request): ?int
+    {
+        // get the dept id from url or session, default to 1st, and store in session
+        $departmentId = $request->dept ?? session('current_department_id', Department::orderBy('id')->first()?->id);
+        session(['current_department_id' => $departmentId]);
+   
+        return $departmentId;
+    }
+
+    /**
+     * Build the Eloquent query for fetching leaves.
+     */
+    private function getLeavesQuery($user, string $activeTab, bool $canViewByDepartment, ?int $departmentId): Builder
+    {
         $leaveTypeName = ucfirst($activeTab);
 
-        // Eager load related data for efficiency.
-        $leavesQuery = Leave::query()->with([
-            'user:id,name,picture', 
-            'status:id,status_name'
-        ])->select('id', 'created_at', 'user_id', 'status_id'); 
+        $query = Leave::with(['user:id,name,picture', 'status:id,status_name'])
+            ->select('id', 'created_at', 'user_id', 'status_id')
+            ->whereHas('leaveType', fn($q) => $q->where('name', $leaveTypeName));
 
-        // Determine if the current user has permission to view leaves by department.
-        $canViewByDepartment = ($userType === 'super_admin') || 
-                               ($userType === 'employee' && $userDepartmentName === 'Admin');
-
-        // --- Authorization & Filtering Logic ---
+        // Apply filters based on user role
         if ($canViewByDepartment) {
-            // user is a 'super_admin' or an 'employee' in the 'Admin' department.
-            $departmentId = $request->query('dept', session('current_department_id'));
-
-            // If no department is specified, use the first department.
-            if (!$departmentId || !Department::find($departmentId)) {
-                $firstDepartment = Department::query()->orderBy('id')->first();
-                $departmentId = $firstDepartment?->id;
-            }
-
-            // Store the currently viewed department ID in the session for persistence
             if ($departmentId) {
-                session(['current_department_id' => $departmentId]);
+                return $query->whereHas('user.employeeDetails', fn($q) => $q->where('department_id', $departmentId));
             }
-
-            // Filter the leaves to only include users from the selected department.
-            if ($departmentId) {
-                $leavesQuery->whereHas('user.employeeDetails', function ($query) use ($departmentId) {
-                    $query->where('department_id', $departmentId);
-                });
-            } else {
-                // no departments exist at all
-                $leavesQuery->whereRaw('1 = 0');
-            }
-
-        } elseif ($userType === 'employee') {
-            // regular employee (not in the 'Admin' department).
-            $leavesQuery->where('user_id', $user->id);
-
-        } else {
-            // no leave access.
-            $leavesQuery->whereRaw('1 = 0');
+            return $query->whereRaw('1 = 0'); // No departments exist, so return no results
         }
 
-        // Add leave type filter based on activeTab
-        $leavesQuery->whereHas('leaveType', function ($query) use ($leaveTypeName) {
-            $query->where('name', $leaveTypeName);
-        });
+        if ($user->userType->type_name === 'employee') {
+            return $query->where('user_id', $user->id);
+        }
 
-        $leaves = $leavesQuery->latest()->get()->map(function ($leave) {
+        return $query->whereRaw('1 = 0'); // User has no leave access
+    }
+
+    /**
+     * Format the collection of leaves for the view.
+     */
+    private function formatLeaves(Collection $leaves): Collection
+    {
+        return $leaves->map(function ($leave) {
             return [
                 'id' => $leave->id,
                 'created_at' => $leave->created_at,
-                'user' => [
-                        'name' => $leave->user->name,
-                        'picture' => $leave->user->picture 
-                            ? Storage::url($leave->user->picture)  // Generates full URL for stored image
-                            : Storage::url('profile-images/default.png'),  // Fallback to default image
-                    ],
                 'status' => $leave->status->status_name,
+                'user' => [
+                    'name' => $leave->user->name,
+                    'picture' => $leave->user->picture
+                        ? Storage::url($leave->user->picture)
+                        : Storage::url('profile-images/default.png'),
+                ],
             ];
         });
+    }
 
-        // --- Prepare Props for the Vue Component ---
+    /**
+     * Prepare the final props array for the Inertia component.
+     */
+    private function preparePropsForView(Collection $leaves, $user, string $activeTab, bool $canViewByDepartment, ?int $departmentId): array
+    {
         $props = [
             'leaves' => $leaves,
             'activeTab' => $activeTab,
         ];
 
-        // provide the full department list and current department ID
         if ($canViewByDepartment) {
             $props['departments'] = Department::query()->orderBy('dept_name')->get(['id', 'dept_name']);
             $props['currentDepartmentId'] = $departmentId ? (int)$departmentId : null;
         }
 
-        // provide the full leave type and category lists
-        if ($userType !== 'super_admin') {
+        if ($user->userType->type_name !== 'super_admin') {
             $props['leaveTypes'] = LeaveType::query()->orderBy('name')->get(['id', 'name']);
         }
 
-        // Render the Inertia view and pass the props.
-        return Inertia::render('LeaveView', $props);
+        return $props;
     }
 
     public function fetchCategories(int $leaveTypeId): JsonResponse

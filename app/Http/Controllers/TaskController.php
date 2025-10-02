@@ -10,8 +10,10 @@ use App\Models\Accomplishment;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Collection;
 use Illuminate\Http\JsonResponse;
 use App\Events\TaskCreated;
 use App\Events\AccomplishmentCreated;
@@ -24,129 +26,128 @@ class TaskController extends Controller
      */
     public function index(Request $request)
     {
-        $user = $request->user();
-        $userType = $user->userType->type_name;
-        $currentDepartmentId = null;
-        $taskType = null;
+        $user = $request->user()->loadMissing('userType', 'employeeDetails', 'internDetails');
 
-        // SUPER ADMIN: Handle type and department parameters
-        if ($userType === 'super_admin') {
-            // Validate and set task type
-            $taskType = in_array($request->type, ['employee', 'intern']) 
-                ? $request->type 
-                : 'employee';
+        // Determine key parameters based on user role
+        ['taskType' => $taskType, 'currentDepartmentId' => $currentDepartmentId] = $this->determineParameters($request, $user);
 
-            // Get or set department from session
-            $currentDepartmentId = $request->dept ?? session('current_department_id');
-            
-            if (!$currentDepartmentId || !Department::find($currentDepartmentId)) {
-                $firstDept = Department::orderBy('id')->first();
-                $currentDepartmentId = $firstDept->id ?? null;
-            }
-            
-            session(['current_department_id' => $currentDepartmentId]);
-        }
-        // EMPLOYEE LEADER: Handle type parameter only
-        elseif ($userType === 'employee' && $user->employeeDetails->hierarchy === 'Leader') {
-            $taskType = in_array($request->type, ['employee', 'intern']) 
-                ? $request->type 
-                : 'employee';
-                
-            $currentDepartmentId = $user->employeeDetails->department_id;
-        }
-        // REGULAR EMPLOYEE & INTERN: No parameters
-        else {
-            $taskType = ($userType === 'intern') ? 'intern' : 'employee';
-            
-            $currentDepartmentId = ($userType === 'employee')
-                ? $user->employeeDetails->department_id
-                : $user->internDetails->department_id;
-        }
+        // Determine which tab should be active
+        $activeTab = $this->getActiveTab($request, $user, $taskType);
 
-        // Determine active tab
-        if ($userType === 'employee' && $user->employeeDetails->hierarchy === 'Leader' && $taskType === 'intern') {
-            $defaultTab = 'active_tasks';
-        } else {
-            $defaultTab = in_array($userType, ['employee', 'intern']) 
-                ? 'your_tasks' 
-                : 'active_tasks';
-        }
+        // Build the query to fetch tasks
+        $query = $this->getTasksQuery($user, $activeTab, $taskType, $currentDepartmentId);
 
-        $activeTab = in_array($request->tab, ['your_tasks', 'active_tasks', 'archived']) 
-            ? $request->tab 
-            : $defaultTab;
+        // Execute the query and format the results for the view
+        $tasks = $this->formatTasks($query->get());
 
-        // Get status IDs for filtering
-        $statuses = Status::whereIn('status_name', [
-            'in progress', 
-            'for approval',
-            'done',
-            'revision'
-        ])->pluck('id', 'status_name');
-
-        // Get user type ID for query
-        $userTypeId = UserType::where('type_name', $taskType)->value('id');
-
-         // Build base query
-        $tasksQuery = Task::with(['users:id,name,picture','status:id,status_name'])
-            ->select('id', 'title', 'created_at', 'priority', 'status_id')
-            ->where('department_id', $currentDepartmentId)
-            ->where('user_type_id', $userTypeId);
-
-        // Apply tab-specific filters
-        switch ($activeTab) {
-            case 'your_tasks':
-                $tasksQuery->whereHas('users', function($q) use ($user) {
-                        $q->where('user_id', $user->id);
-                    })
-                    ->whereIn('status_id', [
-                        $statuses['in progress'],
-                        $statuses['for approval'],
-                        $statuses['revision']
-                    ]);
-                break;
-                
-            case 'active_tasks':
-                $tasksQuery->whereIn('status_id', [
-                    $statuses['in progress'],
-                    $statuses['for approval'],
-                    $statuses['revision']
-                ]);
-                break;
-                
-            case 'archived':
-                $tasksQuery->where('status_id', $statuses['done']);
-                break;
-        }
-
-        $tasks = $tasksQuery->get()->map(function ($task) {
-           return [
-                    'id' => $task->id,
-                    'title' => $task->title,
-                    'created_at' => $task->created_at,
-                    'priority' => $task->priority,
-                    'status' => $task->status->status_name,
-                    'assignees' => $task->users->map(function ($user) {
-                        return [
-                            'id' => $user->id,
-                            'name' => $user->name,
-                            'picture' => $user->picture
-                                ? Storage::url($user->picture)  // Generates full URL for stored image
-                                : Storage::url('profile-images/default.png'),  // Fallback to default image
-                        ];
-                    })->toArray(),
-                ];
-        });
-
+        // Render the Inertia view with all necessary props
         return Inertia::render('TaskView', [
             'tasks' => $tasks,
-            'departments' => ($userType === 'super_admin') 
-                ? Department::all(['id', 'dept_name']) 
-                : [],
-            'currentDepartmentId' => (int)$currentDepartmentId,
+            'departments' => $user->userType->type_name === 'super_admin' ? Department::all(['id', 'dept_name']) : [],
+            'currentDepartmentId' => $currentDepartmentId ? (int)$currentDepartmentId : null,
             'currentType' => $taskType,
             'activeTab' => $activeTab,
         ]);
+    }
+
+    /**
+     * Determines the task type and department ID based on the user's role and request parameters.
+     */
+    private function determineParameters(Request $request, $user): array
+    {
+        $userType = $user->userType->type_name;
+
+        switch (true) {
+            // SUPER ADMIN: Can view any department and type
+            case $userType === 'super_admin':
+                $taskType = in_array($request->type, ['employee', 'intern']) ? $request->type : 'employee';
+                // get the dept id from url or session, default to 1st, and store in session
+                $departmentId = $request->dept ?? session('current_department_id', Department::orderBy('id')->first()?->id);
+                session(['current_department_id' => $departmentId]);
+                return ['taskType' => $taskType, 'currentDepartmentId' => $departmentId];
+
+            // EMPLOYEE LEADER: Can view their department's employees or interns
+            case $userType === 'employee' && $user->employeeDetails?->hierarchy === 'Leader':
+                $taskType = in_array($request->type, ['employee', 'intern']) ? $request->type : 'employee';
+                return ['taskType' => $taskType, 'currentDepartmentId' => $user->employeeDetails->department_id];
+
+            // REGULAR EMPLOYEE / INTERN: Can only view their own
+            default:
+                $taskType = ($userType === 'intern') ? 'intern' : 'employee';
+                $departmentId = ($userType === 'employee') ? $user->employeeDetails?->department_id : $user->internDetails?->department_id;
+                return ['taskType' => $taskType, 'currentDepartmentId' => $departmentId];
+        }
+    }
+
+    /**
+     * Determines the active tab based on user role and context.
+     */
+    private function getActiveTab(Request $request, $user, string $taskType): string
+    {
+        // Define the default tab
+        $isLeaderViewingInterns = $user->userType->type_name === 'employee'
+            && $user->employeeDetails?->hierarchy === 'Leader'
+            && $taskType === 'intern';
+
+        $defaultTab = $isLeaderViewingInterns || $user->userType->type_name === 'super_admin' ? 'active' : 'own';
+
+        // Return the requested tab if valid, otherwise return the default
+        return in_array($request->tab, ['own', 'active', 'archived']) ? $request->tab : $defaultTab;
+    }
+
+    /**
+     * Builds the Eloquent query for fetching tasks with appropriate filters.
+     */
+    private function getTasksQuery($user, string $activeTab, string $taskType, ?int $departmentId): Builder
+    {
+        // For performance, you could consider caching these status/type lookups
+        $userTypeId = UserType::where('type_name', $taskType)->value('id');
+        $statuses = Status::whereIn('status_name', ['in progress', 'for approval', 'done', 'revision'])->pluck('id', 'status_name');
+
+        $query = Task::with(['users:id,name,picture', 'status:id,status_name'])
+            ->select('id', 'title', 'created_at', 'priority', 'status_id')
+            ->where('department_id', $departmentId)
+            ->where('user_type_id', $userTypeId);
+
+        $activeStatuses = [$statuses['in progress'], $statuses['for approval'], $statuses['revision']];
+
+        // Apply tab-specific filters
+        switch ($activeTab) {
+            case 'own':
+                return $query->whereHas('users', fn($q) => $q->where('user_id', $user->id))
+                             ->whereIn('status_id', $activeStatuses);
+            case 'active':
+                return $query->whereIn('status_id', $activeStatuses);
+            case 'archived':
+                return $query->where('status_id', $statuses['done']);
+            default:
+                return $query;
+        }
+    }
+
+    /**
+     * Formats the collection of tasks for the Inertia view.
+     */
+    private function formatTasks(Collection $tasks): Collection
+    {
+        return $tasks->map(function ($task) {
+            return [
+                'id' => $task->id,
+                'title' => $task->title,
+                'created_at' => $task->created_at,
+                'priority' => $task->priority,
+                'status' => $task->status->status_name,
+                'assignees' => $task->users->map(function ($assignee) {
+                    return [
+                        'id' => $assignee->id,
+                        'name' => $assignee->name,
+                        'picture' => $assignee->picture
+                            ? Storage::url($assignee->picture)
+                            : Storage::url('profile-images/default.png'),
+                    ];
+                })->toArray(),
+            ];
+        });
     }
 
     public function fetchAssignees(Request $request, Department $department): JsonResponse
