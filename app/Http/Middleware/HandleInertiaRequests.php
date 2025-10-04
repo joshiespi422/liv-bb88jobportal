@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 use Tighten\Ziggy\Ziggy;
+use Illuminate\Support\Facades\Storage;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -84,6 +85,11 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $user ? [
                     'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'picture' => $user->picture
+                        ? Storage::url($user->picture)
+                        : Storage::url('profile-images/default.png'),
                     'userType' => $userType,
                     'hierarchy' => $hierarchy,
                     'department' => $department ? [

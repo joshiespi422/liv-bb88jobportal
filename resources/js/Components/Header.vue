@@ -2,47 +2,84 @@
 import { useSidebarStore } from "../Stores/sidebarStore.js";
 import { useThemeStore } from "../Stores/themeStore.js";
 import { useNotificationStore } from "../Stores/notificationStore.js";
-import { ref } from "vue";
-import { router } from "@inertiajs/vue3";
+import { ref, computed } from "vue";
+import { router, usePage, Link } from "@inertiajs/vue3";
 import { onClickOutside } from "@vueuse/core";
 import { formatDistanceToNow } from "date-fns";
 
-const notificationStore = useNotificationStore();
-const showDropdown = ref(false);
-const dropdownRef = ref(null);
-const bellRef = ref(null);
+// logged in user data
+const page = usePage();
+const authUser = computed(() => page.props.auth.user);
 
-function toggleDropdown() {
-  showDropdown.value = !showDropdown.value;
+// display purpose only
+const formattedDetails = computed(() => {
+  if (!authUser.value.userType) return "";
+
+  if (authUser.value.userType === "super_admin") return "Super Admin";
+  if (authUser.value.userType === "employee")
+    return `${authUser.value.department.name} - ${authUser.value.hierarchy}`;
+  if (authUser.value.userType === "intern")
+    return `${authUser.value.department.name} - Intern`;
+});
+const formattedUserType = computed(() => {
+  if (!authUser.value.userType) return "";
+
+  if (authUser.value.userType === "super_admin") return "Super Admin";
+  if (authUser.value.userType === "employee") return "Employee";
+  if (authUser.value.userType === "intern") return "Intern";
+});
+
+// --- Profile Dropdown Logic ---
+const showProfileDropdown = ref(false);
+const profileDropdownRef = ref(null);
+const avatarRef = ref(null);
+function toggleProfileDropdown() {
+  showProfileDropdown.value = !showProfileDropdown.value;
 }
-
-onClickOutside(dropdownRef, (event) => {
+onClickOutside(profileDropdownRef, (event) => {
+  // Close if click is outside the dropdown AND the avatar button
   if (
-    dropdownRef.value &&
-    !dropdownRef.value.contains(event.target) &&
-    bellRef.value &&
-    !bellRef.value.contains(event.target)
+    profileDropdownRef.value &&
+    !profileDropdownRef.value.contains(event.target) &&
+    avatarRef.value &&
+    !avatarRef.value.contains(event.target)
   ) {
-    showDropdown.value = false;
+    showProfileDropdown.value = false;
   }
 });
 
+// --- Notification Dropdown Logic ---
+const notificationStore = useNotificationStore();
+const showNotificationDropdown = ref(false);
+const notificationDropdownRef = ref(null);
+const bellRef = ref(null);
+function toggleNotificationDropdown() {
+  showNotificationDropdown.value = !showNotificationDropdown.value;
+}
+onClickOutside(notificationDropdownRef, (event) => {
+  if (
+    notificationDropdownRef.value &&
+    !notificationDropdownRef.value.contains(event.target) &&
+    bellRef.value &&
+    !bellRef.value.contains(event.target)
+  ) {
+    showNotificationDropdown.value = false;
+  }
+});
+// notification actions
 function gotoNotifications() {
-  showDropdown.value = false;
+  showNotificationDropdown.value = false;
   router.get(route("notification"));
 }
-
 function handleNotificationClick(notification) {
-  showDropdown.value = false;
+  showNotificationDropdown.value = false;
   notificationStore.handleNotificationClick(notification);
 }
-
 const markAllAsRead = () => notificationStore.markAllAsRead();
 const deleteNotif = (id) => {
-  showDropdown.value = false;
+  showNotificationDropdown.value = false;
   notificationStore.deleteNotification(id);
 };
-
 function formatTimeAgo(dateString) {
   return formatDistanceToNow(new Date(dateString), { addSuffix: true });
 }
@@ -55,7 +92,7 @@ const themeStore = useThemeStore();
   <div
     class="@container h-18 flex items-center transition-all duration-300 ease-in-out relative header"
   >
-    <div class="w-2/3">
+    <div class="w-2/3 flex items-center">
       <i
         :class="[
           'pi p-2 text-3xl ml-5 cursor-pointer relative inline-block transition-all duration-300 ease-in-out hover:scale-125 gradient-text',
@@ -66,8 +103,69 @@ const themeStore = useThemeStore();
         ]"
         @click="sidebarStore.toggleSidebar"
       ></i>
+      <div class="ms-2 @xl:ms-5 hidden @lg:block">
+        <p class="font-mono font-semibold">{{ formattedDetails }}</p>
+      </div>
     </div>
     <div class="w-1/3 flex justify-end items-center">
+      <div class="relative">
+        <button
+          ref="avatarRef"
+          @click="toggleProfileDropdown"
+          class="mr-4 hover:scale-110 transition-all duration-300 ease-in-out cursor-pointer"
+          aria-label="Open user menu"
+        >
+          <div class="avatar">
+            <div class="w-9 border-2 border-indigo-500 rounded-full">
+              <img :src="authUser.picture" alt="User avatar" />
+            </div>
+          </div>
+        </button>
+
+        <div
+          v-if="showProfileDropdown"
+          ref="profileDropdownRef"
+          class="absolute -right-20 @sm:-right-10 @md:right-0 mt-2 w-64 @sm:w-72 origin-top-right rounded-md bg-base-100 shadow-lg z-20 border-3 border-indigo-500"
+        >
+          <div class="p-4 text-center">
+            <img
+              class="w-20 h-20 @sm:w-24 @sm:h-24 rounded-full mx-auto border-4 border-indigo-300"
+              :src="authUser.picture"
+              alt="User avatar"
+            />
+            <h3 class="mt-2 @sm:text-lg text-base font-semibold truncate">
+              {{ authUser.name }}
+            </h3>
+            <p class="text-sm text-base-content/70 truncate">
+              {{ authUser.email }}
+            </p>
+            <div class="divider my-2"></div>
+            <div class="text-left text-sm space-y-1">
+              <p class="font-bold truncate">
+                <strong class="font-normal">Role:</strong>
+                {{ formattedUserType }}
+              </p>
+              <p v-if="authUser.department" class="font-bold truncate">
+                <strong class="font-normal">Department:</strong>
+                {{ authUser.department.name }}
+              </p>
+              <p v-if="authUser.hierarchy" class="font-bold truncate">
+                <strong class="font-normal">Hierarchy:</strong>
+                {{ authUser.hierarchy }}
+              </p>
+            </div>
+          </div>
+          <div class="p-2">
+            <Link
+              :href="route('profile')"
+              @click="showProfileDropdown = false"
+              class="block w-full text-center px-4 py-2 text-sm font-bold text-white-primary bg-gradient-to-tr from-green-secondary to-green-primary-1 rounded-md hover:opacity-90 transition-opacity"
+            >
+              View Profile
+            </Link>
+          </div>
+        </div>
+      </div>
       <button
         @click="themeStore.toggleTheme"
         class="mr-4 rounded-full bg-gradient-to-tr from-green-secondary to-green-primary-1 hover:scale-110 transition-all duration-300 ease-in-out cursor-pointer"
@@ -84,7 +182,7 @@ const themeStore = useThemeStore();
         <i
           ref="bellRef"
           class="pi pi-bell p-2 text-xl mr-5 cursor-pointer text-white-primary bg-gradient-to-tr from-green-secondary to-green-primary-1 rounded-full hover:scale-110 transition-all duration-300 ease-in-out"
-          @click="toggleDropdown"
+          @click="toggleNotificationDropdown"
         />
         <span
           v-if="notificationStore.unreadCount > 0"
@@ -95,8 +193,8 @@ const themeStore = useThemeStore();
 
         <!-- Notification Dropdown -->
         <div
-          v-if="showDropdown"
-          ref="dropdownRef"
+          v-if="showNotificationDropdown"
+          ref="notificationDropdownRef"
           class="absolute right-2 @sm:right-5 mt-2 w-[95vw] @sm:w-[350px] @md:w-96 @xl:w-100 bg-base-100 shadow-lg rounded-md z-20 border-3 border-green-primary-1"
         >
           <div
