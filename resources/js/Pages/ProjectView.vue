@@ -41,6 +41,7 @@ const isResolveModalOpen = ref(false);
 const pendingAction = ref(null);
 // confirmation before updating
 const isConfirmModalOpen = ref(false);
+const isConfirmLoading = ref(false);
 
 // Holds the properties for the confirmation modal
 const confirmModalProps = reactive({
@@ -231,7 +232,8 @@ const handleAddIssueSubmit = () => {
     iconBgColor: "bg-blue-100",
   });
 
-  pendingAction.value = () =>
+  pendingAction.value = () => {
+    isConfirmLoading.value = true;
     addIssueForm
       .transform(() => transformedData)
       .post(route("project.issue.store"), {
@@ -241,7 +243,13 @@ const handleAddIssueSubmit = () => {
           addIssueForm.reset();
         },
         onError: () => closeConfirmModal(),
+        onFinish: () => {
+          setTimeout(() => {
+            isConfirmLoading.value = false;
+          }, 500);
+        },
       });
+  };
 
   isConfirmModalOpen.value = true;
 };
@@ -262,7 +270,8 @@ const handleResolveIssueSubmit = () => {
     iconBgColor: "bg-blue-100",
   });
 
-  pendingAction.value = () =>
+  pendingAction.value = () => {
+    isConfirmLoading.value = true;
     resolveIssueForm.patch(
       route("project.issue.resolve", { issue: selectedIssue.value.id }),
       {
@@ -272,8 +281,15 @@ const handleResolveIssueSubmit = () => {
           resolveIssueForm.reset();
         },
         onError: () => closeConfirmModal(),
+        onFinish: () => {
+          setTimeout(() => {
+            isConfirmLoading.value = false;
+          }, 500);
+        },
       }
     );
+  };
+
   isConfirmModalOpen.value = true;
 };
 // handle resolve issue
@@ -304,7 +320,8 @@ const handleCommentSubmit = () => {
     iconBgColor: "bg-blue-100",
   });
 
-  pendingAction.value = () =>
+  pendingAction.value = () => {
+    isConfirmLoading.value = true;
     commentForm.post(route("comment.store"), {
       preserveScroll: true,
       onSuccess: () => {
@@ -315,7 +332,13 @@ const handleCommentSubmit = () => {
         closeConfirmModal();
       },
       onError: () => closeConfirmModal(),
+      onFinish: () => {
+        setTimeout(() => {
+          isConfirmLoading.value = false;
+        }, 500);
+      },
     });
+  };
 
   isConfirmModalOpen.value = true;
 };
@@ -345,7 +368,8 @@ const handleNewProjectSubmit = () => {
     iconBgColor: "bg-blue-100",
   });
 
-  pendingAction.value = () =>
+  pendingAction.value = () => {
+    isConfirmLoading.value = true;
     newProjectForm
       .transform(() => transformedData)
       .post(route("project.store"), {
@@ -355,7 +379,13 @@ const handleNewProjectSubmit = () => {
           newProjectForm.reset();
         },
         onError: () => closeConfirmModal(),
+        onFinish: () => {
+          setTimeout(() => {
+            isConfirmLoading.value = false;
+          }, 500);
+        },
       });
+  };
 
   isConfirmModalOpen.value = true;
 };
@@ -1292,6 +1322,7 @@ const showResolveButton = computed(() => {
       <ConfirmModal
         :show="isConfirmModalOpen"
         v-bind="confirmModalProps"
+        :loading="isConfirmLoading"
         @cancel="closeConfirmModal"
         @confirm="executeConfirm"
       />
@@ -1332,6 +1363,7 @@ const showResolveButton = computed(() => {
       <ConfirmModal
         :show="isConfirmModalOpen"
         v-bind="confirmModalProps"
+        :loading="isConfirmLoading"
         @cancel="closeConfirmModal"
         @confirm="executeConfirm"
       />
@@ -1351,6 +1383,7 @@ const showResolveButton = computed(() => {
       <ConfirmModal
         :show="isConfirmModalOpen"
         v-bind="confirmModalProps"
+        :loading="isConfirmLoading"
         @cancel="closeConfirmModal"
         @confirm="executeConfirm"
       />
@@ -1373,6 +1406,7 @@ const showResolveButton = computed(() => {
       <ConfirmModal
         :show="isConfirmModalOpen"
         v-bind="confirmModalProps"
+        :loading="isConfirmLoading"
         @cancel="closeConfirmModal"
         @confirm="executeConfirm"
       />

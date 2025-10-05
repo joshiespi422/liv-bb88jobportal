@@ -89,6 +89,7 @@ const handleTimeIn = () => {
 
 // State for the confirmation modal
 const isConfirmModalOpen = ref(false);
+const isConfirmLoading = ref(false);
 const pendingAction = ref(null);
 // Holds the properties for the confirmation modal
 const confirmModalProps = reactive({
@@ -139,6 +140,7 @@ const handleTimeOut = () => {
 };
 // second request to confirm time-out
 const confirmTimeOut = (timeLogId) => {
+  isConfirmLoading.value = true;
   router.patch(
     route("timeout.update", { timeLog: timeLogId }),
     {},
@@ -147,6 +149,9 @@ const confirmTimeOut = (timeLogId) => {
       onFinish: () => {
         isConfirmModalOpen.value = false;
         isTimeLoading.value = false;
+        setTimeout(() => {
+          isConfirmLoading.value = false;
+        }, 500);
       },
     }
   );
@@ -556,6 +561,7 @@ watch(selectedUser, (newUser) => {
     <ConfirmModal
       :show="isConfirmModalOpen"
       v-bind="confirmModalProps"
+      :loading="isConfirmLoading"
       @cancel="closeConfirmModal"
       @confirm="executeConfirm"
     />

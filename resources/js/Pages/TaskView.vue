@@ -53,6 +53,7 @@ const isNewTaskModalOpen = ref(false);
 const pendingAction = ref(null);
 // confirmation before updating
 const isConfirmModalOpen = ref(false);
+const isConfirmLoading = ref(false);
 
 // Holds the properties for the confirmation modal
 const confirmModalProps = reactive({
@@ -438,7 +439,8 @@ const handleUpdateSubmit = () => {
     iconBgColor: "bg-blue-100",
   });
 
-  pendingAction.value = () =>
+  pendingAction.value = () => {
+    isConfirmLoading.value = true;
     updateTaskForm.post(
       route("task.update", { task: selectedDetails.value.id }),
       {
@@ -448,8 +450,14 @@ const handleUpdateSubmit = () => {
           updateTaskForm.reset();
         },
         onError: () => closeConfirmModal(),
+        onFinish: () => {
+          setTimeout(() => {
+            isConfirmLoading.value = false;
+          }, 500);
+        },
       }
     );
+  };
 
   isConfirmModalOpen.value = true;
 };
@@ -465,7 +473,8 @@ const handleValidateSubmit = () => {
     iconBgColor: "bg-blue-100",
   });
 
-  pendingAction.value = () =>
+  pendingAction.value = () => {
+    isConfirmLoading.value = true;
     validateTaskForm.post(
       route("task.validate", { task: selectedDetails.value.id }),
       {
@@ -475,8 +484,14 @@ const handleValidateSubmit = () => {
           validateTaskForm.reset();
         },
         onError: () => closeConfirmModal(),
+        onFinish: () => {
+          setTimeout(() => {
+            isConfirmLoading.value = false;
+          }, 300);
+        },
       }
     );
+  };
 
   isConfirmModalOpen.value = true;
 };
@@ -497,7 +512,8 @@ const handleNewTaskSubmit = () => {
     iconBgColor: "bg-blue-100",
   });
 
-  pendingAction.value = () =>
+  pendingAction.value = () => {
+    isConfirmLoading.value = true;
     newTaskForm
       .transform(() => transformedData)
       .post(route("task.store"), {
@@ -507,7 +523,13 @@ const handleNewTaskSubmit = () => {
           newTaskForm.reset();
         },
         onError: () => closeConfirmModal(),
+        onFinish: () => {
+          setTimeout(() => {
+            isConfirmLoading.value = false;
+          }, 300);
+        },
       });
+  };
 
   isConfirmModalOpen.value = true;
 };
@@ -523,7 +545,8 @@ const handleCommentSubmit = () => {
     iconBgColor: "bg-blue-100",
   });
 
-  pendingAction.value = () =>
+  pendingAction.value = () => {
+    isConfirmLoading.value = true;
     commentForm.post(route("comment.store"), {
       preserveScroll: true,
       onSuccess: () => {
@@ -534,7 +557,13 @@ const handleCommentSubmit = () => {
         closeConfirmModal();
       },
       onError: () => closeConfirmModal(),
+      onFinish: () => {
+        setTimeout(() => {
+          isConfirmLoading.value = false;
+        }, 300);
+      },
     });
+  };
 
   isConfirmModalOpen.value = true;
 };
@@ -1045,6 +1074,7 @@ const showNewButton = computed(() => {
       <ConfirmModal
         :show="isConfirmModalOpen"
         v-bind="confirmModalProps"
+        :loading="isConfirmLoading"
         @cancel="closeConfirmModal"
         @confirm="executeConfirm"
       />
@@ -1067,6 +1097,7 @@ const showNewButton = computed(() => {
       <ConfirmModal
         :show="isConfirmModalOpen"
         v-bind="confirmModalProps"
+        :loading="isConfirmLoading"
         @cancel="closeConfirmModal"
         @confirm="executeConfirm"
       />
@@ -1115,6 +1146,7 @@ const showNewButton = computed(() => {
       <ConfirmModal
         :show="isConfirmModalOpen"
         v-bind="confirmModalProps"
+        :loading="isConfirmLoading"
         @cancel="closeConfirmModal"
         @confirm="executeConfirm"
       />
@@ -1375,6 +1407,7 @@ const showNewButton = computed(() => {
       <ConfirmModal
         :show="isConfirmModalOpen"
         v-bind="confirmModalProps"
+        :loading="isConfirmLoading"
         @cancel="closeConfirmModal"
         @confirm="executeConfirm"
       />

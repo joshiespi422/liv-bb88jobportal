@@ -46,6 +46,7 @@ const displayValue = (field, value) => {
 // State for modals
 const isPictureModalOpen = ref(false);
 const isConfirmModalOpen = ref(false);
+const isConfirmLoading = ref(false);
 const isPasswordModalOpen = ref(false);
 const isEditDetailsModalOpen = ref(false);
 // Holds the action to be executed on confirmation
@@ -224,11 +225,18 @@ const handleChangePicture = (imageBlob) => {
     iconBgColor: "bg-blue-100",
   });
 
-  pendingAction.value = () =>
+  pendingAction.value = () => {
+    isConfirmLoading.value = true;
     pictureForm.post(route("profile.picture.update"), {
       onSuccess: () => closeAllModals(),
       onError: () => (isConfirmModalOpen.value = false),
+      onFinish: () => {
+        setTimeout(() => {
+          isConfirmLoading.value = false;
+        }, 500);
+      },
     });
+  };
 
   isConfirmModalOpen.value = true;
 };
@@ -246,10 +254,18 @@ const handleDeletePicture = () => {
     iconBgColor: "bg-red-100",
   });
 
-  pendingAction.value = () =>
+  pendingAction.value = () => {
+    isConfirmLoading.value = true;
     pictureForm.delete(route("profile.picture.delete"), {
       onSuccess: () => closeAllModals(),
+      onError: () => (isConfirmModalOpen.value = false),
+      onFinish: () => {
+        setTimeout(() => {
+          isConfirmLoading.value = false;
+        }, 500);
+      },
     });
+  };
 
   isConfirmModalOpen.value = true;
 };
@@ -267,9 +283,15 @@ const handlePasswordChange = () => {
   });
 
   pendingAction.value = () => {
+    isConfirmLoading.value = true;
     passwordForm.post(route("profile.password.update"), {
       onSuccess: () => closeAllModals(),
       onError: () => (isConfirmModalOpen.value = false),
+      onFinish: () => {
+        setTimeout(() => {
+          isConfirmLoading.value = false;
+        }, 500);
+      },
     });
   };
 
@@ -487,6 +509,7 @@ const closeQrModal = () => {
       <ConfirmModal
         :show="isConfirmModalOpen"
         v-bind="confirmModalProps"
+        :loading="isConfirmLoading"
         @cancel="closeConfirmModal"
         @confirm="executeConfirm"
       />
@@ -506,6 +529,7 @@ const closeQrModal = () => {
       <ConfirmModal
         :show="isConfirmModalOpen"
         v-bind="confirmModalProps"
+        :loading="isConfirmLoading"
         @cancel="closeConfirmModal"
         @confirm="executeConfirm"
       />
@@ -525,6 +549,7 @@ const closeQrModal = () => {
       <ConfirmModal
         :show="isConfirmModalOpen"
         v-bind="confirmModalProps"
+        :loading="isConfirmLoading"
         @cancel="closeConfirmModal"
         @confirm="executeConfirm"
       />

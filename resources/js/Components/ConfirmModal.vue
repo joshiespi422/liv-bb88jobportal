@@ -9,6 +9,10 @@ import {
 
 defineProps({
   show: Boolean,
+  loading: {
+    type: Boolean,
+    default: false,
+  },
   title: {
     type: String,
     default: "Confirm Action",
@@ -48,8 +52,11 @@ defineEmits(["confirm", "cancel"]);
 
 <template>
   <TransitionRoot as="template" :show="show">
-    <Dialog as="div" class="relative z-50" @close="$emit('cancel')">
-      <!-- Background backdrop -->
+    <Dialog
+      as="div"
+      class="relative z-50"
+      @close="loading ? () => {} : $emit('cancel')"
+    >
       <TransitionChild
         as="template"
         enter="ease-out duration-300"
@@ -109,15 +116,31 @@ defineEmits(["confirm", "cancel"]);
               >
                 <button
                   type="button"
-                  class="inline-flex w-full justify-center rounded-md px-3 py-2 text-sm font-semibold text-white shadow-xs sm:ml-3 sm:w-auto cursor-pointer"
-                  :class="confirmButtonBg"
+                  class="inline-flex w-full justify-center rounded-md px-3 py-2 text-sm font-semibold text-white shadow-xs sm:ml-3 sm:w-auto"
+                  :class="[
+                    confirmButtonBg,
+                    {
+                      'opacity-50 cursor-not-allowed': loading,
+                      'cursor-pointer': !loading,
+                    },
+                  ]"
+                  :disabled="loading"
                   @click="$emit('confirm')"
                 >
-                  {{ confirmText }}
+                  <span
+                    v-if="loading"
+                    class="loading loading-spinner loading-xs mr-2"
+                  ></span>
+                  {{ loading ? "Processing..." : confirmText }}
                 </button>
                 <button
                   type="button"
-                  class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-gray-300 hover:bg-gray-100 sm:mt-0 sm:w-auto cursor-pointer"
+                  class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-gray-300 hover:bg-gray-300 sm:mt-0 sm:w-auto"
+                  :class="{
+                    'opacity-50 cursor-not-allowed': loading,
+                    'cursor-pointer': !loading,
+                  }"
+                  :disabled="loading"
                   @click="$emit('cancel')"
                 >
                   {{ cancelText }}

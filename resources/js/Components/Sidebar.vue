@@ -9,6 +9,7 @@ import { useMediaQuery } from "../Composables/useMediaQuery";
 const sidebarStore = useSidebarStore();
 const page = usePage();
 const showLogoutModal = ref(false);
+const isLogoutLoading = ref(false);
 
 // logged in user data
 const userAuth = computed(() => page.props.auth.user || {});
@@ -20,7 +21,14 @@ const promptLogout = () => {
 };
 
 const handleLogout = () => {
-  router.post(route("logout"));
+  isLogoutLoading.value = true;
+  router.post(route("logout"), {
+    onFinish: () => {
+      setTimeout(() => {
+        isLogoutLoading.value = false;
+      }, 500);
+    },
+  });
 };
 
 const menuItemRefs = ref(new Map());
@@ -342,6 +350,7 @@ const isBelowSm = useMediaQuery("(max-width: 639px)");
     message="Are you sure you want to logout?"
     confirm-text="Logout"
     icon-name="pi pi-sign-out"
+    :loading="isLogoutLoading"
     @confirm="handleLogout"
     @cancel="showLogoutModal = false"
   />

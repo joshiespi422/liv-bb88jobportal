@@ -21,13 +21,16 @@ const handleDelete = (id) => {
 
   notificationStore.deleteNotification(id, {
     onFinish: () => {
-      isLoading.value = false;
+      setTimeout(() => {
+        isLoading.value = false;
+      }, 1000);
     },
   });
 };
 
 // confirmation before deleting
 const isConfirmModalOpen = ref(false);
+const isConfirmLoading = ref(false);
 const pendingAction = ref(null);
 const isLoading = ref(false);
 // Holds the properties for the confirmation modal
@@ -61,8 +64,15 @@ const handleDeleteAll = () => {
   });
 
   pendingAction.value = () => {
-    notificationStore.deleteAllNotifications();
-    closeConfirmModal();
+    isConfirmLoading.value = true;
+    notificationStore.deleteAllNotifications({
+      onFinish: () => {
+        closeConfirmModal();
+        setTimeout(() => {
+          isConfirmLoading.value = false;
+        }, 500);
+      },
+    });
   };
 
   isConfirmModalOpen.value = true;
@@ -92,12 +102,14 @@ const handleDeleteAll = () => {
         @click="
           !isLoading && notificationStore.handleNotificationClick(notification)
         "
-        class="px-4 py-2 border-2 rounded-lg shadow-md cursor-pointer"
-        :class="
-          notification.read
-            ? 'bg-pink-50 border-pink-200'
-            : 'bg-blue-50 border-blue-200'
-        "
+        class="px-4 py-2 border-2 rounded-lg shadow-md"
+        :class="{
+          'bg-pink-50 border-pink-200 cursor-pointer':
+            notification.read && !isLoading,
+          'bg-blue-50 border-blue-200 cursor-pointer':
+            !notification.read && !isLoading,
+          'bg-gray-50 border-gray-200 opacity-50 cursor-not-allowed': isLoading,
+        }"
       >
         <div class="flex justify-between items-center font-semibold">
           <p class="text-gray-800 truncate">
@@ -157,6 +169,7 @@ const handleDeleteAll = () => {
     <ConfirmModal
       :show="isConfirmModalOpen"
       v-bind="confirmModalProps"
+      :loading="isConfirmLoading"
       @cancel="closeConfirmModal"
       @confirm="executeConfirm"
     />

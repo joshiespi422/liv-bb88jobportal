@@ -54,7 +54,7 @@ export const useNotificationStore = defineStore("notification", {
       });
     },
 
-    deleteAllNotifications() {
+    deleteAllNotifications({ onFinish } = {}) {
       router.delete(route("notification.destroyAll"), {
         preserveScroll: true,
         onSuccess: () => {
@@ -62,6 +62,7 @@ export const useNotificationStore = defineStore("notification", {
           this.notifications = [];
           this.total = 0;
         },
+        onFinish,
       });
     },
 

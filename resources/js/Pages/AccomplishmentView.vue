@@ -50,6 +50,7 @@ const isFormModalOpen = ref(false);
 const pendingAction = ref(null);
 // confirmation before editing
 const isConfirmModalOpen = ref(false);
+const isConfirmLoading = ref(false);
 
 // Holds the properties for the confirmation modal
 const confirmModalProps = reactive({
@@ -164,7 +165,8 @@ const handleEditSubmit = () => {
     iconBgColor: "bg-blue-100",
   });
 
-  pendingAction.value = () =>
+  pendingAction.value = () => {
+    isConfirmLoading.value = true;
     editAccomplishForm.post(
       route("accomplishment.update", selectedDetails.value.id),
       {
@@ -176,8 +178,14 @@ const handleEditSubmit = () => {
         onError: () => {
           closeConfirmModal();
         },
+        onFinish: () => {
+          setTimeout(() => {
+            isConfirmLoading.value = false;
+          }, 500);
+        },
       }
     );
+  };
 
   isConfirmModalOpen.value = true;
 };
@@ -608,6 +616,7 @@ const handleExport = async () => {
       <ConfirmModal
         :show="isConfirmModalOpen"
         v-bind="confirmModalProps"
+        :loading="isConfirmLoading"
         @cancel="closeConfirmModal"
         @confirm="executeConfirm"
       />

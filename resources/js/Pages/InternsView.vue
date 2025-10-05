@@ -34,6 +34,7 @@ const authUser = computed(() => page.props.auth.user);
 const isFormModalOpen = ref(false);
 // confirmation before adding
 const showConfirmModal = ref(false);
+const isConfirmLoading = ref(false);
 
 // Add form state
 const addForm = useForm({
@@ -129,12 +130,17 @@ const closeConfirmModal = () => {
 
 // after confirmation
 const submitAddForm = () => {
-  showConfirmModal.value = false;
-
+  isConfirmLoading.value = true;
   addForm.post(route("team.interns.store"), {
     onSuccess: () => {
       isFormModalOpen.value = false;
       addForm.reset();
+    },
+    onFinish: () => {
+      closeConfirmModal();
+      setTimeout(() => {
+        isConfirmLoading.value = false;
+      }, 500);
     },
   });
 };
@@ -312,6 +318,7 @@ const internTableColumns = [
         iconBgColor="bg-blue-100"
         confirmButtonBg="bg-blue-600 hover:bg-blue-700"
         confirmText="Yes, Add Intern"
+        :loading="addForm.processing"
         @confirm="submitAddForm"
         @cancel="closeConfirmModal"
       />

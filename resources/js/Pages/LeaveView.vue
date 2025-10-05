@@ -47,6 +47,7 @@ const isValidateModalOpen = ref(false);
 const pendingAction = ref(null);
 // confirmation before request
 const isConfirmModalOpen = ref(false);
+const isConfirmLoading = ref(false);
 
 // Holds the properties for the confirmation modal
 const confirmModalProps = reactive({
@@ -315,7 +316,8 @@ const handleRequestSubmit = () => {
     iconBgColor: "bg-blue-100",
   });
 
-  pendingAction.value = () =>
+  pendingAction.value = () => {
+    isConfirmLoading.value = true;
     requestForm.post(route("leave.store"), {
       preserveScroll: true,
       onSuccess: () => {
@@ -323,7 +325,13 @@ const handleRequestSubmit = () => {
         requestForm.reset();
       },
       onError: () => closeConfirmModal(),
+      onFinish: () => {
+        setTimeout(() => {
+          isConfirmLoading.value = false;
+        }, 500);
+      },
     });
+  };
 
   isConfirmModalOpen.value = true;
 };
@@ -340,7 +348,8 @@ const handleValidateSubmit = () => {
     iconBgColor: "bg-blue-100",
   });
 
-  pendingAction.value = () =>
+  pendingAction.value = () => {
+    isConfirmLoading.value = true;
     validateForm.post(
       route("leave.validate", { leave: selectedDetails.value.id }),
       {
@@ -350,8 +359,14 @@ const handleValidateSubmit = () => {
           validateForm.reset();
         },
         onError: () => closeConfirmModal(),
+        onFinish: () => {
+          setTimeout(() => {
+            isConfirmLoading.value = false;
+          }, 500);
+        },
       }
     );
+  };
 
   isConfirmModalOpen.value = true;
 };
@@ -685,6 +700,7 @@ const showValidateButton = computed(() => {
     <ConfirmModal
       :show="isConfirmModalOpen"
       v-bind="confirmModalProps"
+      :loading="isConfirmLoading"
       @cancel="closeConfirmModal"
       @confirm="executeConfirm"
     />
@@ -707,6 +723,7 @@ const showValidateButton = computed(() => {
     <ConfirmModal
       :show="isConfirmModalOpen"
       v-bind="confirmModalProps"
+      :loading="isConfirmLoading"
       @cancel="closeConfirmModal"
       @confirm="executeConfirm"
     />
