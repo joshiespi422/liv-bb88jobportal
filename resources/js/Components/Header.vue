@@ -90,7 +90,7 @@ const themeStore = useThemeStore();
 
 <template>
   <div
-    class="@container h-18 flex items-center transition-all duration-300 ease-in-out relative header"
+    class="@container h-18 flex items-center transition-all duration-300 ease-in-out relative header z-20"
   >
     <div class="w-2/3 flex items-center">
       <i
@@ -125,7 +125,7 @@ const themeStore = useThemeStore();
         <div
           v-if="showProfileDropdown"
           ref="profileDropdownRef"
-          class="absolute -right-20 @sm:-right-10 @md:right-0 mt-2 w-64 @sm:w-72 origin-top-right rounded-md bg-base-100 shadow-lg z-20 border-3 border-indigo-500"
+          class="absolute -right-20 @sm:-right-10 @md:right-0 mt-2 w-64 @sm:w-72 origin-top-right rounded-md bg-base-100 shadow-lg z-20 border-4 border-indigo-500"
         >
           <div class="p-4 text-center">
             <img
@@ -195,7 +195,7 @@ const themeStore = useThemeStore();
         <div
           v-if="showNotificationDropdown"
           ref="notificationDropdownRef"
-          class="absolute right-2 @sm:right-5 mt-2 w-[95vw] @sm:w-[350px] @md:w-96 @xl:w-100 bg-base-100 shadow-lg rounded-md z-20 border-3 border-green-primary-1"
+          class="absolute right-2 @sm:right-5 mt-2 w-[95vw] @sm:w-[350px] @md:w-96 @xl:w-[400px] bg-base-100 shadow-lg rounded-md z-20 border-4 border-green-primary-1"
         >
           <div
             class="p-3 border-b-2 border-green-primary-1 text-sm @md:text-base font-semibold @md:font-bold flex justify-between items-center"
@@ -210,7 +210,7 @@ const themeStore = useThemeStore();
             </button>
           </div>
 
-          <div class="max-h-70 overflow-y-auto list-scroll">
+          <div class="max-h-72 overflow-y-auto list-scroll">
             <template v-if="notificationStore.notifications.length">
               <div
                 v-for="notification in notificationStore.notifications"
