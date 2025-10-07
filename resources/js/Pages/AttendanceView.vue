@@ -1,6 +1,6 @@
 <script setup>
 import { computed, h, ref } from "vue";
-import { usePage, router } from "@inertiajs/vue3";
+import { usePage, router, Link } from "@inertiajs/vue3";
 import {
   formatDate,
   longDate,
@@ -228,7 +228,7 @@ const attendanceTitle = computed(() => {
     </h1>
     <!-- Tabs -->
     <div class="tabs tabs-box my-3 tabs-sm @sm:tabs-md">
-      <a
+      <Link
         v-for="tab in tabs"
         :key="tab.id"
         @click.prevent="setTab(tab.id)"
@@ -238,7 +238,7 @@ const attendanceTitle = computed(() => {
         ]"
       >
         {{ tab.label }}
-      </a>
+      </Link>
     </div>
 
     <!-- Today Table -->

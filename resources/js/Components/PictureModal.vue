@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch } from "vue";
+import { ref, watch, computed } from "vue";
 import {
   Dialog,
   DialogPanel,
@@ -70,6 +70,14 @@ const cancelCrop = () => {
   selectedImage.value = null;
   emit("cancel");
 };
+
+const pictureDeletable = computed(() => {
+  return (
+    props.pictureUrl &&
+    props.pictureUrl !== "/profile-images/default.png" &&
+    props.pictureUrl !== "/storage/profile-images/default.png"
+  );
+});
 
 const focusElement = ref(null);
 </script>
@@ -181,6 +189,7 @@ const focusElement = ref(null);
                   <button
                     type="button"
                     class="btn btn-sm @sm:btn-md btn-soft btn-error shadow-lg rounded-full"
+                    :disabled="!pictureDeletable"
                     @click="requestDelete"
                   >
                     Delete

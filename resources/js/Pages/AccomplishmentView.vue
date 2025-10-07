@@ -1,6 +1,6 @@
 <script setup>
 import { ref, h, computed, reactive } from "vue";
-import { useForm, usePage, router } from "@inertiajs/vue3";
+import { useForm, usePage, router, Link } from "@inertiajs/vue3";
 import { formatDate, longDateTime } from "../Composables/useDateFormatter";
 import { useUrlParameter } from "../Composables/useUrlParameter";
 import { useExcelExporter } from "../Composables/useExcelExporter";
@@ -542,7 +542,7 @@ const handleExport = async () => {
 
     <!-- Tabs -->
     <div class="tabs tabs-box my-3 tabs-sm @sm:tabs-md">
-      <a
+      <Link
         v-for="tab in tabs"
         :key="tab.id"
         @click.prevent="setTab(tab.id)"
@@ -552,7 +552,7 @@ const handleExport = async () => {
         ]"
       >
         {{ tab.label }}
-      </a>
+      </Link>
     </div>
 
     <!-- Accomplishment Table -->

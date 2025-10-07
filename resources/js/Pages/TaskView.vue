@@ -1,6 +1,6 @@
 <script setup>
 import { ref, h, computed, reactive, watch } from "vue";
-import { useForm, usePage, router } from "@inertiajs/vue3";
+import { useForm, usePage, router, Link } from "@inertiajs/vue3";
 import {
   shortDateTime,
   longDate,
@@ -1026,7 +1026,7 @@ const showNewButton = computed(() => {
 
     <!-- Tabs -->
     <div class="tabs tabs-box my-3 tabs-sm @sm:tabs-md">
-      <a
+      <Link
         v-for="tab in tabs"
         :key="tab.id"
         @click.prevent="setTab(tab.id)"
@@ -1036,7 +1036,7 @@ const showNewButton = computed(() => {
         ]"
       >
         {{ tab.label }}
-      </a>
+      </Link>
     </div>
 
     <!-- Task Table -->

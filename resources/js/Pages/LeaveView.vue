@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, h, reactive, watch } from "vue";
-import { usePage, router, useForm } from "@inertiajs/vue3";
+import { usePage, router, useForm, Link } from "@inertiajs/vue3";
 import { longDate } from "../Composables/useDateFormatter";
 import { useUrlParameter } from "../Composables/useUrlParameter";
 import DataTable from "../Components/DataTable.vue";
@@ -655,7 +655,7 @@ const showValidateButton = computed(() => {
 
     <!-- Tabs -->
     <div class="tabs tabs-box my-3 tabs-sm @sm:tabs-md">
-      <a
+      <Link
         v-for="tab in tabs"
         :key="tab.id"
         @click.prevent="setTab(tab.id)"
@@ -665,7 +665,7 @@ const showValidateButton = computed(() => {
         ]"
       >
         {{ tab.label }}
-      </a>
+      </Link>
     </div>
 
     <!-- Task Table -->
