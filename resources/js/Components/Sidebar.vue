@@ -3,7 +3,7 @@ import { ref, nextTick, computed, onMounted, onUnmounted } from "vue";
 import { useSidebarStore } from "../Stores/sidebarStore.js";
 import { Link, usePage, router } from "@inertiajs/vue3";
 import { menuItems } from "../Data/menu.js";
-import ConfirmModal from "./ConfirmModal.vue";
+import ConfirmModal from "./modals/ConfirmModal.vue";
 import { useMediaQuery } from "../Composables/useMediaQuery";
 
 const sidebarStore = useSidebarStore();

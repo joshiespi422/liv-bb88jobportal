@@ -3,7 +3,7 @@ import { ref, reactive } from "vue";
 import { Link } from "@inertiajs/vue3";
 import { shortDateTime } from "../Composables/useDateFormatter";
 import { useNotificationStore } from "../Stores/notificationStore.js";
-import ConfirmModal from "../Components/ConfirmModal.vue";
+import ConfirmModal from "../Components/modals/ConfirmModal.vue";
 
 // The 'notifications' prop is now the Paginator object from Laravel
 const props = defineProps({

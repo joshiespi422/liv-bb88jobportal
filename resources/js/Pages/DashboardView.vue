@@ -9,7 +9,7 @@ import {
 } from "../Composables/useDateFormatter";
 import LocationMap from "../Components/LocationMap.vue";
 import Combobox from "../Components/forms/ComboBox.vue";
-import ConfirmModal from "../Components/ConfirmModal.vue";
+import ConfirmModal from "../Components/modals/ConfirmModal.vue";
 import { useToast } from "../Composables/useToast";
 
 // logged in user data

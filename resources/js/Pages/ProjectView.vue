@@ -8,9 +8,9 @@ import {
 } from "../Composables/useDateFormatter";
 import { useUrlParameter } from "../Composables/useUrlParameter";
 import DataTable from "../Components/DataTable.vue";
-import DetailsModal from "../Components/DetailsModal.vue";
-import FormModal from "../Components/FormModal.vue";
-import ConfirmModal from "../Components/ConfirmModal.vue";
+import DetailsModal from "../Components/modals/DetailsModal.vue";
+import FormModal from "../Components/modals/FormModal.vue";
+import ConfirmModal from "../Components/modals/ConfirmModal.vue";
 import TextInput from "../Components/forms/TextInput.vue";
 import ComboBox from "../Components/forms/ComboBox.vue";
 import TextArea from "../Components/forms/TextArea.vue";

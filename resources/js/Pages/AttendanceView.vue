@@ -7,7 +7,7 @@ import {
   formatTime,
 } from "../Composables/useDateFormatter";
 import DataTable from "../Components/DataTable.vue";
-import DetailsModal from "../Components/DetailsModal.vue";
+import DetailsModal from "../Components/modals/DetailsModal.vue";
 import LocationMap from "../Components/LocationMap.vue";
 
 // logged in user data
