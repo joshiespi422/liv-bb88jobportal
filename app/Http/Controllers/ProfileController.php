@@ -110,7 +110,7 @@ class ProfileController extends Controller
 
         $request->validate([
             'current_password' => ['required', 'current_password'],
-            'password' => ['required', 'confirmed', 'min:8'],
+            'password' => ['required', 'confirmed', 'min:8', 'different:current_password'],
         ]);
 
         $user->password = Hash::make($request->password);

@@ -151,7 +151,7 @@ class LeaveController extends Controller
     public function validateLeave(Request $request, Leave $leave)
     {
         // Get the authenticated user and eager load their type and department details
-        $user = $request->user()->load('userType', 'employeeDetails.department');
+        $user = $request->user()->loadMissing('userType', 'employeeDetails.department');
         $userType = $user->userType->type_name;
         $userDeptName = $user->employeeDetails?->department?->dept_name;
        

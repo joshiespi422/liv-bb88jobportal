@@ -95,7 +95,7 @@ class ProjectController extends Controller
 
     public function showIssue(ProjectIssue $issue)
     {
-        $issue->load([
+        $issue->loadMissing([
             'project:id,title',
             'user:id,name',
             'status:id,status_name'

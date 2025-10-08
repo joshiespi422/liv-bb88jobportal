@@ -33,7 +33,7 @@ class CommentController extends Controller
 
         $validated = $request->validate([
             'message' => 'required|string|max:1000',
-            'commentable_id' => 'required|integer',
+            'commentable_id' => 'required|integer|exists:tasks,id',
             'commentable_type' => 'required|string|in:App\Models\Task'
         ]);
 
