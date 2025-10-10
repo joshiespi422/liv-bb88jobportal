@@ -8,7 +8,7 @@ import {
   shortDate,
 } from "../Composables/useDateFormatter";
 import LocationMap from "../Components/LocationMap.vue";
-import Combobox from "../Components/forms/ComboBox.vue";
+import Combobox from "../Components/fields/ComboBox.vue";
 import ConfirmModal from "../Components/modals/ConfirmModal.vue";
 import { useToast } from "../Composables/useToast";
 

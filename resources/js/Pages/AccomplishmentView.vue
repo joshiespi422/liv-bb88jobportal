@@ -11,9 +11,7 @@ import ListBox from "../Components/ListBox.vue";
 import DetailsModal from "../Components/modals/DetailsModal.vue";
 import FormModal from "../Components/modals/FormModal.vue";
 import ConfirmModal from "../Components/modals/ConfirmModal.vue";
-import TextInput from "../Components/forms/TextInput.vue";
-import FileInput from "../Components/forms/FileInput.vue";
-import TextArea from "../Components/forms/TextArea.vue";
+import { useEditAccomplishmentFormFields } from "../Data/forms/accomplishmentFormFields";
 import VueDatePicker from "@vuepic/vue-datepicker";
 import "@vuepic/vue-datepicker/dist/main.css";
 
@@ -79,58 +77,14 @@ const editAccomplishForm = useForm({
   attachment: null,
 });
 
+// Details Modal state
+const isDetailsModalOpen = ref(false);
+const selectedDetails = ref(null);
+const isDetailsLoading = ref(false);
+const isDetailsError = ref(false);
+
 // Form field configuration for editing an accomplishment
-const editFormFields = computed(() => {
-  return [
-    {
-      key: "task_title",
-      label: "Task Selected",
-      component: TextInput,
-      attrs: {
-        disabled: true,
-        value: selectedDetails.value?.task_title || "N/A",
-      },
-    },
-    {
-      key: "user_name",
-      label: "From",
-      component: TextInput,
-      attrs: {
-        disabled: true,
-        value: selectedDetails.value?.user_name || "N/A",
-      },
-    },
-    {
-      key: "title",
-      label: "Accomplish Name",
-      component: TextInput,
-      attrs: { disabled: true, value: selectedDetails.value?.title || "N/A" },
-    },
-    {
-      key: "description",
-      label: "Description",
-      component: TextArea,
-      attrs: {
-        required: true,
-        placeholder: "Example Description",
-      },
-    },
-    {
-      key: "link",
-      label: "Reference Link (optional)",
-      component: TextInput,
-      attrs: { placeholder: "https://example.com" },
-    },
-    {
-      key: "attachment",
-      label: "Attachment (optional)",
-      component: FileInput,
-      attrs: {
-        accept: ".pdf,.doc,.docx,.jpg,.jpeg,.png",
-      },
-    },
-  ];
-});
+const editFormFields = useEditAccomplishmentFormFields(selectedDetails);
 
 // edit accomplishment modal state
 const handleEditAccomplish = () => {
@@ -190,12 +144,24 @@ const handleEditSubmit = () => {
   isConfirmModalOpen.value = true;
 };
 
-// Details Modal state
-const isDetailsModalOpen = ref(false);
-const selectedDetails = ref(null);
-const isDetailsLoading = ref(false);
-const isDetailsError = ref(false);
+//
+const fetchAccomplishDetails = async (accomplishmentId) => {
+  isDetailsLoading.value = true;
+  isDetailsModalOpen.value = true;
+  selectedDetails.value = null;
+  isDetailsError.value = false;
 
+  try {
+    const response = await axios.get(`/accomplishment/${accomplishmentId}`);
+    selectedDetails.value = response.data;
+  } catch (error) {
+    console.error("Error fetching accomplishment details:", error);
+    isDetailsError.value = true;
+  } finally {
+    await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for 1 second
+    isDetailsLoading.value = false;
+  }
+};
 // the fields to be displayed in the details modal for an accomplishment
 const accomplishDetailFields = ref([
   { key: "task_title", label: "Task" },
@@ -232,25 +198,6 @@ const accomplishDetailFields = ref([
   },
   { key: "created_at", label: "Submitted", formatter: longDateTime },
 ]);
-
-// Function to fetch accomplishment details
-const fetchAccomplishDetails = async (accomplishmentId) => {
-  isDetailsLoading.value = true;
-  isDetailsModalOpen.value = true;
-  selectedDetails.value = null;
-  isDetailsError.value = false;
-
-  try {
-    const response = await axios.get(`/accomplishment/${accomplishmentId}`);
-    selectedDetails.value = response.data;
-  } catch (error) {
-    console.error("Error fetching accomplishment details:", error);
-    isDetailsError.value = true;
-  } finally {
-    await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for 1 second
-    isDetailsLoading.value = false;
-  }
-};
 // Auto-handle 'open' parameter on mount
 onMountedHandleParameter("open", fetchAccomplishDetails);
 
@@ -316,22 +263,6 @@ const tabs = computed(() => {
 
   return items;
 });
-// handle tab navigation
-function setTab(tabId) {
-  if (tabId === props.activeTab) return;
-  router.get(
-    route("accomplishment"),
-    {
-      ...route().params,
-      tab: tabId,
-    },
-    {
-      preserveState: true,
-      preserveScroll: true,
-      replace: true,
-    }
-  );
-}
 
 // table columns tanstack definition
 const accomplishTableColumns = computed(() => {
@@ -545,11 +476,16 @@ const handleExport = async () => {
       <Link
         v-for="tab in tabs"
         :key="tab.id"
-        @click.prevent="setTab(tab.id)"
+        :href="route('accomplishment', { ...route().params, tab: tab.id })"
         :class="[
           'tab',
-          activeTab === tab.id ? 'tab-active font-bold' : 'hover:bg-base-300',
+          activeTab === tab.id
+            ? 'tab-active font-bold pointer-events-none'
+            : 'hover:bg-base-300',
         ]"
+        preserve-state
+        preserve-scroll
+        replace
       >
         {{ tab.label }}
       </Link>

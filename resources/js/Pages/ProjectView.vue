@@ -11,10 +11,11 @@ import DataTable from "../Components/DataTable.vue";
 import DetailsModal from "../Components/modals/DetailsModal.vue";
 import FormModal from "../Components/modals/FormModal.vue";
 import ConfirmModal from "../Components/modals/ConfirmModal.vue";
-import TextInput from "../Components/forms/TextInput.vue";
-import ComboBox from "../Components/forms/ComboBox.vue";
-import TextArea from "../Components/forms/TextArea.vue";
-import DateInput from "../Components/forms/DateInput.vue";
+import {
+  useNewProjectFormFields,
+  useAddIssueFormFields,
+  useResolveIssueFormFields,
+} from "../Data/forms/projectFormFields";
 
 const props = defineProps({
   projects: {
@@ -70,7 +71,6 @@ const newProjectForm = useForm({
   deadline: "",
   department_ids: [],
 });
-
 // add issue form state
 const projectsList = ref([]);
 const addIssueForm = useForm({
@@ -78,12 +78,10 @@ const addIssueForm = useForm({
   title: "",
   description: "",
 });
-
 // resolve issue form state
 const resolveIssueForm = useForm({
   solution: "",
 });
-
 // add comment form state
 const commentForm = useForm({
   message: "",
@@ -91,45 +89,32 @@ const commentForm = useForm({
   commentable_type: "App\\Models\\Task",
 });
 
-// Form field configuration for adding new project
-const newProjectFormFields = computed(() => {
-  return [
-    {
-      key: "department_ids",
-      label: "Departments",
-      component: ComboBox,
-      attrs: {
-        options: props.departments,
-        placeholder: "Select Departments",
-        multiple: true,
-      },
-    },
-    {
-      key: "title",
-      label: "Project",
-      component: TextInput,
-      attrs: { required: true, placeholder: "Example Project" },
-    },
-    {
-      key: "description",
-      label: "Description",
-      component: TextArea,
-      attrs: { required: true, placeholder: "Example Description" },
-    },
-    {
-      key: "client",
-      label: "Client",
-      component: TextInput,
-      attrs: { required: true, placeholder: "Example Client" },
-    },
-    {
-      key: "deadline",
-      label: "Deadline",
-      component: DateInput,
-      attrs: { required: true, min: today.value },
-    },
-  ];
-});
+// Project Details Modal state
+const isProjectDetailsOpen = ref(false);
+const selectedProject = ref(null);
+const isProjectLoading = ref(false);
+const isProjectError = ref(false);
+
+// Issue Details Modal state
+const isIssueDetailsOpen = ref(false);
+const selectedIssue = ref(null);
+const isIssueLoading = ref(false);
+const isIssueError = ref(false);
+
+// Task Details Modal state
+const isTaskDetailsOpen = ref(false);
+const selectedTask = ref(null);
+const isTaskLoading = ref(false);
+const isTaskError = ref(false);
+// state for showing revision reason
+const showReviseReason = ref(false);
+
+// Accomplishment Details state
+const isAccomplishModalOpen = ref(false);
+const selectedAccomplish = ref(null);
+const isAccomplishLoading = ref(false);
+const isAccomplishError = ref(false);
+
 // for min attribute deadline
 const today = computed(() => {
   const now = new Date();
@@ -138,33 +123,13 @@ const today = computed(() => {
   const day = String(now.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 });
+// Form field configuration for adding new project
+const newProjectFormFields = useNewProjectFormFields(
+  computed(() => props.departments),
+  today
+);
 
-// form field configuration for adding new issue
-const addIssueFormFields = computed(() => {
-  return [
-    {
-      key: "project",
-      label: "Project",
-      component: ComboBox,
-      attrs: {
-        options: projectsList.value,
-        placeholder: "Select Project",
-      },
-    },
-    {
-      key: "title",
-      label: "Issue",
-      component: TextInput,
-      attrs: { required: true, placeholder: "Example Issue" },
-    },
-    {
-      key: "description",
-      label: "Description",
-      component: TextArea,
-      attrs: { required: true, placeholder: "Example Description" },
-    },
-  ];
-});
+// Fetch projects list
 const fetchProjectsList = async (departmentId) => {
   if (!departmentId) {
     projectsList.value = [];
@@ -193,27 +158,11 @@ watch(
   },
   { immediate: true }
 );
+// form field configuration for adding new issue
+const addIssueFormFields = useAddIssueFormFields(projectsList);
 
 // Form field configuration for resolving issue
-const resolveIssueFormFields = computed(() => {
-  return [
-    {
-      key: "issue_title",
-      label: "Issue Selected",
-      component: TextInput,
-      attrs: {
-        disabled: true,
-        value: selectedIssue.value?.title || "N/A",
-      },
-    },
-    {
-      key: "solution",
-      label: "Solution",
-      component: TextArea,
-      attrs: { required: true, placeholder: "Example Solution" },
-    },
-  ];
-});
+const resolveIssueFormFields = useResolveIssueFormFields(selectedIssue);
 
 // -- Add Issue Flow --
 const handleAddIssueSubmit = () => {
@@ -400,28 +349,7 @@ const closeAllModal = () => {
   isConfirmModalOpen.value = false;
 };
 
-// Project Details Modal state
-const isProjectDetailsOpen = ref(false);
-const selectedProject = ref(null);
-const isProjectLoading = ref(false);
-const isProjectError = ref(false);
-
-// formatter for departments
-const formatDepartments = (departments) => {
-  if (!departments || departments.length === 0) return "N/A";
-  return departments.join(", ");
-};
-// the fields to be displayed in the project details modal for an project
-const projectDetailFields = ref([
-  { key: "title", label: "Project" },
-  { key: "description", label: "Description" },
-  { key: "client", label: "Client" },
-  { key: "departments", label: "Departments", formatter: formatDepartments },
-  { key: "created_at", label: "Started", formatter: longDate },
-  { key: "deadline", label: "Deadline", formatter: longDate },
-]);
-
-// Function to fetch project details
+// -- Project Details Logic --
 const fetchProjectDetails = async (projectId) => {
   isProjectLoading.value = true;
   isProjectDetailsOpen.value = true;
@@ -440,6 +368,20 @@ const fetchProjectDetails = async (projectId) => {
     isProjectLoading.value = false;
   }
 };
+// formatter for departments
+const formatDepartments = (departments) => {
+  if (!departments || departments.length === 0) return "N/A";
+  return departments.join(", ");
+};
+// the fields to be displayed in the project details modal for an project
+const projectDetailFields = ref([
+  { key: "title", label: "Project" },
+  { key: "description", label: "Description" },
+  { key: "client", label: "Client" },
+  { key: "departments", label: "Departments", formatter: formatDepartments },
+  { key: "created_at", label: "Started", formatter: longDate },
+  { key: "deadline", label: "Deadline", formatter: longDate },
+]);
 // Auto-handle 'open' parameter on mount
 onMountedHandleParameter("open", fetchProjectDetails);
 
@@ -451,12 +393,7 @@ const closeProjectDetails = () => {
   isProjectDetailsOpen.value = false;
 };
 
-// Issue Details Modal state
-const isIssueDetailsOpen = ref(false);
-const selectedIssue = ref(null);
-const isIssueLoading = ref(false);
-const isIssueError = ref(false);
-
+// -- Issue Details Logic --
 const fetchIssueDetails = async (issueId) => {
   isIssueLoading.value = true;
   isIssueDetailsOpen.value = true;
@@ -504,14 +441,7 @@ const closeIssueDetails = () => {
   isIssueDetailsOpen.value = false;
 };
 
-// Task Details Modal state
-const isTaskDetailsOpen = ref(false);
-const selectedTask = ref(null);
-const isTaskLoading = ref(false);
-const isTaskError = ref(false);
-// state for showing revision reason
-const showReviseReason = ref(false);
-
+// -- Task Details Logic --
 const fetchTaskDetails = async (taskId) => {
   isTaskLoading.value = true;
   isTaskDetailsOpen.value = true;
@@ -591,12 +521,7 @@ const toggleReviseReason = () => {
   showReviseReason.value = !showReviseReason.value;
 };
 
-// Accomplishment Details state
-const isAccomplishModalOpen = ref(false);
-const selectedAccomplish = ref(null);
-const isAccomplishLoading = ref(false);
-const isAccomplishError = ref(false);
-// Function to fetch accomplishment details
+// -- Accomplishment Details Logic --
 const fetchAccomplishDetails = async (accomplishmentId) => {
   isAccomplishLoading.value = true;
   isAccomplishModalOpen.value = true;

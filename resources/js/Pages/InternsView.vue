@@ -6,10 +6,8 @@ import DataTable from "../Components/DataTable.vue";
 import DetailsModal from "../Components/modals/DetailsModal.vue";
 import FormModal from "../Components/modals/FormModal.vue";
 import ConfirmModal from "../Components/modals/ConfirmModal.vue";
-import TextInput from "../Components/forms/TextInput.vue";
-import SelectInput from "../Components/forms/SelectInput.vue";
-import PasswordInput from "../Components/forms/PasswordInput.vue";
 import ListBox from "../Components/ListBox.vue";
+import { useInternFormFields } from "../Data/forms/internFormFields";
 
 // Props received from Inertia
 const props = defineProps({
@@ -55,63 +53,7 @@ function getDefaultDepartment() {
 }
 
 // Form field configuration for adding new intern
-const formFields = computed(() => {
-  return [
-    {
-      key: "email",
-      label: "Email Address",
-      component: TextInput,
-      attrs: {
-        type: "email",
-        required: true,
-        placeholder: "h1D2y@example.com",
-      },
-    },
-    {
-      key: "name",
-      label: "Name",
-      component: TextInput,
-      attrs: { required: true, placeholder: "John Doe" },
-    },
-    {
-      key: "school",
-      label: "School",
-      component: TextInput,
-      attrs: { required: true, placeholder: "Example School" },
-    },
-    {
-      key: "position",
-      label: "Position",
-      component: TextInput,
-      attrs: { readonly: true, value: "Intern" },
-    },
-    {
-      key: "department_id",
-      label: "Department",
-      component:
-        authUser.value.userType === "super_admin" ? SelectInput : TextInput,
-      attrs:
-        authUser.value.userType === "super_admin"
-          ? {
-              options: props.departments.map((d) => ({
-                value: d.id,
-                label: d.dept_name,
-              })),
-              placeholder: "Select a department",
-            }
-          : {
-              readonly: true,
-              value: authUser.value.department?.name || "N/A",
-            },
-    },
-    {
-      key: "password",
-      label: "Password",
-      component: PasswordInput,
-      attrs: { required: true, placeholder: "Enter password" },
-    },
-  ];
-});
+const formFields = useInternFormFields(authUser, props);
 
 // Add intern form modal state
 const handleAddNewIntern = () => {

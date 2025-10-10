@@ -12,12 +12,11 @@ import ListBox from "../Components/ListBox.vue";
 import DetailsModal from "../Components/modals/DetailsModal.vue";
 import FormModal from "../Components/modals/FormModal.vue";
 import ConfirmModal from "../Components/modals/ConfirmModal.vue";
-import TextInput from "../Components/forms/TextInput.vue";
-import SelectInput from "../Components/forms/SelectInput.vue";
-import FileInput from "../Components/forms/FileInput.vue";
-import ComboBox from "../Components/forms/ComboBox.vue";
-import TextArea from "../Components/forms/TextArea.vue";
-import DateInput from "../Components/forms/DateInput.vue";
+import {
+  useNewTaskFormFields,
+  useUpdateTaskFormFields,
+  useValidateTaskFormFields,
+} from "../Data/forms/taskFormFields";
 
 const props = defineProps({
   tasks: {
@@ -108,89 +107,20 @@ const commentForm = useForm({
   commentable_type: "App\\Models\\Task",
 });
 
-// Form field configuration for adding new task
-const newTaskFormFields = computed(() => {
-  return [
-    {
-      key: "title",
-      label: "Task Name",
-      component: TextInput,
-      attrs: { required: true, placeholder: "Example Task" },
-    },
-    {
-      key: "department_id",
-      label: "Department",
-      component:
-        authUser.value.userType === "super_admin" ? SelectInput : TextInput,
-      attrs:
-        authUser.value.userType === "super_admin"
-          ? {
-              options: props.departments.map((d) => ({
-                value: d.id,
-                label: d.dept_name,
-              })),
-              placeholder: "Select a department",
-              required: true,
-            }
-          : {
-              readonly: true,
-              value: authUser.value.department?.name || "N/A",
-            },
-    },
-    {
-      key: "collateral",
-      label: "Collateral",
-      component: TextInput,
-      attrs: { required: true, placeholder: "Example Collateral" },
-    },
-    {
-      key: "deadline",
-      label: "Deadline",
-      component: DateInput,
-      attrs: { required: true, min: today.value },
-    },
-    {
-      key: "project",
-      label: "Project (optional)",
-      component: ComboBox,
-      attrs: {
-        options: projectsList.value,
-        placeholder: "Select a project",
-      },
-    },
-    {
-      key: "assignees",
-      label: "Assignees",
-      component: ComboBox,
-      attrs: {
-        multiple: true,
-        options: assigneesList.value,
-        placeholder: "Select Assignees",
-      },
-    },
-    {
-      key: "description",
-      label: "Description",
-      component: TextArea,
-      attrs: { required: true, placeholder: "Example Description" },
-    },
+// Details Modal state
+const isDetailsModalOpen = ref(false);
+const selectedDetails = ref(null);
+const isDetailsLoading = ref(false);
+const isDetailsError = ref(false);
+// state for showing revision reason
+const showReviseReason = ref(false);
 
-    {
-      key: "priority",
-      label: "Priority",
-      component: SelectInput,
-      attrs: {
-        required: true,
-        placeholder: "Select Priority",
-        options: [
-          { value: "high", label: "High" },
-          { value: "medium", label: "Medium" },
-          { value: "low", label: "Low" },
-        ],
-      },
-    },
-  ];
-});
+// Accomplishment Details state
+const isAccomplishModalOpen = ref(false);
+const selectedAccomplish = ref(null);
+const isAccomplishLoading = ref(false);
+const isAccomplishError = ref(false);
+
 // Set the default department for the "New Task" form based on user role
 function getDefaultDepartment() {
   if (authUser.value.userType === "super_admin") {
@@ -266,61 +196,16 @@ watch(
   },
   { immediate: true }
 );
+// Form field configuration for adding new task
+const newTaskFormFields = useNewTaskFormFields(
+  authUser,
+  props,
+  projectsList,
+  assigneesList,
+  today
+);
 
-// Form field configuration for updating task
-const updateFormFields = computed(() => {
-  return [
-    {
-      key: "task_title",
-      label: "Task Selected",
-      component: TextInput,
-      attrs: {
-        disabled: true,
-        value: selectedDetails.value?.title || "N/A",
-      },
-    },
-    {
-      key: "title",
-      label: "Accomplish Name",
-      component: TextInput,
-      attrs: {
-        required: true,
-        placeholder: "Example Accomplishment",
-      },
-    },
-    {
-      key: "status",
-      label: "Status",
-      component: SelectInput,
-      attrs: {
-        required: true,
-        placeholder: "Select a status",
-        options: statusOptions.value,
-      },
-    },
-    {
-      key: "description",
-      label: "Description",
-      component: TextArea,
-      attrs: { required: true, placeholder: "Example Description" },
-    },
-    {
-      key: "link",
-      label: "Reference Link (optional)",
-      component: TextInput,
-      attrs: { placeholder: "https://example.com" },
-    },
-    {
-      key: "attachment",
-      label: "Attachment (optional)",
-      component: FileInput,
-      attrs: {
-        accept: ".pdf,.doc,.docx,.jpg,.jpeg,.png",
-      },
-    },
-  ];
-});
-// dynamic status options
+// dynamic status options for update task
 const statusOptions = computed(() => {
   if (!selectedDetails.value) return [];
 
@@ -341,49 +226,17 @@ const statusOptions = computed(() => {
   }
   return [];
 });
+// Form field configuration for updating task
+const updateFormFields = useUpdateTaskFormFields(
+  selectedDetails,
+  statusOptions
+);
 
 // Form field configuration for validating task
-const validateFormFields = computed(() => {
-  const fields = [
-    {
-      key: "task_title",
-      label: "Task Selected",
-      component: TextInput,
-      attrs: {
-        disabled: true,
-        value: selectedDetails.value?.title || "N/A",
-      },
-    },
-    {
-      key: "status",
-      label: "Status",
-      component: SelectInput,
-      attrs: {
-        required: true,
-        placeholder: "Select a status",
-        options: [
-          { value: "done", label: "Mark as Done" },
-          { value: "revision", label: "For Revision" },
-        ],
-      },
-    },
-  ];
-
-  // If the selected status is 'revision', add the reason text input
-  if (validateTaskForm.status === "revision") {
-    fields.push({
-      key: "revise_reason",
-      label: "Reason for Revision",
-      component: TextArea,
-      attrs: {
-        required: true,
-        placeholder: "Please provide a reason",
-      },
-    });
-  }
-
-  return fields;
-});
+const validateFormFields = useValidateTaskFormFields(
+  validateTaskForm,
+  selectedDetails
+);
 
 // update task modal state
 const handleUpdateTask = () => {
@@ -577,32 +430,7 @@ const handleEnterKey = (event) => {
   }
 };
 
-// Details Modal state
-const isDetailsModalOpen = ref(false);
-const selectedDetails = ref(null);
-const isDetailsLoading = ref(false);
-const isDetailsError = ref(false);
-// state for showing revision reason
-const showReviseReason = ref(false);
-
-// formatter for assignees
-const formatAssignees = (assignees) => {
-  if (!assignees || !Array.isArray(assignees)) return "N/A";
-  return assignees.map((user) => user.name).join(", ");
-};
-// the fields to be displayed in the details modal for an task
-const taskDetailFields = ref([
-  { key: "title", label: "Task Name" },
-  { key: "description", label: "Description" },
-  { key: "assignees", label: "Assignees", formatter: formatAssignees },
-  { key: "collateral", label: "Collaterals" },
-  { key: "created_at", label: "Started", formatter: longDate },
-  { key: "deadline", label: "Deadline", formatter: longDate },
-  { key: "priority", label: "Priority" },
-  { key: "status", label: "Status" },
-]);
-
-// Function to fetch task details
+// -- Task Details Logic --
 const fetchTaskDetails = async (taskId) => {
   isDetailsLoading.value = true;
   isDetailsModalOpen.value = true;
@@ -625,6 +453,22 @@ const fetchTaskDetails = async (taskId) => {
     isDetailsLoading.value = false;
   }
 };
+// formatter for assignees
+const formatAssignees = (assignees) => {
+  if (!assignees || !Array.isArray(assignees)) return "N/A";
+  return assignees.map((user) => user.name).join(", ");
+};
+// the fields to be displayed in the details modal for an task
+const taskDetailFields = ref([
+  { key: "title", label: "Task Name" },
+  { key: "description", label: "Description" },
+  { key: "assignees", label: "Assignees", formatter: formatAssignees },
+  { key: "collateral", label: "Collaterals" },
+  { key: "created_at", label: "Started", formatter: longDate },
+  { key: "deadline", label: "Deadline", formatter: longDate },
+  { key: "priority", label: "Priority" },
+  { key: "status", label: "Status" },
+]);
 // Auto-handle 'open' parameter on mount
 onMountedHandleParameter("open", fetchTaskDetails);
 
@@ -661,12 +505,7 @@ const toggleReviseReason = () => {
   showReviseReason.value = !showReviseReason.value;
 };
 
-// Accomplishment Details state
-const isAccomplishModalOpen = ref(false);
-const selectedAccomplish = ref(null);
-const isAccomplishLoading = ref(false);
-const isAccomplishError = ref(false);
-// Function to fetch accomplishment details
+// -- Accomplishment Details Logic --
 const fetchAccomplishDetails = async (accomplishmentId) => {
   isAccomplishLoading.value = true;
   isAccomplishModalOpen.value = true;
@@ -791,22 +630,6 @@ const tabs = computed(() => {
 
   return items;
 });
-// handle tab navigation
-function setTab(tabId) {
-  if (tabId === props.activeTab) return;
-  router.get(
-    route("task"),
-    {
-      ...route().params,
-      tab: tabId,
-    },
-    {
-      preserveState: true,
-      preserveScroll: true,
-      replace: true,
-    }
-  );
-}
 
 // Tanstack Table columns definition
 const taskTableColumns = [
@@ -1029,11 +852,16 @@ const showNewButton = computed(() => {
       <Link
         v-for="tab in tabs"
         :key="tab.id"
-        @click.prevent="setTab(tab.id)"
+        :href="route('task', { ...route().params, tab: tab.id })"
         :class="[
           'tab',
-          activeTab === tab.id ? 'tab-active font-bold' : 'hover:bg-base-300',
+          activeTab === tab.id
+            ? 'tab-active font-bold pointer-events-none'
+            : 'hover:bg-base-300',
         ]"
+        preserve-state
+        preserve-scroll
+        replace
       >
         {{ tab.label }}
       </Link>

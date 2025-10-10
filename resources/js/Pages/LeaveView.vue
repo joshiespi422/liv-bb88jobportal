@@ -8,11 +8,10 @@ import ListBox from "../Components/ListBox.vue";
 import DetailsModal from "../Components/modals/DetailsModal.vue";
 import FormModal from "../Components/modals/FormModal.vue";
 import ConfirmModal from "../Components/modals/ConfirmModal.vue";
-import SelectInput from "../Components/forms/SelectInput.vue";
-import TextInput from "../Components/forms/TextInput.vue";
-import FileInput from "../Components/forms/FileInput.vue";
-import TextArea from "../Components/forms/TextArea.vue";
-import DateInput from "../Components/forms/DateInput.vue";
+import {
+  useRequestLeaveFormFields,
+  useValidateLeaveFormFields,
+} from "../Data/forms/leaveFormFields";
 
 const props = defineProps({
   leaves: {
@@ -85,6 +84,14 @@ const validateForm = useForm({
   hard_copy: null,
 });
 
+// Details Modal state
+const isDetailsModalOpen = ref(false);
+const selectedDetails = ref(null);
+const isDetailsLoading = ref(false);
+const isDetailsError = ref(false);
+// state for showing rejection reason
+const showRejectReason = ref(false);
+
 // for min attribute deadline
 const today = computed(() => {
   const now = new Date();
@@ -98,87 +105,6 @@ const selectedLeaveType = computed(() => {
   if (!requestForm.leave_type_id) return "";
   const type = props.leaveTypes.find((t) => t.id == requestForm.leave_type_id);
   return type ? type.name : "";
-});
-// Form field configuration for requesting leave
-const requestFormFields = computed(() => {
-  const fields = [
-    {
-      key: "leave_type_id",
-      label: "Leave Type",
-      component: SelectInput,
-      attrs: {
-        options: props.leaveTypes.map((l) => ({
-          value: l.id,
-          label: l.name,
-        })),
-        required: true,
-        placeholder: "Select leave type",
-      },
-    },
-    {
-      key: "leave_category_id",
-      label: "Leave Category",
-      component: SelectInput,
-      attrs: {
-        required: true,
-        placeholder: "Select leave category",
-        options: categoriesList.value.map((c) => ({
-          value: c.id,
-          label: c.name,
-        })),
-      },
-    },
-  ];
-
-  if (selectedLeaveType.value === "Regular") {
-    fields.push({
-      key: "request_date",
-      label: "Request Date",
-      component: DateInput,
-      attrs: { required: true, min: today.value },
-    });
-  }
-
-  if (selectedLeaveType.value === "Special") {
-    // find the full object for the selected leave category.
-    const selectedCategory = categoriesList.value.find(
-      (c) => c.id == requestForm.leave_category_id
-    );
-    fields.push({
-      key: "days_display",
-      label: "Entitled days of leave:",
-      component: TextInput,
-      attrs: {
-        disabled: true,
-        value: selectedCategory
-          ? `${selectedCategory.days} days`
-          : "Select a category to see the number of days.",
-      },
-    });
-  }
-
-  fields.push(
-    {
-      key: "reason",
-      label: "Reason",
-      component: TextArea,
-      attrs: {
-        required: true,
-        placeholder: "Example reason",
-      },
-    },
-    {
-      key: "proof",
-      label: "Proof (optional)",
-      component: FileInput,
-      attrs: {
-        accept: ".pdf,.jpg,.jpeg,.png",
-        maxSize: 2 * 1024 * 1024,
-      },
-    }
-  );
-
-  return fields;
 });
 // fetch leave categories for request leave
 const fetchCategoriesList = async (leaveTypeId) => {
@@ -224,60 +150,20 @@ watch(
     }
   }
 );
+// Form field configuration for requesting leave
+const requestFormFields = useRequestLeaveFormFields(
+  requestForm,
+  props,
+  categoriesList,
+  selectedLeaveType,
+  today
+);
 
 // form field configuration for validating leave
-const validateFormFields = computed(() => {
-  const fields = [
-    {
-      key: "leave_selected",
-      label: "Leave Selected",
-      component: TextInput,
-      attrs: {
-        disabled: true,
-        value: selectedDetails.value?.reason || "N/A",
-      },
-    },
-    {
-      key: "status",
-      label: "Status",
-      component: SelectInput,
-      attrs: {
-        required: true,
-        placeholder: "Select a status",
-        options: [
-          { value: "approved", label: "Approved" },
-          { value: "rejected", label: "Rejected" },
-        ],
-      },
-    },
-  ];
-
-  // If the selected status is 'rejected', add the reason text input
-  if (validateForm.status === "rejected") {
-    fields.push({
-      key: "reject_reason",
-      label: "Reason",
-      component: TextArea,
-      attrs: {
-        required: true,
-        placeholder: "Reason for rejection",
-      },
-    });
-  }
-
-  fields.push({
-    key: "hard_copy",
-    label: "Hard Copy",
-    component: FileInput,
-    attrs: {
-      required: true,
-      accept: ".pdf,.jpg,.jpeg,.png",
-      maxSize: 2 * 1024 * 1024,
-    },
-  });
-
-  return fields;
-});
+const validateFormFields = useValidateLeaveFormFields(
+  validateForm,
+  selectedDetails
+);
 
 // handle validate leave
 const handleValidateLeave = () => {
@@ -371,14 +257,25 @@ const handleValidateSubmit = () => {
   isConfirmModalOpen.value = true;
 };
 
-// Details Modal state
-const isDetailsModalOpen = ref(false);
-const selectedDetails = ref(null);
-const isDetailsLoading = ref(false);
-const isDetailsError = ref(false);
-// state for showing rejection reason
-const showRejectReason = ref(false);
+// -- Leave Details Logic --
+const fetchLeaveDetails = async (leaveId) => {
+  isDetailsLoading.value = true;
+  isDetailsModalOpen.value = true;
+  selectedDetails.value = null;
+  isDetailsError.value = false;
 
+  try {
+    const response = await axios.get(`/leave/${leaveId}`);
+    selectedDetails.value = response.data;
+  } catch (error) {
+    console.error("Error fetching leave details:", error);
+    selectedDetails.value = null;
+    isDetailsError.value = true;
+  } finally {
+    await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for 1 second
+    isDetailsLoading.value = false;
+  }
+};
 const attachFormatter = (attachment) => {
   if (!attachment) return "N/A";
   return `
@@ -395,6 +292,24 @@ const attachFormatter = (attachment) => {
 const requestDateFormatter = (date) => {
   if (props.activeTab === "special") return date;
   return longDate(date);
+};
+// Function to toggle rejection reason
+const toggleRejectReason = () => {
+  showRejectReason.value = !showRejectReason.value;
+};
+// Handler for viewing leave details and details modal function
+const handleViewDetails = (leaveId) => {
+  showRejectReason.value = false;
+  fetchLeaveDetails(leaveId);
+};
+const closeDetailsModal = () => {
+  isDetailsModalOpen.value = false;
+  showRejectReason.value = false;
+};
+const statusClassMap = {
+  approved: "text-success",
+  rejected: "text-error",
+  pending: "text-accent",
 };
 const leaveDetailFields = ref([
   { key: "name", label: "Employee" },
@@ -426,46 +341,8 @@ const leaveDetailFields = ref([
     html: true,
   },
 ]);
-
-// Function to fetch leave details
-const fetchLeaveDetails = async (leaveId) => {
-  isDetailsLoading.value = true;
-  isDetailsModalOpen.value = true;
-  selectedDetails.value = null;
-  isDetailsError.value = false;
-
-  try {
-    const response = await axios.get(`/leave/${leaveId}`);
-    selectedDetails.value = response.data;
-  } catch (error) {
-    console.error("Error fetching leave details:", error);
-    selectedDetails.value = null;
-    isDetailsError.value = true;
-  } finally {
-    await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for 1 second
-    isDetailsLoading.value = false;
-  }
-};
 // Auto-handle 'open' parameter on mount
 onMountedHandleParameter("open", fetchLeaveDetails);
-// Function to toggle rejection reason
-const toggleRejectReason = () => {
-  showRejectReason.value = !showRejectReason.value;
-};
-// Handler for viewing leave details and details modal function
-const handleViewDetails = (leaveId) => {
-  showRejectReason.value = false;
-  fetchLeaveDetails(leaveId);
-};
-const closeDetailsModal = () => {
-  isDetailsModalOpen.value = false;
-  showRejectReason.value = false;
-};
-const statusClassMap = {
-  approved: "text-success",
-  rejected: "text-error",
-  pending: "text-accent",
-};
 
 // core logic for the super_admin filter
 const selectedDepartment = computed({
@@ -506,22 +383,6 @@ const tabs = computed(() => {
 
   return items;
 });
-// handle tab navigation
-function setTab(tabId) {
-  if (tabId === props.activeTab) return;
-  router.get(
-    route("leave"),
-    {
-      ...route().params,
-      tab: tabId,
-    },
-    {
-      preserveState: true,
-      preserveScroll: true,
-      replace: true,
-    }
-  );
-}
 
 // Tanstack Table columns definition
 const leaveTableColumns = [
@@ -658,17 +519,22 @@ const showValidateButton = computed(() => {
       <Link
         v-for="tab in tabs"
         :key="tab.id"
-        @click.prevent="setTab(tab.id)"
+        :href="route('leave', { ...route().params, tab: tab.id })"
         :class="[
           'tab',
-          activeTab === tab.id ? 'tab-active font-bold' : 'hover:bg-base-300',
+          activeTab === tab.id
+            ? 'tab-active font-bold pointer-events-none'
+            : 'hover:bg-base-300',
         ]"
+        preserve-state
+        preserve-scroll
+        replace
       >
         {{ tab.label }}
       </Link>
     </div>
 
-    <!-- Task Table -->
+    <!-- Leave Table -->
     <DataTable
       :data="props.leaves"
       :columns="leaveTableColumns"
