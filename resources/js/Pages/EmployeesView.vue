@@ -8,6 +8,8 @@ import FormModal from "../Components/modals/FormModal.vue";
 import ConfirmModal from "../Components/modals/ConfirmModal.vue";
 import ListBox from "../Components/ListBox.vue";
 import { useEmployeeFormFields } from "../Data/forms/employeeFormFields";
+import { useDetailsModal } from "../Composables/useDetailsModal";
+import { employeeDetailFields } from "../Data/detailFields";
 
 // Props received from Inertia
 const props = defineProps({
@@ -114,56 +116,24 @@ const departmentOptions = computed(() => {
   return props.departments.map((d) => ({ value: d.id, label: d.dept_name }));
 });
 
-// Details Modal state
-const isDetailsModalOpen = ref(false);
-const selectedDetails = ref(null);
-const isDetailsLoading = ref(false);
-const isDetailsError = ref(false);
-
-// the fields to be displayed in the details modal for an employee
-const employeeDetailFields = ref([
-  { key: "name", label: "Full Name" },
-  { key: "email", label: "Email" },
-  { key: "picture", label: "Picture" },
-  { key: "position", label: "Position" },
-  { key: "deptName", label: "Department" },
-  { key: "hierarchy", label: "Hierarchy" },
-  { key: "address", label: "Address" },
-  { key: "gender", label: "Gender" },
-  { key: "bday", label: "Birthday", formatter: formatDate },
-]);
-
-// Function to fetch employee details
-const fetchEmployeeDetails = async (employeeId) => {
-  isDetailsLoading.value = true;
-  isDetailsModalOpen.value = true;
-  selectedDetails.value = null;
-  isDetailsError.value = false;
-
-  try {
-    const response = await axios.get(`/team/employees/${employeeId}`);
-    selectedDetails.value = response.data;
-  } catch (error) {
-    console.error("Error fetching employee details:", error);
-    selectedDetails.value = null;
-    isDetailsError.value = true;
-  } finally {
-    await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for 1 second
-    isDetailsLoading.value = false;
-  }
-};
+// -- Employee Details Logic --
+const {
+  isOpen: isEmployeeModalOpen,
+  isLoading: isEmployeeLoading,
+  isError: isEmployeeError,
+  data: selectedEmployee,
+  open: fetchEmployeeDetails,
+  close: closeEmployeeModal,
+} = useDetailsModal({ baseUrl: "/team/employees" });
 
 // Handler for viewing employee details and details modal function
 const handleViewDetails = (employee) => {
   fetchEmployeeDetails(employee.id);
 };
-const closeDetailsModal = () => {
-  isDetailsModalOpen.value = false;
-};
 
 // computed property for custom details field separation
 const customDetails = computed(() => {
-  const fields = employeeDetailFields.value;
+  const fields = employeeDetailFields;
   return {
     name: fields.find((f) => f.key === "name"),
     email: fields.find((f) => f.key === "email"),
@@ -269,14 +239,14 @@ const employeeTableColumns = [
 
     <!-- Employee Details Modal -->
     <DetailsModal
-      :isOpen="isDetailsModalOpen"
-      :item="selectedDetails"
-      :loading="isDetailsLoading"
-      :error="isDetailsError"
+      :isOpen="isEmployeeModalOpen"
+      :item="selectedEmployee"
+      :loading="isEmployeeLoading"
+      :error="isEmployeeError"
       title="EMPLOYEE DETAILS"
       :fields="employeeDetailFields"
       :panel-class="'w-full max-w-xl'"
-      @close="closeDetailsModal"
+      @close="closeEmployeeModal"
     >
       <!-- Custom Skeleton -->
       <template #skeleton="{ skeletonFieldCount }">

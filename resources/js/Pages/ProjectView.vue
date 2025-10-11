@@ -1,11 +1,7 @@
 <script setup>
 import { ref, computed, reactive, watch } from "vue";
 import { usePage, useForm } from "@inertiajs/vue3";
-import {
-  longDate,
-  longDateTime,
-  shortDateTime,
-} from "../Composables/useDateFormatter";
+import { longDate, shortDateTime } from "../Composables/useDateFormatter";
 import { useUrlParameter } from "../Composables/useUrlParameter";
 import DataTable from "../Components/DataTable.vue";
 import DetailsModal from "../Components/modals/DetailsModal.vue";
@@ -16,6 +12,13 @@ import {
   useAddIssueFormFields,
   useResolveIssueFormFields,
 } from "../Data/forms/projectFormFields";
+import { useDetailsModal } from "../Composables/useDetailsModal";
+import {
+  projectDetailFields,
+  issueDetailFields,
+  taskDetailFields,
+  accomplishDetailFields,
+} from "../Data/detailFields";
 
 const props = defineProps({
   projects: {
@@ -89,31 +92,52 @@ const commentForm = useForm({
   commentable_type: "App\\Models\\Task",
 });
 
-// Project Details Modal state
-const isProjectDetailsOpen = ref(false);
-const selectedProject = ref(null);
-const isProjectLoading = ref(false);
-const isProjectError = ref(false);
+// -- Project Details Logic --
+const {
+  isOpen: isProjectDetailsOpen,
+  isLoading: isProjectLoading,
+  isError: isProjectError,
+  data: selectedProject,
+  open: fetchProjectDetails,
+  close: closeProjectDetails,
+} = useDetailsModal({ baseUrl: "/project" });
+// Auto-handle 'open' parameter on mount
+onMountedHandleParameter("open", fetchProjectDetails);
 
-// Issue Details Modal state
-const isIssueDetailsOpen = ref(false);
-const selectedIssue = ref(null);
-const isIssueLoading = ref(false);
-const isIssueError = ref(false);
+// -- Issue Details Logic -- (uses a custom fetcher for the ziggy route)
+const {
+  isOpen: isIssueDetailsOpen,
+  isLoading: isIssueLoading,
+  isError: isIssueError,
+  data: selectedIssue,
+  open: fetchIssueDetails,
+  close: closeIssueDetails,
+} = useDetailsModal({
+  fetcher: (issueId) =>
+    axios.get(route("project.issue.show", { issue: issueId })),
+});
 
-// Task Details Modal state
-const isTaskDetailsOpen = ref(false);
-const selectedTask = ref(null);
-const isTaskLoading = ref(false);
-const isTaskError = ref(false);
+// -- Task Details Logic
+const {
+  isOpen: isTaskDetailsOpen,
+  isLoading: isTaskLoading,
+  isError: isTaskError,
+  data: selectedTask,
+  open: fetchTaskDetails,
+  close: closeTaskDetails,
+} = useDetailsModal({ baseUrl: "/task" });
 // state for showing revision reason
 const showReviseReason = ref(false);
 
-// Accomplishment Details state
-const isAccomplishModalOpen = ref(false);
-const selectedAccomplish = ref(null);
-const isAccomplishLoading = ref(false);
-const isAccomplishError = ref(false);
+// -- Accomplishment Details Logic
+const {
+  isOpen: isAccomplishModalOpen,
+  isLoading: isAccomplishLoading,
+  isError: isAccomplishError,
+  data: selectedAccomplish,
+  open: fetchAccomplishDetails,
+  close: closeAccomplishModal,
+} = useDetailsModal({ baseUrl: "/accomplishment" });
 
 // for min attribute deadline
 const today = computed(() => {
@@ -349,71 +373,11 @@ const closeAllModal = () => {
   isConfirmModalOpen.value = false;
 };
 
-// -- Project Details Logic --
-const fetchProjectDetails = async (projectId) => {
-  isProjectLoading.value = true;
-  isProjectDetailsOpen.value = true;
-  selectedProject.value = null;
-  isProjectError.value = false;
-
-  try {
-    const response = await axios.get(`/project/${projectId}`);
-    selectedProject.value = response.data;
-  } catch (error) {
-    console.error("Error fetching project details:", error);
-    selectedProject.value = null;
-    isProjectError.value = true;
-  } finally {
-    await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for 1 second
-    isProjectLoading.value = false;
-  }
-};
-// formatter for departments
-const formatDepartments = (departments) => {
-  if (!departments || departments.length === 0) return "N/A";
-  return departments.join(", ");
-};
-// the fields to be displayed in the project details modal for an project
-const projectDetailFields = ref([
-  { key: "title", label: "Project" },
-  { key: "description", label: "Description" },
-  { key: "client", label: "Client" },
-  { key: "departments", label: "Departments", formatter: formatDepartments },
-  { key: "created_at", label: "Started", formatter: longDate },
-  { key: "deadline", label: "Deadline", formatter: longDate },
-]);
-// Auto-handle 'open' parameter on mount
-onMountedHandleParameter("open", fetchProjectDetails);
-
 // Handler for viewing project details and details modal function
 const handleViewDetails = (projectId) => {
   fetchProjectDetails(projectId);
 };
-const closeProjectDetails = () => {
-  isProjectDetailsOpen.value = false;
-};
 
-// -- Issue Details Logic --
-const fetchIssueDetails = async (issueId) => {
-  isIssueLoading.value = true;
-  isIssueDetailsOpen.value = true;
-  selectedIssue.value = null;
-  isIssueError.value = false;
-
-  try {
-    const response = await axios.get(
-      route("project.issue.show", { issue: issueId })
-    );
-    selectedIssue.value = response.data;
-  } catch (error) {
-    console.error("Error fetching issue details:", error);
-    selectedIssue.value = null;
-    isIssueError.value = true;
-  } finally {
-    await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for 1 second
-    isIssueLoading.value = false;
-  }
-};
 // Handle back navigation from issue modal
 const handleBackFromIssue = () => {
   isIssueDetailsOpen.value = false;
@@ -423,46 +387,11 @@ const handleBackFromIssue = () => {
 const showBackButtonInIssue = computed(() => {
   return isIssueDetailsOpen.value && selectedIssue.value !== null;
 });
-// Fields for issue details modal
-const issueDetailFields = ref([
-  { key: "project_title", label: "Project" },
-  { key: "user_name", label: "Submitted" },
-  { key: "title", label: "Issue" },
-  { key: "description", label: "Description" },
-  { key: "status", label: "Status" },
-  { key: "created_at", label: "Created At", formatter: longDate },
-  { key: "solution", label: "Solution" },
-]);
 const handleViewIssue = (issueId) => {
   isProjectDetailsOpen.value = false;
   fetchIssueDetails(issueId);
 };
-const closeIssueDetails = () => {
-  isIssueDetailsOpen.value = false;
-};
 
-// -- Task Details Logic --
-const fetchTaskDetails = async (taskId) => {
-  isTaskLoading.value = true;
-  isTaskDetailsOpen.value = true;
-  selectedTask.value = null;
-  isTaskError.value = false;
-
-  try {
-    const response = await axios.get(`/task/${taskId}`);
-    selectedTask.value = response.data;
-    // Reset comment form with new task ID
-    commentForm.commentable_id = response.data.id;
-    commentForm.message = "";
-  } catch (error) {
-    console.error("Error fetching task details:", error);
-    selectedTask.value = null;
-    isTaskError.value = true;
-  } finally {
-    await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for 1 second
-    isTaskLoading.value = false;
-  }
-};
 // Handle back navigation from task modal
 const handleBackFromTask = () => {
   isTaskDetailsOpen.value = false;
@@ -472,30 +401,10 @@ const handleBackFromTask = () => {
 const showBackButtonInTask = computed(() => {
   return isTaskDetailsOpen.value && selectedTask.value !== null;
 });
-// formatter for assignees
-const formatAssignees = (assignees) => {
-  if (!assignees || !Array.isArray(assignees)) return "N/A";
-  return assignees.map((user) => user.name).join(", ");
-};
-// the fields to be displayed in task details modal
-const taskDetailFields = ref([
-  { key: "title", label: "Task Name" },
-  { key: "description", label: "Description" },
-  { key: "assignees", label: "Assignees", formatter: formatAssignees },
-  { key: "collateral", label: "Collaterals" },
-  { key: "created_at", label: "Started", formatter: longDate },
-  { key: "deadline", label: "Deadline", formatter: longDate },
-  { key: "priority", label: "Priority" },
-  { key: "status", label: "Status" },
-]);
 const handleViewTask = (taskId) => {
   isProjectDetailsOpen.value = false;
   showReviseReason.value = false;
   fetchTaskDetails(taskId);
-};
-const closeTaskDetails = () => {
-  isTaskDetailsOpen.value = false;
-  showReviseReason.value = false;
 };
 const statusClassMap = {
   done: "text-success",
@@ -521,24 +430,6 @@ const toggleReviseReason = () => {
   showReviseReason.value = !showReviseReason.value;
 };
 
-// -- Accomplishment Details Logic --
-const fetchAccomplishDetails = async (accomplishmentId) => {
-  isAccomplishLoading.value = true;
-  isAccomplishModalOpen.value = true;
-  selectedAccomplish.value = null;
-  isAccomplishError.value = false;
-
-  try {
-    const response = await axios.get(`/accomplishment/${accomplishmentId}`);
-    selectedAccomplish.value = response.data;
-  } catch (error) {
-    console.error("Error fetching accomplishment details:", error);
-    isAccomplishError.value = true;
-  } finally {
-    await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for 1 second
-    isAccomplishLoading.value = false;
-  }
-};
 // Handle back navigation from accomplishment modal
 const handleBackFromAccomplish = () => {
   isAccomplishModalOpen.value = false;
@@ -548,48 +439,9 @@ const handleBackFromAccomplish = () => {
 const showBackButtonInAccomplish = computed(() => {
   return isAccomplishModalOpen.value && selectedAccomplish.value !== null;
 });
-// Fields for accomplishment details modal
-const accomplishDetailFields = ref([
-  { key: "task_title", label: "Task" },
-  { key: "user_name", label: "From" },
-  { key: "title", label: "Title" },
-  { key: "description", label: "Description" },
-  {
-    key: "link",
-    label: "Link",
-    formatter: (value) =>
-      value
-        ? `<a href="${value}" target="_blank" class="text-blue-500 hover:underline">${value}</a>`
-        : "N/A",
-    html: true,
-  },
-  {
-    key: "attachment",
-    label: "Attachment",
-    formatter: (attachment) => {
-      if (!attachment) return "N/A";
-      return `
-        <div class="flex items-center gap-2">
-          <i class="pi pi-paperclip text-sm"></i>
-          <a href="${attachment.url}" 
-             target="_blank" 
-             class="text-blue-500 hover:underline truncate"
-             download="${attachment.name}">
-            ${attachment.name}
-          </a>
-        </div>
-      `;
-    },
-    html: true,
-  },
-  { key: "created_at", label: "Submitted", formatter: longDateTime },
-]);
 const handleViewAccomplish = (accomplishmentId) => {
   isTaskDetailsOpen.value = false;
   fetchAccomplishDetails(accomplishmentId);
-};
-const closeAccomplishModal = () => {
-  isAccomplishModalOpen.value = false;
 };
 
 // Tanstack Table columns definition
@@ -1020,7 +872,7 @@ const showResolveButton = computed(() => {
       title="TASK DETAILS"
       :fields="taskDetailFields"
       :panel-class="'w-full max-w-4xl'"
-      @close="closeTaskDetails"
+      @close="closeTaskDetails(), (showReviseReason = false)"
     >
       <!-- Custom Skeleton -->
       <template #skeleton="{ skeletonFieldCount }">

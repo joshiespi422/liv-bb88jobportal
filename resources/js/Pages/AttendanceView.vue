@@ -9,6 +9,7 @@ import {
 import DataTable from "../Components/DataTable.vue";
 import DetailsModal from "../Components/modals/DetailsModal.vue";
 import LocationMap from "../Components/LocationMap.vue";
+import { useDetailsModal } from "../Composables/useDetailsModal";
 
 // logged in user data
 const page = usePage();
@@ -36,21 +37,6 @@ const tabs = computed(() => {
     { id: "all", label: "All Logs" },
   ];
 });
-// handle tab navigation
-function setTab(tabId) {
-  if (tabId === props.activeTab) return;
-  router.get(
-    route("attendance"),
-    {
-      tab: tabId,
-    },
-    {
-      preserveState: true,
-      preserveScroll: true,
-      replace: true,
-    }
-  );
-}
 
 // tanstack table columns definition for today list
 const todayListColumns = [
@@ -77,7 +63,7 @@ const todayListColumns = [
       h(
         "button",
         {
-          onClick: () => handleViewToday(row.original.id, row.original.date),
+          onClick: () => openLogModal(row.original.id, row.original.date),
           class:
             "btn btn-sm @sm:btn-md rounded-full bg-green-primary-1 text-white hover:bg-green-primary-3",
         },
@@ -86,40 +72,21 @@ const todayListColumns = [
     enableSorting: false,
   },
 ];
-// individual log details and map state
-const isLogModalOpen = ref(false);
-const selectedLog = ref(null);
-const isLogLoading = ref(false);
-const isLogError = ref(false);
+// --- Individual Log Details ---
+const {
+  isOpen: isLogModalOpen,
+  isLoading: isLogLoading,
+  isError: isLogError,
+  data: selectedLog,
+  open: openLogModal,
+  close: closeLogModal,
+} = useDetailsModal({
+  // Define the fetcher with the exact parameters it needs
+  fetcher: (userId, date) =>
+    axios.get(route("attendance.show", { id: userId, date })),
+});
 const showMap = ref(false);
 const visibleIps = ref({});
-// Handler for viewing log details and details modal function
-const handleViewToday = (userId, date) => {
-  fetchLogDetails(userId, date);
-};
-const fetchLogDetails = async (id, date) => {
-  isLogLoading.value = true;
-  isLogModalOpen.value = true;
-  selectedLog.value = null;
-  isLogError.value = false;
-
-  try {
-    const response = await axios.get(route("attendance.show", { id, date }));
-    selectedLog.value = response.data;
-  } catch (error) {
-    console.error("Error fetching log details:", error);
-    selectedLog.value = null;
-    isLogError.value = true;
-  } finally {
-    await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for 1 second
-    isLogLoading.value = false;
-  }
-};
-const closeLogModal = () => {
-  isLogModalOpen.value = false;
-  showMap.value = false;
-  visibleIps.value = {};
-};
 const toggleIpVisibility = (logIndex) => {
   visibleIps.value[logIndex] = !visibleIps.value[logIndex];
 };
@@ -168,7 +135,7 @@ const deptAttendanceColumns = [
       h(
         "button",
         {
-          onClick: () => handleViewAllDept(row.original.id, row.original.date),
+          onClick: () => openDeptLogModal(row.original.id, row.original.date),
           class:
             "btn btn-sm @sm:btn-md rounded-full bg-green-primary-1 text-white hover:bg-green-primary-3",
         },
@@ -177,38 +144,19 @@ const deptAttendanceColumns = [
     enableSorting: false,
   },
 ];
-// department log Details state
-const isDeptLogModalOpen = ref(false);
-const selectedDeptLog = ref(null);
-const isDeptLogLoading = ref(false);
-const isDeptLogError = ref(false);
-// Handler for viewing log details and details modal function
-const handleViewAllDept = (deptId, date) => {
-  fetchDeptLogDetails(deptId, date);
-};
-const fetchDeptLogDetails = async (deptId, date) => {
-  isDeptLogLoading.value = true;
-  isDeptLogModalOpen.value = true;
-  selectedDeptLog.value = null;
-  isDeptLogError.value = false;
-
-  try {
-    const response = await axios.get(
-      route("attendance.show.dept", { deptId, date })
-    );
-    selectedDeptLog.value = response.data;
-  } catch (error) {
-    console.error("Error fetching log details:", error);
-    selectedDeptLog.value = null;
-    isDeptLogError.value = true;
-  } finally {
-    await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for 1 second
-    isDeptLogLoading.value = false;
-  }
-};
-const closeDeptLogModal = () => {
-  isDeptLogModalOpen.value = false;
-};
+// --- Department Log Details ---
+const {
+  isOpen: isDeptLogModalOpen,
+  isLoading: isDeptLogLoading,
+  isError: isDeptLogError,
+  data: selectedDeptLog,
+  open: openDeptLogModal,
+  close: closeDeptLogModal,
+} = useDetailsModal({
+  // This fetcher takes different parameters, and the composable handles it perfectly
+  fetcher: (deptId, date) =>
+    axios.get(route("attendance.show.dept", { deptId, date })),
+});
 
 const hideCloseBtn = computed(() => {
   return props.activeTab !== "today";
@@ -231,11 +179,16 @@ const attendanceTitle = computed(() => {
       <Link
         v-for="tab in tabs"
         :key="tab.id"
-        @click.prevent="setTab(tab.id)"
+        :href="route('attendance', { ...route().params, tab: tab.id })"
         :class="[
           'tab',
-          activeTab === tab.id ? 'tab-active font-bold' : 'hover:bg-base-300',
+          activeTab === tab.id
+            ? 'tab-active font-bold pointer-events-none'
+            : 'hover:bg-base-300',
         ]"
+        preserve-state
+        preserve-scroll
+        replace
       >
         {{ tab.label }}
       </Link>
@@ -265,7 +218,7 @@ const attendanceTitle = computed(() => {
       :error="isLogError"
       :hide-close-btn="hideCloseBtn"
       title="ATTENDANCE DETAILS"
-      @close="closeLogModal"
+      @close="closeLogModal(), (showMap = false), (visibleIps = {})"
       panelClass="w-full max-w-2xl"
     >
       <!-- Custom Skeleton Loader -->
@@ -452,7 +405,7 @@ const attendanceTitle = computed(() => {
               </p>
               <button
                 @click="
-                  fetchLogDetails(user.id, item.date);
+                  openLogModal(user.id, item.date);
                   closeDeptLogModal();
                 "
                 class="btn bg-green-primary-1 hover:bg-green-primary-3 rounded-full"

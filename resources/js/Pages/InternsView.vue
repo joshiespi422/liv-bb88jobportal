@@ -8,6 +8,8 @@ import FormModal from "../Components/modals/FormModal.vue";
 import ConfirmModal from "../Components/modals/ConfirmModal.vue";
 import ListBox from "../Components/ListBox.vue";
 import { useInternFormFields } from "../Data/forms/internFormFields";
+import { useDetailsModal } from "../Composables/useDetailsModal";
+import { internDetailFields } from "../Data/detailFields";
 
 // Props received from Inertia
 const props = defineProps({
@@ -113,56 +115,24 @@ const departmentOptions = computed(() => {
   return props.departments.map((d) => ({ value: d.id, label: d.dept_name }));
 });
 
-// Details Modal state
-const isDetailsModalOpen = ref(false);
-const selectedDetails = ref(null);
-const isDetailsLoading = ref(false);
-const isDetailsError = ref(false);
-
-// the fields to be displayed in the details modal for an intern
-const internDetailFields = ref([
-  { key: "name", label: "Full Name" },
-  { key: "email", label: "Email" },
-  { key: "picture", label: "Picture" },
-  { key: "position", label: "Position" },
-  { key: "deptName", label: "Department" },
-  { key: "school", label: "School" },
-  { key: "address", label: "Address" },
-  { key: "gender", label: "Gender" },
-  { key: "bday", label: "Birthday", formatter: formatDate },
-]);
-
-// Function to fetch intern details
-const fetchInternDetails = async (internId) => {
-  isDetailsLoading.value = true;
-  isDetailsModalOpen.value = true;
-  selectedDetails.value = null;
-  isDetailsError.value = false;
-
-  try {
-    const response = await axios.get(`/team/interns/${internId}`);
-    selectedDetails.value = response.data;
-  } catch (error) {
-    console.error("Error fetching intern details:", error);
-    selectedDetails.value = null;
-    isDetailsError.value = true;
-  } finally {
-    await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for 1 second
-    isDetailsLoading.value = false;
-  }
-};
+// -- Intern Details Logic --
+const {
+  isOpen: isInternModalOpen,
+  isLoading: isInternLoading,
+  isError: isInternError,
+  data: selectedIntern,
+  open: fetchInternDetails,
+  close: closeInternModal,
+} = useDetailsModal({ baseUrl: "/team/interns" });
 
 // Handler for viewing intern details and details modal function
 const handleViewDetails = (intern) => {
   fetchInternDetails(intern.id);
 };
-const closeDetailsModal = () => {
-  isDetailsModalOpen.value = false;
-};
 
 // computed property for custom details field separation
 const customDetails = computed(() => {
-  const fields = internDetailFields.value;
+  const fields = internDetailFields;
   return {
     name: fields.find((f) => f.key === "name"),
     email: fields.find((f) => f.key === "email"),
@@ -268,14 +238,14 @@ const internTableColumns = [
 
     <!-- Intern Details Modal -->
     <DetailsModal
-      :isOpen="isDetailsModalOpen"
-      :item="selectedDetails"
-      :loading="isDetailsLoading"
-      :error="isDetailsError"
+      :isOpen="isInternModalOpen"
+      :item="selectedIntern"
+      :loading="isInternLoading"
+      :error="isInternError"
       title="INTERN DETAILS"
       :fields="internDetailFields"
       :panel-class="'w-full max-w-xl'"
-      @close="closeDetailsModal"
+      @close="closeInternModal"
     >
       <!-- Custom Skeleton -->
       <template #skeleton="{ skeletonFieldCount }">

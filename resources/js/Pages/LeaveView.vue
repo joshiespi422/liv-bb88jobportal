@@ -12,6 +12,8 @@ import {
   useRequestLeaveFormFields,
   useValidateLeaveFormFields,
 } from "../Data/forms/leaveFormFields";
+import { useDetailsModal } from "../Composables/useDetailsModal";
+import { getLeaveDetailFields } from "../Data/detailFields";
 
 const props = defineProps({
   leaves: {
@@ -84,11 +86,20 @@ const validateForm = useForm({
   hard_copy: null,
 });
 
-// Details Modal state
-const isDetailsModalOpen = ref(false);
-const selectedDetails = ref(null);
-const isDetailsLoading = ref(false);
-const isDetailsError = ref(false);
+// -- Leave Details Logic --
+const {
+  isOpen: isLeaveModalOpen,
+  isLoading: isLeaveLoading,
+  isError: isLeaveError,
+  data: selectedLeave,
+  open: fetchLeaveDetails,
+  close: closeLeaveModal,
+} = useDetailsModal({ baseUrl: "/leave" });
+const leaveDetailFields = computed(() => {
+  return getLeaveDetailFields(props.activeTab);
+});
+// Auto-handle 'open' parameter on mount
+onMountedHandleParameter("open", fetchLeaveDetails);
 // state for showing rejection reason
 const showRejectReason = ref(false);
 
@@ -162,14 +173,14 @@ const requestFormFields = useRequestLeaveFormFields(
 // form field configuration for validating leave
 const validateFormFields = useValidateLeaveFormFields(
   validateForm,
-  selectedDetails
+  selectedLeave
 );
 
 // handle validate leave
 const handleValidateLeave = () => {
-  if (!selectedDetails.value) return;
+  if (!selectedLeave.value) return;
   isValidateModalOpen.value = true;
-  isDetailsModalOpen.value = false;
+  isLeaveModalOpen.value = false;
 };
 // handle request leave
 const handleRequestLeave = () => {
@@ -183,12 +194,12 @@ const closeAllModal = () => {
 
 // control validate back button visibility
 const showBackButtonInValidate = computed(() => {
-  return isValidateModalOpen.value && selectedDetails.value !== null;
+  return isValidateModalOpen.value && selectedLeave.value !== null;
 });
 // handle validate back navigation
 const handleBackFromValidate = () => {
   isValidateModalOpen.value = false;
-  isDetailsModalOpen.value = true;
+  isLeaveModalOpen.value = true;
 };
 // -- Request Leave Flow --
 const handleRequestSubmit = () => {
@@ -237,7 +248,7 @@ const handleValidateSubmit = () => {
   pendingAction.value = () => {
     isConfirmLoading.value = true;
     validateForm.post(
-      route("leave.validate", { leave: selectedDetails.value.id }),
+      route("leave.validate", { leave: selectedLeave.value.id }),
       {
         preserveScroll: true,
         onSuccess: () => {
@@ -257,42 +268,6 @@ const handleValidateSubmit = () => {
   isConfirmModalOpen.value = true;
 };
 
-// -- Leave Details Logic --
-const fetchLeaveDetails = async (leaveId) => {
-  isDetailsLoading.value = true;
-  isDetailsModalOpen.value = true;
-  selectedDetails.value = null;
-  isDetailsError.value = false;
-
-  try {
-    const response = await axios.get(`/leave/${leaveId}`);
-    selectedDetails.value = response.data;
-  } catch (error) {
-    console.error("Error fetching leave details:", error);
-    selectedDetails.value = null;
-    isDetailsError.value = true;
-  } finally {
-    await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for 1 second
-    isDetailsLoading.value = false;
-  }
-};
-const attachFormatter = (attachment) => {
-  if (!attachment) return "N/A";
-  return `
-    <div class="flex items-center gap-2">
-      <i class="pi pi-paperclip text-sm"></i>
-      <a href="${attachment.url}"
-         target="_blank"
-         class="text-blue-500 hover:underline truncate"
-         download="${attachment.name}">
-        ${attachment.name}
-      </a>
-    </div>`;
-};
-const requestDateFormatter = (date) => {
-  if (props.activeTab === "special") return date;
-  return longDate(date);
-};
 // Function to toggle rejection reason
 const toggleRejectReason = () => {
   showRejectReason.value = !showRejectReason.value;
@@ -302,47 +277,11 @@ const handleViewDetails = (leaveId) => {
   showRejectReason.value = false;
   fetchLeaveDetails(leaveId);
 };
-const closeDetailsModal = () => {
-  isDetailsModalOpen.value = false;
-  showRejectReason.value = false;
-};
 const statusClassMap = {
   approved: "text-success",
   rejected: "text-error",
   pending: "text-accent",
 };
-const leaveDetailFields = ref([
-  { key: "name", label: "Employee" },
-  { key: "dept_name", label: "Department" },
-  {
-    key: "leave_type",
-    label: "Leave Type",
-    formatter: (value) => `${value} Leave`,
-  },
-  {
-    key: "category",
-    label: "Category",
-    formatter: (value) => `${value} Leave`,
-  },
-  { key: "created_at", label: "Submitted", formatter: longDate },
-  { key: "request_date", label: "Leave Date", formatter: requestDateFormatter },
-  { key: "reason", label: "Reason" },
-  { key: "status", label: "Status" },
-  {
-    key: "proof",
-    label: "Proof",
-    formatter: attachFormatter,
-    html: true,
-  },
-  {
-    key: "hard_copy",
-    label: "Hard Copy",
-    formatter: attachFormatter,
-    html: true,
-  },
-]);
-// Auto-handle 'open' parameter on mount
-onMountedHandleParameter("open", fetchLeaveDetails);
 
 // core logic for the super_admin filter
 const selectedDepartment = computed({
@@ -479,12 +418,12 @@ const showValidateButton = computed(() => {
   }
 
   // 2. Must have selected task details
-  if (!selectedDetails.value) {
+  if (!selectedLeave.value) {
     return false;
   }
 
   // 3. Must be in "pending" status
-  if (selectedDetails.value.status !== "pending") {
+  if (selectedLeave.value.status !== "pending") {
     return false;
   }
   return true;
@@ -597,13 +536,13 @@ const showValidateButton = computed(() => {
 
   <!-- Leave Details Modal -->
   <DetailsModal
-    :isOpen="isDetailsModalOpen"
-    :item="selectedDetails"
-    :loading="isDetailsLoading"
-    :error="isDetailsError"
+    :isOpen="isLeaveModalOpen"
+    :item="selectedLeave"
+    :loading="isLeaveLoading"
+    :error="isLeaveError"
     title="LEAVE DETAILS"
     :fields="leaveDetailFields"
-    @close="closeDetailsModal"
+    @close="closeLeaveModal(), (showRejectReason = false)"
   >
     <!-- custom content slot  -->
     <template #content="{ item, getFieldValue }">

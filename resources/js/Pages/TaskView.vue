@@ -1,11 +1,7 @@
 <script setup>
 import { ref, h, computed, reactive, watch } from "vue";
 import { useForm, usePage, router, Link } from "@inertiajs/vue3";
-import {
-  shortDateTime,
-  longDate,
-  longDateTime,
-} from "../Composables/useDateFormatter";
+import { shortDateTime, longDate } from "../Composables/useDateFormatter";
 import { useUrlParameter } from "../Composables/useUrlParameter";
 import DataTable from "../Components/DataTable.vue";
 import ListBox from "../Components/ListBox.vue";
@@ -17,6 +13,8 @@ import {
   useUpdateTaskFormFields,
   useValidateTaskFormFields,
 } from "../Data/forms/taskFormFields";
+import { useDetailsModal } from "../Composables/useDetailsModal";
+import { taskDetailFields, accomplishDetailFields } from "../Data/detailFields";
 
 const props = defineProps({
   tasks: {
@@ -107,19 +105,29 @@ const commentForm = useForm({
   commentable_type: "App\\Models\\Task",
 });
 
-// Details Modal state
-const isDetailsModalOpen = ref(false);
-const selectedDetails = ref(null);
-const isDetailsLoading = ref(false);
-const isDetailsError = ref(false);
+// -- Task Details Logic --
+const {
+  isOpen: isTaskDetailsOpen,
+  isLoading: isTaskLoading,
+  isError: isTaskError,
+  data: selectedTask,
+  open: fetchTaskDetails,
+  close: closeTaskDetails,
+} = useDetailsModal({ baseUrl: "/task" });
+// Auto-handle 'open' parameter on mount
+onMountedHandleParameter("open", fetchTaskDetails);
 // state for showing revision reason
 const showReviseReason = ref(false);
 
-// Accomplishment Details state
-const isAccomplishModalOpen = ref(false);
-const selectedAccomplish = ref(null);
-const isAccomplishLoading = ref(false);
-const isAccomplishError = ref(false);
+// -- Accomplishment Details Logic --
+const {
+  isOpen: isAccomplishModalOpen,
+  isLoading: isAccomplishLoading,
+  isError: isAccomplishError,
+  data: selectedAccomplish,
+  open: fetchAccomplishDetails,
+  close: closeAccomplishModal,
+} = useDetailsModal({ baseUrl: "/accomplishment" });
 
 // Set the default department for the "New Task" form based on user role
 function getDefaultDepartment() {
@@ -156,6 +164,7 @@ const fetchAssigneesList = async (departmentId, type) => {
     assigneesList.value = [];
   }
 };
+// fetch projects for new task
 const fetchProjectsList = async (departmentId) => {
   if (!departmentId) {
     projectsList.value = [];
@@ -180,6 +189,7 @@ watch(
   async (newDeptId) => {
     if (authUser.value.userType === "super_admin" && newDeptId) {
       newTaskForm.assignees = [];
+      projectsList.value = [];
       await fetchAssigneesList(newDeptId, props.currentType);
       await fetchProjectsList(newDeptId);
     }
@@ -207,9 +217,9 @@ const newTaskFormFields = useNewTaskFormFields(
 
 // dynamic status options for update task
 const statusOptions = computed(() => {
-  if (!selectedDetails.value) return [];
+  if (!selectedTask.value) return [];
 
-  const currentStatus = selectedDetails.value.status;
+  const currentStatus = selectedTask.value.status;
 
   if (currentStatus === "in progress") {
     return [
@@ -227,28 +237,25 @@ const statusOptions = computed(() => {
   return [];
 });
 // Form field configuration for updating task
-const updateFormFields = useUpdateTaskFormFields(
-  selectedDetails,
-  statusOptions
-);
+const updateFormFields = useUpdateTaskFormFields(selectedTask, statusOptions);
 
 // Form field configuration for validating task
 const validateFormFields = useValidateTaskFormFields(
   validateTaskForm,
-  selectedDetails
+  selectedTask
 );
 
 // update task modal state
 const handleUpdateTask = () => {
-  if (!selectedDetails.value) return;
+  if (!selectedTask.value) return;
   isUpdateModalOpen.value = true;
-  isDetailsModalOpen.value = false;
+  isTaskDetailsOpen.value = false;
 };
 // validate task modal state
 const handleValidateTask = () => {
-  if (!selectedDetails.value) return;
+  if (!selectedTask.value) return;
   isValidateModalOpen.value = true;
-  isDetailsModalOpen.value = false;
+  isTaskDetailsOpen.value = false;
 };
 // handle new task modal state
 const handleNewTask = () => {
@@ -263,21 +270,21 @@ const closeAllModal = () => {
 
 // control update back button visibility
 const showBackButtonInUpdate = computed(() => {
-  return isUpdateModalOpen.value && selectedDetails.value !== null;
+  return isUpdateModalOpen.value && selectedTask.value !== null;
 });
 // handle update back navigation
 const handleBackFromUpdate = () => {
   isUpdateModalOpen.value = false;
-  isDetailsModalOpen.value = true;
+  isTaskDetailsOpen.value = true;
 };
 // control validate back button visibility
 const showBackButtonInValidate = computed(() => {
-  return isValidateModalOpen.value && selectedDetails.value !== null;
+  return isValidateModalOpen.value && selectedTask.value !== null;
 });
 // handle validate back navigation
 const handleBackFromValidate = () => {
   isValidateModalOpen.value = false;
-  isDetailsModalOpen.value = true;
+  isTaskDetailsOpen.value = true;
 };
 
 // -- Update Task Flow --
@@ -294,22 +301,19 @@ const handleUpdateSubmit = () => {
 
   pendingAction.value = () => {
     isConfirmLoading.value = true;
-    updateTaskForm.post(
-      route("task.update", { task: selectedDetails.value.id }),
-      {
-        preserveScroll: true,
-        onSuccess: () => {
-          closeAllModal();
-          updateTaskForm.reset();
-        },
-        onError: () => closeConfirmModal(),
-        onFinish: () => {
-          setTimeout(() => {
-            isConfirmLoading.value = false;
-          }, 500);
-        },
-      }
-    );
+    updateTaskForm.post(route("task.update", { task: selectedTask.value.id }), {
+      preserveScroll: true,
+      onSuccess: () => {
+        closeAllModal();
+        updateTaskForm.reset();
+      },
+      onError: () => closeConfirmModal(),
+      onFinish: () => {
+        setTimeout(() => {
+          isConfirmLoading.value = false;
+        }, 500);
+      },
+    });
   };
 
   isConfirmModalOpen.value = true;
@@ -329,7 +333,7 @@ const handleValidateSubmit = () => {
   pendingAction.value = () => {
     isConfirmLoading.value = true;
     validateTaskForm.post(
-      route("task.validate", { task: selectedDetails.value.id }),
+      route("task.validate", { task: selectedTask.value.id }),
       {
         preserveScroll: true,
         onSuccess: () => {
@@ -404,8 +408,8 @@ const handleCommentSubmit = () => {
       preserveScroll: true,
       onSuccess: () => {
         commentForm.reset();
-        if (selectedDetails.value) {
-          fetchTaskDetails(selectedDetails.value.id);
+        if (selectedTask.value) {
+          fetchTaskDetails(selectedTask.value.id);
         }
         closeConfirmModal();
       },
@@ -430,56 +434,10 @@ const handleEnterKey = (event) => {
   }
 };
 
-// -- Task Details Logic --
-const fetchTaskDetails = async (taskId) => {
-  isDetailsLoading.value = true;
-  isDetailsModalOpen.value = true;
-  selectedDetails.value = null;
-  isDetailsError.value = false;
-
-  try {
-    const response = await axios.get(`/task/${taskId}`);
-    selectedDetails.value = response.data;
-    // Reset comment form with new task ID
-    commentForm.commentable_id = response.data.id;
-    commentForm.message = "";
-    commentForm.clearErrors("message");
-  } catch (error) {
-    console.error("Error fetching task details:", error);
-    selectedDetails.value = null;
-    isDetailsError.value = true;
-  } finally {
-    await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for 1 second
-    isDetailsLoading.value = false;
-  }
-};
-// formatter for assignees
-const formatAssignees = (assignees) => {
-  if (!assignees || !Array.isArray(assignees)) return "N/A";
-  return assignees.map((user) => user.name).join(", ");
-};
-// the fields to be displayed in the details modal for an task
-const taskDetailFields = ref([
-  { key: "title", label: "Task Name" },
-  { key: "description", label: "Description" },
-  { key: "assignees", label: "Assignees", formatter: formatAssignees },
-  { key: "collateral", label: "Collaterals" },
-  { key: "created_at", label: "Started", formatter: longDate },
-  { key: "deadline", label: "Deadline", formatter: longDate },
-  { key: "priority", label: "Priority" },
-  { key: "status", label: "Status" },
-]);
-// Auto-handle 'open' parameter on mount
-onMountedHandleParameter("open", fetchTaskDetails);
-
 // Handler for viewing task details and details modal function
 const handleViewDetails = (task) => {
   showReviseReason.value = false;
   fetchTaskDetails(task.id);
-};
-const closeDetailsModal = () => {
-  isDetailsModalOpen.value = false;
-  showReviseReason.value = false;
 };
 const statusClassMap = {
   done: "text-success",
@@ -505,75 +463,18 @@ const toggleReviseReason = () => {
   showReviseReason.value = !showReviseReason.value;
 };
 
-// -- Accomplishment Details Logic --
-const fetchAccomplishDetails = async (accomplishmentId) => {
-  isAccomplishLoading.value = true;
-  isAccomplishModalOpen.value = true;
-  selectedAccomplish.value = null;
-  isAccomplishError.value = false;
-
-  try {
-    const response = await axios.get(`/accomplishment/${accomplishmentId}`);
-    selectedAccomplish.value = response.data;
-  } catch (error) {
-    console.error("Error fetching accomplishment details:", error);
-    isAccomplishError.value = true;
-  } finally {
-    await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for 1 second
-    isAccomplishLoading.value = false;
-  }
-};
 // Handle back navigation from accomplishment modal
 const handleBackFromAccomplish = () => {
   isAccomplishModalOpen.value = false;
-  isDetailsModalOpen.value = true;
+  isTaskDetailsOpen.value = true;
 };
 // Show back button in accomplishment modal
 const showBackButtonInAccomplish = computed(() => {
-  return isAccomplishModalOpen.value && selectedDetails.value !== null;
+  return isAccomplishModalOpen.value && selectedTask.value !== null;
 });
-// Fields for accomplishment details modal
-const accomplishDetailFields = ref([
-  { key: "task_title", label: "Task" },
-  { key: "user_name", label: "From" },
-  { key: "title", label: "Title" },
-  { key: "description", label: "Description" },
-  {
-    key: "link",
-    label: "Link",
-    formatter: (value) =>
-      value
-        ? `<a href="${value}" target="_blank" class="text-blue-500 hover:underline">${value}</a>`
-        : "N/A",
-    html: true,
-  },
-  {
-    key: "attachment",
-    label: "Attachment",
-    formatter: (attachment) => {
-      if (!attachment) return "N/A";
-      return `
-        <div class="flex items-center gap-2">
-          <i class="pi pi-paperclip text-sm"></i>
-          <a href="${attachment.url}"
-             target="_blank"
-             class="text-blue-500 hover:underline truncate"
-             download="${attachment.name}">
-            ${attachment.name}
-          </a>
-        </div>
-      `;
-    },
-    html: true,
-  },
-  { key: "created_at", label: "Submitted", formatter: longDateTime },
-]);
 const handleViewAccomplish = (accomplishmentId) => {
-  isDetailsModalOpen.value = false;
+  isTaskDetailsOpen.value = false;
   fetchAccomplishDetails(accomplishmentId);
-};
-const closeAccomplishModal = () => {
-  isAccomplishModalOpen.value = false;
 };
 
 // core logic for the super_admin filter
@@ -763,18 +664,14 @@ const capitalizedType = computed(() => {
 const showUpdateButton = computed(() => {
   // 1. Must not be super admin
   if (authUser.value?.userType === "super_admin") return false;
-
   // 2. Must have selected task details
-  if (!selectedDetails.value) return false;
-
+  if (!selectedTask.value) return false;
   // 3. Must be in "own" tab
   if (props.activeTab !== "own") return false;
-
   // 4. Must be not in "done" status
-  if (selectedDetails.value.status === "done") return false;
-
+  if (selectedTask.value.status === "done") return false;
   // 5. Current user must be in assignees
-  const isAssignee = selectedDetails.value.assignees.some(
+  const isAssignee = selectedTask.value.assignees.some(
     (assignee) => assignee.id === authUser.value.id
   );
 
@@ -784,23 +681,20 @@ const showUpdateButton = computed(() => {
 const showValidateButton = computed(() => {
   const isSuperAdmin = authUser.value?.userType === "super_admin";
   const isLeader = authUser.value?.hierarchy === "Leader";
-  const selectedStatus = selectedDetails.value?.status;
+  const selectedStatus = selectedTask.value?.status;
 
   // 1. Must be super admin or leader
   if (!isSuperAdmin && !isLeader) {
     return false;
   }
-
   // 2. Must have selected task details
-  if (!selectedDetails.value) {
+  if (!selectedTask.value) {
     return false;
   }
-
   // 3. Must be in "active" tab
   if (props.activeTab !== "active") {
     return false;
   }
-
   // 4. Must be in "for approval" status
   if (selectedStatus !== "for approval") {
     return false;
@@ -817,7 +711,6 @@ const showNewButton = computed(() => {
   if (!isSuperAdmin && !isLeader) {
     return false;
   }
-
   // 2. Must be not in "archived" tab
   if (props.activeTab === "archived") {
     return false;
@@ -982,14 +875,14 @@ const showNewButton = computed(() => {
 
     <!-- Task Details Modal -->
     <DetailsModal
-      :isOpen="isDetailsModalOpen"
-      :item="selectedDetails"
-      :loading="isDetailsLoading"
-      :error="isDetailsError"
+      :isOpen="isTaskDetailsOpen"
+      :item="selectedTask"
+      :loading="isTaskLoading"
+      :error="isTaskError"
       title="TASK DETAILS"
       :fields="taskDetailFields"
       :panel-class="'w-full max-w-4xl'"
-      @close="closeDetailsModal"
+      @close="closeTaskDetails(), (showReviseReason = false)"
     >
       <!-- Custom Skeleton -->
       <template #skeleton="{ skeletonFieldCount }">
@@ -1154,7 +1047,7 @@ const showNewButton = computed(() => {
                 >
                   <!-- Comments list -->
                   <li
-                    v-for="comment in selectedDetails.comments"
+                    v-for="comment in selectedTask.comments"
                     :key="comment.id"
                     class="list-row gap-0 p-2 pe-0"
                   >

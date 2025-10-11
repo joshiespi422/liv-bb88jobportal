@@ -12,6 +12,8 @@ import DetailsModal from "../Components/modals/DetailsModal.vue";
 import FormModal from "../Components/modals/FormModal.vue";
 import ConfirmModal from "../Components/modals/ConfirmModal.vue";
 import { useEditAccomplishmentFormFields } from "../Data/forms/accomplishmentFormFields";
+import { useDetailsModal } from "../Composables/useDetailsModal";
+import { accomplishDetailFields } from "../Data/detailFields";
 import VueDatePicker from "@vuepic/vue-datepicker";
 import "@vuepic/vue-datepicker/dist/main.css";
 
@@ -77,20 +79,26 @@ const editAccomplishForm = useForm({
   attachment: null,
 });
 
-// Details Modal state
-const isDetailsModalOpen = ref(false);
-const selectedDetails = ref(null);
-const isDetailsLoading = ref(false);
-const isDetailsError = ref(false);
+// -- Accomplishment Details Logic --
+const {
+  isOpen: isAccomplishModalOpen,
+  isLoading: isAccomplishLoading,
+  isError: isAccomplishError,
+  data: selectedAccomplish,
+  open: fetchAccomplishDetails,
+  close: closeAccomplishModal,
+} = useDetailsModal({ baseUrl: "/accomplishment" });
+// Auto-handle 'open' parameter on mount
+onMountedHandleParameter("open", fetchAccomplishDetails);
 
 // Form field configuration for editing an accomplishment
-const editFormFields = useEditAccomplishmentFormFields(selectedDetails);
+const editFormFields = useEditAccomplishmentFormFields(selectedAccomplish);
 
 // edit accomplishment modal state
 const handleEditAccomplish = () => {
-  if (!selectedDetails.value) return;
+  if (!selectedAccomplish.value) return;
   isFormModalOpen.value = true;
-  isDetailsModalOpen.value = false;
+  isAccomplishModalOpen.value = false;
 };
 const closeAllModal = () => {
   isFormModalOpen.value = false;
@@ -99,12 +107,12 @@ const closeAllModal = () => {
 
 // control edit back button visibility
 const showBackButtonInEdit = computed(() => {
-  return isFormModalOpen.value && selectedDetails.value !== null;
+  return isFormModalOpen.value && selectedAccomplish.value !== null;
 });
 // handle edit back navigation
 const handleBackFromEdit = () => {
   isFormModalOpen.value = false;
-  isDetailsModalOpen.value = true;
+  isAccomplishModalOpen.value = true;
 };
 
 // -- Edit Accomplishment Flow --
@@ -122,7 +130,7 @@ const handleEditSubmit = () => {
   pendingAction.value = () => {
     isConfirmLoading.value = true;
     editAccomplishForm.post(
-      route("accomplishment.update", selectedDetails.value.id),
+      route("accomplishment.update", selectedAccomplish.value.id),
       {
         preserveScroll: true,
         onSuccess: () => {
@@ -144,69 +152,9 @@ const handleEditSubmit = () => {
   isConfirmModalOpen.value = true;
 };
 
-//
-const fetchAccomplishDetails = async (accomplishmentId) => {
-  isDetailsLoading.value = true;
-  isDetailsModalOpen.value = true;
-  selectedDetails.value = null;
-  isDetailsError.value = false;
-
-  try {
-    const response = await axios.get(`/accomplishment/${accomplishmentId}`);
-    selectedDetails.value = response.data;
-  } catch (error) {
-    console.error("Error fetching accomplishment details:", error);
-    isDetailsError.value = true;
-  } finally {
-    await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for 1 second
-    isDetailsLoading.value = false;
-  }
-};
-// the fields to be displayed in the details modal for an accomplishment
-const accomplishDetailFields = ref([
-  { key: "task_title", label: "Task" },
-  { key: "user_name", label: "From" },
-  { key: "title", label: "Title" },
-  { key: "description", label: "Description" },
-  {
-    key: "link",
-    label: "Link",
-    formatter: (value) =>
-      value
-        ? `<a href="${value}" target="_blank" class="text-blue-500 hover:underline">${value}</a>`
-        : "N/A",
-    html: true,
-  },
-  {
-    key: "attachment",
-    label: "Attachment",
-    formatter: (attachment) => {
-      if (!attachment) return "N/A";
-      return `
-        <div class="flex items-center gap-2">
-          <i class="pi pi-paperclip text-sm"></i>
-          <a href="${attachment.url}"
-             target="_blank"
-             class="text-blue-500 hover:underline truncate"
-             download="${attachment.name}">
-            ${attachment.name}
-          </a>
-        </div>
-      `;
-    },
-    html: true,
-  },
-  { key: "created_at", label: "Submitted", formatter: longDateTime },
-]);
-// Auto-handle 'open' parameter on mount
-onMountedHandleParameter("open", fetchAccomplishDetails);
-
 // Handler for viewing accomplishment details and details modal function
 const handleViewDetails = (accomplishment) => {
   fetchAccomplishDetails(accomplishment.id);
-};
-const closeDetailsModal = () => {
-  isDetailsModalOpen.value = false;
 };
 
 // core logic for the super_admin filter
@@ -361,25 +309,21 @@ const showEditButton = computed(() => {
   if (isSuperAdmin) {
     return false;
   }
-
   // 2. Must have selected task details
-  if (!selectedDetails.value) {
+  if (!selectedAccomplish.value) {
     return false;
   }
-
   // 3. Must be in "own" tab
   if (props.activeTab !== "own") {
     return false;
   }
-
   // 4. Must be his own accomplishment
-  if (selectedDetails.value.user?.id !== authUser.value?.id) {
+  if (selectedAccomplish.value.user?.id !== authUser.value?.id) {
     return false;
   }
-
   // 5. Must be in the same date as today
   const formattedDate = formatDate(
-    selectedDetails.value.created_at,
+    selectedAccomplish.value.created_at,
     "yyyy-MM-dd"
   );
   if (formattedDate !== today.value) {
@@ -560,13 +504,13 @@ const handleExport = async () => {
 
     <!-- Accomplishment Details Modal -->
     <DetailsModal
-      :isOpen="isDetailsModalOpen"
-      :item="selectedDetails"
-      :loading="isDetailsLoading"
-      :error="isDetailsError"
+      :isOpen="isAccomplishModalOpen"
+      :item="selectedAccomplish"
+      :loading="isAccomplishLoading"
+      :error="isAccomplishError"
       title="ACCOMPLISH DETAILS"
       :fields="accomplishDetailFields"
-      @close="closeDetailsModal"
+      @close="closeAccomplishModal"
     >
       <template #custom-buttons>
         <button
