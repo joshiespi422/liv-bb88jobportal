@@ -1,6 +1,6 @@
 <script setup>
-import { computed, h, ref } from "vue";
-import { usePage, router, Link } from "@inertiajs/vue3";
+import { computed, ref } from "vue";
+import { usePage, Link } from "@inertiajs/vue3";
 import {
   formatDate,
   longDate,
@@ -10,6 +10,10 @@ import DataTable from "../Components/DataTable.vue";
 import DetailsModal from "../Components/modals/DetailsModal.vue";
 import LocationMap from "../Components/LocationMap.vue";
 import { useDetailsModal } from "../Composables/useDetailsModal";
+import {
+  useTodayListColumns,
+  useDeptAttendanceColumns,
+} from "../Data/tableColumns";
 
 // logged in user data
 const page = usePage();
@@ -38,40 +42,6 @@ const tabs = computed(() => {
   ];
 });
 
-// tanstack table columns definition for today list
-const todayListColumns = [
-  {
-    accessorKey: "name",
-    header: "NAME",
-  },
-  {
-    accessorKey: "department",
-    header: "DEPARTMENT",
-  },
-  {
-    accessorKey: "position",
-    header: "POSITION",
-  },
-  {
-    header: "DATE",
-    accessorFn: (row) => formatDate(row.date),
-  },
-  {
-    id: "details",
-    header: "DETAILS",
-    cell: ({ row }) =>
-      h(
-        "button",
-        {
-          onClick: () => openLogModal(row.original.id, row.original.date),
-          class:
-            "btn btn-sm @sm:btn-md rounded-full bg-green-primary-1 text-white hover:bg-green-primary-3",
-        },
-        "View Details"
-      ),
-    enableSorting: false,
-  },
-];
 // --- Individual Log Details ---
 const {
   isOpen: isLogModalOpen,
@@ -85,6 +55,8 @@ const {
   fetcher: (userId, date) =>
     axios.get(route("attendance.show", { id: userId, date })),
 });
+// tanstack table columns definition for today list
+const todayListColumns = useTodayListColumns({ openLogModal });
 const showMap = ref(false);
 const visibleIps = ref({});
 const toggleIpVisibility = (logIndex) => {
@@ -118,32 +90,6 @@ const handleBackFromLog = () => {
   isDeptLogModalOpen.value = true;
 };
 
-// tanstack table columns definition for all department attendance
-const deptAttendanceColumns = [
-  {
-    accessorKey: "department",
-    header: "DEPARTMENT",
-  },
-  {
-    header: "DATE",
-    accessorFn: (row) => longDate(row.date),
-  },
-  {
-    id: "details",
-    header: "DETAILS",
-    cell: ({ row }) =>
-      h(
-        "button",
-        {
-          onClick: () => openDeptLogModal(row.original.id, row.original.date),
-          class:
-            "btn btn-sm @sm:btn-md rounded-full bg-green-primary-1 text-white hover:bg-green-primary-3",
-        },
-        "View Details"
-      ),
-    enableSorting: false,
-  },
-];
 // --- Department Log Details ---
 const {
   isOpen: isDeptLogModalOpen,
@@ -157,7 +103,10 @@ const {
   fetcher: (deptId, date) =>
     axios.get(route("attendance.show.dept", { deptId, date })),
 });
-
+// tanstack table columns definition for all department attendance
+const deptAttendanceColumns = useDeptAttendanceColumns({
+  openDeptLogModal,
+});
 const hideCloseBtn = computed(() => {
   return props.activeTab !== "today";
 });

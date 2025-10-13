@@ -1,7 +1,6 @@
 <script setup>
-import { ref, h, computed } from "vue";
+import { ref, computed } from "vue";
 import { useForm, usePage, router } from "@inertiajs/vue3";
-import { formatDate } from "../Composables/useDateFormatter";
 import DataTable from "../Components/DataTable.vue";
 import DetailsModal from "../Components/modals/DetailsModal.vue";
 import FormModal from "../Components/modals/FormModal.vue";
@@ -10,6 +9,7 @@ import ListBox from "../Components/ListBox.vue";
 import { useEmployeeFormFields } from "../Data/forms/employeeFormFields";
 import { useDetailsModal } from "../Composables/useDetailsModal";
 import { employeeDetailFields } from "../Data/detailFields";
+import { useEmployeeColumns } from "../Data/tableColumns";
 
 // Props received from Inertia
 const props = defineProps({
@@ -143,36 +143,7 @@ const customDetails = computed(() => {
 });
 
 // Tanstack Table columns definition
-const employeeTableColumns = [
-  {
-    accessorKey: "name",
-    header: "NAME",
-    size: 200,
-  },
-  {
-    accessorKey: "deptName",
-    header: "DEPARTMENT",
-  },
-  {
-    accessorKey: "hierarchy",
-    header: "HIERARCHY",
-  },
-  {
-    id: "details",
-    header: "DETAILS",
-    cell: ({ row }) =>
-      h(
-        "button",
-        {
-          onClick: () => handleViewDetails(row.original),
-          class:
-            "btn btn-sm @sm:btn-md rounded-full bg-green-primary-1 text-white hover:bg-green-primary-3",
-        },
-        "View Details"
-      ),
-    enableSorting: false,
-  },
-];
+const employeeTableColumns = useEmployeeColumns({ handleViewDetails });
 </script>
 
 <template>

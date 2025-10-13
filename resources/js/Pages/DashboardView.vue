@@ -1,16 +1,13 @@
 <script setup>
-import { computed, h, onMounted, onUnmounted, ref, watch, reactive } from "vue";
+import { computed, onMounted, onUnmounted, ref, watch, reactive } from "vue";
 import { usePage, router, useForm } from "@inertiajs/vue3";
 import DataTable from "../Components/DataTable.vue";
-import {
-  formatDate,
-  formatTime,
-  shortDate,
-} from "../Composables/useDateFormatter";
+import { formatDate, formatTime } from "../Composables/useDateFormatter";
 import LocationMap from "../Components/LocationMap.vue";
 import Combobox from "../Components/fields/ComboBox.vue";
 import ConfirmModal from "../Components/modals/ConfirmModal.vue";
 import { useToast } from "../Composables/useToast";
+import { attendanceColumns, onlineUsersColumns } from "../Data/tableColumns";
 
 // logged in user data
 const page = usePage();
@@ -156,62 +153,6 @@ const confirmTimeOut = (timeLogId) => {
     }
   );
 };
-
-// Tanstack Table columns definition for attendance
-const attendanceColumns = [
-  {
-    header: "DATE",
-    accessorFn: (row) => shortDate(row.date),
-  },
-  {
-    header: "FIRST IN",
-    accessorFn: (row) =>
-      row.firstIn !== "N/A" ? formatTime(row.firstIn) : "N/A",
-  },
-  {
-    header: "1ST BREAK",
-    accessorFn: (row) =>
-      row.secondIn !== "N/A" ? formatTime(row.secondIn) : "N/A",
-  },
-  {
-    header: "LUNCH",
-    accessorFn: (row) =>
-      row.thirdIn !== "N/A" ? formatTime(row.thirdIn) : "N/A",
-  },
-  {
-    header: "2ND BREAK",
-    accessorFn: (row) =>
-      row.fourthIn !== "N/A" ? formatTime(row.fourthIn) : "N/A",
-  },
-  {
-    header: "LAST OUT",
-    accessorFn: (row) =>
-      row.lastOut !== "N/A" ? formatTime(row.lastOut) : "N/A",
-  },
-];
-
-// Tanstack Table columns definition for online users
-const onlineUsersColumns = [
-  {
-    accessorKey: "name",
-    header: "NAME",
-  },
-  {
-    accessorKey: "department",
-    header: "DEPARTMENT",
-  },
-  {
-    accessorKey: "position",
-    header: "POSITION",
-  },
-  {
-    accessorKey: "status",
-    header: "STATUS",
-    // Custom cell render to apply green text style
-    cell: ({ getValue }) =>
-      h("span", { class: "font-bold text-green-600" }, getValue()),
-  },
-];
 
 // Auto-refresh logic
 let refreshInterval = null;

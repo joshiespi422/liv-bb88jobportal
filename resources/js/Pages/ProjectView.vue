@@ -19,6 +19,7 @@ import {
   taskDetailFields,
   accomplishDetailFields,
 } from "../Data/detailFields";
+import { projectTableColumns } from "../Data/tableColumns";
 
 const props = defineProps({
   projects: {
@@ -443,32 +444,6 @@ const handleViewAccomplish = (accomplishmentId) => {
   isTaskDetailsOpen.value = false;
   fetchAccomplishDetails(accomplishmentId);
 };
-
-// Tanstack Table columns definition
-const projectTableColumns = [
-  {
-    accessorKey: "title",
-    header: "TITLE",
-  },
-  {
-    accessorKey: "description",
-    header: "DESCRIPTION",
-  },
-  {
-    id: "assignees",
-    accessorFn: (row) => row.assignees.map((a) => a.name).join(", "),
-    header: "ASSIGNEES",
-  },
-  {
-    accessorFn: (row) => longDate(row.created_at),
-    id: "started-date",
-    header: "STARTED DATE",
-  },
-  {
-    accessorFn: (row) => row.departments.join(", "),
-    header: "DEPARTMENTS",
-  },
-];
 
 // Assignee info
 const renderAssignees = (assignees, maximum = 3) => {

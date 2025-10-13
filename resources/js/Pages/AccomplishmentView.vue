@@ -1,7 +1,7 @@
 <script setup>
-import { ref, h, computed, reactive } from "vue";
+import { ref, computed, reactive } from "vue";
 import { useForm, usePage, router, Link } from "@inertiajs/vue3";
-import { formatDate, longDateTime } from "../Composables/useDateFormatter";
+import { formatDate } from "../Composables/useDateFormatter";
 import { useUrlParameter } from "../Composables/useUrlParameter";
 import { useExcelExporter } from "../Composables/useExcelExporter";
 import { onClickOutside } from "@vueuse/core";
@@ -14,6 +14,7 @@ import ConfirmModal from "../Components/modals/ConfirmModal.vue";
 import { useEditAccomplishmentFormFields } from "../Data/forms/accomplishmentFormFields";
 import { useDetailsModal } from "../Composables/useDetailsModal";
 import { accomplishDetailFields } from "../Data/detailFields";
+import { useAccomplishmentColumns } from "../Data/tableColumns";
 import VueDatePicker from "@vuepic/vue-datepicker";
 import "@vuepic/vue-datepicker/dist/main.css";
 
@@ -213,74 +214,8 @@ const tabs = computed(() => {
 });
 
 // table columns tanstack definition
-const accomplishTableColumns = computed(() => {
-  const columns = [];
-
-  // Conditionally add "FROM" column for All Accomplishments tab
-  if (props.activeTab === "all") {
-    columns.push({
-      id: "employee",
-      header: "FROM",
-      accessorFn: (row) => row.user.name,
-      cell: ({ cell }) => {
-        const userPicture = cell.row.original.user.picture;
-        return h(
-          "span",
-          {
-            class: "flex items-center justify-center gap-2",
-          },
-          [
-            h("img", {
-              src: userPicture || "/profile-images/default.png",
-              class: "avatar w-10 rounded-full",
-            }),
-            h(
-              "span",
-              {
-                class: "truncate",
-              },
-              cell.getValue()
-            ),
-          ]
-        );
-      },
-    });
-  }
-
-  // Common columns
-  columns.push(
-    {
-      accessorKey: "task_title",
-      header: "TASK",
-    },
-    {
-      accessorKey: "title",
-      header: "TITLE",
-    },
-    {
-      header: "SUBMITTED",
-      accessorFn: (row) => longDateTime(row.created_at),
-      id: "started-date",
-      cell: ({ cell }) => h("span", {}, cell.getValue()),
-    },
-    {
-      id: "details",
-      header: "DETAILS",
-      cell: ({ row }) =>
-        h(
-          "button",
-          {
-            onClick: () => handleViewDetails(row.original),
-            class:
-              "btn btn-sm @sm:btn-md rounded-full bg-green-primary-1 text-white hover:bg-green-primary-3",
-          },
-          "View Details"
-        ),
-      enableSorting: false,
-    }
-  );
-
-  return columns;
+const accomplishTableColumns = useAccomplishmentColumns(props, {
+  handleViewDetails,
 });
 // for date picker
 const showDateFilter = ref(false);

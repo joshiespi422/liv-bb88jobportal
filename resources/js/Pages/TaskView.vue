@@ -1,7 +1,7 @@
 <script setup>
-import { ref, h, computed, reactive, watch } from "vue";
+import { ref, computed, reactive, watch } from "vue";
 import { useForm, usePage, router, Link } from "@inertiajs/vue3";
-import { shortDateTime, longDate } from "../Composables/useDateFormatter";
+import { shortDateTime } from "../Composables/useDateFormatter";
 import { useUrlParameter } from "../Composables/useUrlParameter";
 import DataTable from "../Components/DataTable.vue";
 import ListBox from "../Components/ListBox.vue";
@@ -15,6 +15,7 @@ import {
 } from "../Data/forms/taskFormFields";
 import { useDetailsModal } from "../Composables/useDetailsModal";
 import { taskDetailFields, accomplishDetailFields } from "../Data/detailFields";
+import { useTaskColumns } from "../Data/tableColumns";
 
 const props = defineProps({
   tasks: {
@@ -533,128 +534,7 @@ const tabs = computed(() => {
 });
 
 // Tanstack Table columns definition
-const taskTableColumns = [
-  {
-    accessorKey: "title",
-    header: "TITLE",
-  },
-  {
-    id: "assignees",
-    size: 220,
-    accessorFn: (row) => row.assignees.map((a) => a.name).join(", "),
-    header: "ASSIGNEES",
-    cell: ({ row }) => {
-      let assignees = [...row.original.assignees];
-
-      if (!assignees || assignees.length === 0) {
-        return h("span", { class: "text-gray-400 italic" }, "Unassigned");
-      }
-
-      // Move the current user to the top of the list
-      const currentUserIndex = assignees.findIndex(
-        (a) => a.id === authUser.value.id
-      );
-      if (currentUserIndex > -1) {
-        const currentUser = assignees.splice(currentUserIndex, 1)[0];
-        assignees.unshift(currentUser);
-      }
-
-      const visibleAssignees = assignees.slice(0, 3);
-      const hiddenAssigneesCount = assignees.length - visibleAssignees.length;
-
-      return h(
-        "div",
-        {
-          class: "avatar-group p-1 -space-x-4 flex justify-center",
-        },
-        [
-          ...visibleAssignees.map((assignee) =>
-            h(
-              "div",
-              {
-                class: "cursor-pointer hover:z-10 hover:scale-110",
-                "data-tippy-content": assignee.name,
-                key: assignee.id,
-              },
-              [
-                h("div", { class: "avatar" }, [
-                  h("div", { class: "w-10 @sm:w-12 bg-neutral" }, [
-                    h("img", {
-                      src: assignee.picture || "/profile-images/default.png",
-                      alt: assignee.name,
-                    }),
-                  ]),
-                ]),
-              ]
-            )
-          ),
-          hiddenAssigneesCount > 0
-            ? h(
-                "div",
-                {
-                  class:
-                    "avatar cursor-pointer hover:z-10 hover:scale-110 avatar-placeholder flex-none",
-                  "data-tippy-content": `${hiddenAssigneesCount} more`,
-                },
-                [
-                  h(
-                    "div",
-                    { class: "w-10 @sm:w-12 bg-neutral text-neutral-content" },
-                    [`+${hiddenAssigneesCount}`]
-                  ),
-                ]
-              )
-            : null,
-        ]
-      );
-    },
-  },
-  {
-    header: "STARTED",
-    accessorFn: (row) => longDate(row.created_at),
-    id: "started-date",
-    cell: ({ cell }) => {
-      return h("span", {}, cell.getValue());
-    },
-  },
-  {
-    header: "STATUS",
-    accessorKey: "status",
-    cell: ({ row }) => {
-      const status = row.original.status;
-      const badgeClass = statusColor[status] || "badge-primary";
-      return h(
-        "span",
-        {
-          class: `badge badge-soft ${badgeClass} text-sm px-3.5 py-3.5`,
-        },
-        status
-      );
-    },
-  },
-  {
-    id: "details",
-    header: "DETAILS",
-    cell: ({ row }) =>
-      h(
-        "button",
-        {
-          onClick: () => handleViewDetails(row.original),
-          class:
-            "btn btn-sm @sm:btn-md rounded-full bg-green-primary-1 text-white hover:bg-green-primary-3",
-        },
-        "View Details"
-      ),
-    enableSorting: false,
-  },
-];
-
-const statusColor = {
-  "in progress": "badge-accent",
-  "for approval": "badge-info",
-  done: "badge-success",
-  revision: "badge-error",
-};
+const taskTableColumns = useTaskColumns(authUser, { handleViewDetails });
 
 const capitalizedType = computed(() => {
   if (!props.currentType) return "";

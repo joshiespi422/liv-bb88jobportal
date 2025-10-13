@@ -1,7 +1,6 @@
 <script setup>
-import { ref, computed, h, reactive, watch } from "vue";
+import { ref, computed, reactive, watch } from "vue";
 import { usePage, router, useForm, Link } from "@inertiajs/vue3";
-import { longDate } from "../Composables/useDateFormatter";
 import { useUrlParameter } from "../Composables/useUrlParameter";
 import DataTable from "../Components/DataTable.vue";
 import ListBox from "../Components/ListBox.vue";
@@ -14,6 +13,7 @@ import {
 } from "../Data/forms/leaveFormFields";
 import { useDetailsModal } from "../Composables/useDetailsModal";
 import { getLeaveDetailFields } from "../Data/detailFields";
+import { useLeaveColumns } from "../Data/tableColumns";
 
 const props = defineProps({
   leaves: {
@@ -324,78 +324,7 @@ const tabs = computed(() => {
 });
 
 // Tanstack Table columns definition
-const leaveTableColumns = [
-  {
-    id: "employee",
-    header: "EMPLOYEE",
-    accessorFn: (row) => row.user.name,
-    cell: ({ cell }) => {
-      const userPicture = cell.row.original.user.picture;
-      return h(
-        "span",
-        {
-          class: "flex items-center justify-center gap-2",
-        },
-        [
-          h("img", {
-            src: userPicture || "/profile-images/default.png",
-            class: "avatar w-10 rounded-full",
-          }),
-          h(
-            "span",
-            {
-              class: "truncate",
-            },
-            cell.getValue()
-          ),
-        ]
-      );
-    },
-  },
-  {
-    header: "SUBMITTED",
-    accessorFn: (row) => longDate(row.created_at),
-    id: "submitted-date",
-    cell: ({ cell }) => {
-      return h("span", {}, cell.getValue());
-    },
-  },
-  {
-    header: "STATUS",
-    accessorKey: "status",
-    cell: ({ row }) => {
-      const status = row.original.status;
-      const badgeClass = statusColor[status] || "badge-primary";
-      return h(
-        "span",
-        {
-          class: `badge badge-soft ${badgeClass} text-sm px-3.5 py-3.5`,
-        },
-        status
-      );
-    },
-  },
-  {
-    id: "details",
-    header: "DETAILS",
-    cell: ({ row }) =>
-      h(
-        "button",
-        {
-          onClick: () => handleViewDetails(row.original.id),
-          class:
-            "btn btn-sm @sm:btn-md rounded-full bg-green-primary-1 text-white hover:bg-green-primary-3",
-        },
-        "View Details"
-      ),
-    enableSorting: false,
-  },
-];
-const statusColor = {
-  pending: "badge-accent",
-  approved: "badge-success",
-  rejected: "badge-error",
-};
+const leaveTableColumns = useLeaveColumns({ handleViewDetails });
 
 const showRequestButton = computed(() => {
   const isSuperAdmin = authUser.value?.userType === "super_admin";
