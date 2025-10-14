@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, reactive, watch } from "vue";
 import { usePage, useForm } from "@inertiajs/vue3";
-import { longDate, shortDateTime } from "../Composables/useDateFormatter";
+import { longDate } from "../Composables/useDateFormatter";
 import { useUrlParameter } from "../Composables/useUrlParameter";
 import DataTable from "../Components/DataTable.vue";
 import DetailsModal from "../Components/modals/DetailsModal.vue";
@@ -20,6 +20,8 @@ import {
   accomplishDetailFields,
 } from "../Data/detailFields";
 import { projectTableColumns } from "../Data/tableColumns";
+import TaskPanel from "../Components/modals/TaskPanel.vue";
+import ProjectPanel from "../Components/modals/ProjectPanel.vue";
 
 const props = defineProps({
   projects: {
@@ -129,6 +131,15 @@ const {
 } = useDetailsModal({ baseUrl: "/task" });
 // state for showing revision reason
 const showReviseReason = ref(false);
+// watchers for updating comment form
+watch(selectedTask, (newTask) => {
+  if (newTask && newTask.id) {
+    commentForm.commentable_id = newTask.id;
+    commentForm.message = "";
+  } else {
+    commentForm.reset();
+  }
+});
 
 // -- Accomplishment Details Logic
 const {
@@ -316,15 +327,6 @@ const handleCommentSubmit = () => {
 
   isConfirmModalOpen.value = true;
 };
-// Handle enter key press
-const handleEnterKey = (event) => {
-  if (event.key === "Enter" && !event.shiftKey) {
-    event.preventDefault();
-    if (commentForm.message.trim()) {
-      handleCommentSubmit();
-    }
-  }
-};
 
 // -- New Project Flow --
 const handleNewProjectSubmit = () => {
@@ -413,20 +415,6 @@ const statusClassMap = {
   "in progress": "text-accent",
   pending: "text-info",
 };
-const priorityClassMap = {
-  low: "text-info",
-  medium: "text-accent",
-  high: "text-error",
-};
-function getFieldClass(field, item) {
-  if (field.key === "status") {
-    return statusClassMap[item.status] || "";
-  }
-  if (field.key === "priority") {
-    return priorityClassMap[item.priority] || "";
-  }
-  return "";
-}
 const toggleReviseReason = () => {
   showReviseReason.value = !showReviseReason.value;
 };
@@ -639,173 +627,17 @@ const showResolveButton = computed(() => {
       title="PROJECT DETAILS"
       :fields="projectDetailFields"
       :panel-class="'w-full max-w-4xl'"
+      layout-type="default2"
       @close="closeProjectDetails"
     >
-      <!-- Custom Skeleton -->
-      <template #skeleton="{ skeletonFieldCount }">
-        <div
-          class="grid grid-cols-1 @2xl:grid-cols-[2fr_2fr] gap-4 py-6 px-0 @2xl:px-3"
-        >
-          <div class="space-y-3">
-            <div
-              v-for="i in skeletonFieldCount"
-              :key="`custom-skel-${i}`"
-              class="grid grid-cols-[1fr_3fr] gap-2 items-center"
-            >
-              <div class="skeleton h-6 @2xl:h-8 w-full" />
-              <div class="skeleton h-6 @2xl:h-8 w-full" />
-            </div>
-          </div>
-          <div class="rounded-xl bg-base-200 p-3">
-            <div
-              class="collapse collapse-plus bg-base-100 border border-base-300"
-            >
-              <input type="radio" name="my-accordion-1" checked="checked" />
-              <div class="collapse-title text-sm font-medium">
-                <div class="skeleton h-6 @2xl:h-8 w-full" />
-              </div>
-              <div class="collapse-content space-y-1">
-                <div class="skeleton h-6 @2xl:h-8 w-full" />
-                <div class="skeleton h-6 @2xl:h-8 w-full" />
-              </div>
-            </div>
-            <div
-              class="collapse collapse-plus bg-base-100 border border-base-300"
-            >
-              <input type="radio" name="my-accordion-2" checked="checked" />
-              <div class="collapse-title text-sm font-medium">
-                <div class="skeleton h-6 @2xl:h-8 w-full" />
-              </div>
-              <div class="collapse-content space-y-1">
-                <div class="skeleton h-6 @2xl:h-8 w-full" />
-                <div class="skeleton h-6 @2xl:h-8 w-full" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </template>
-
       <!-- Custom Content Layout -->
-      <template #content="{ item, getFieldValue }">
-        <div
-          class="grid grid-cols-1 @2xl:grid-cols-[2fr_2fr] gap-4 py-6 px-0 @2xl:px-3"
-        >
-          <div class="space-y-3">
-            <div
-              v-for="field in projectDetailFields"
-              :key="field.key"
-              class="grid grid-cols-[1.5fr_4fr] gap-2 items-center"
-            >
-              <label class="block text-sm font-bold">
-                {{ field.label }}
-              </label>
-
-              <p
-                class="text-sm bg-base-200 rounded-xl px-3 py-2 font-medium text-wrap truncate"
-              >
-                {{ getFieldValue(item, field) }}
-              </p>
-            </div>
-          </div>
-          <div class="rounded-xl bg-base-200 p-0 @sm:p-2 @2xl:p-3">
-            <div
-              class="collapse collapse-plus bg-base-100 border border-base-300"
-            >
-              <input type="radio" name="my-accordion-3" checked="checked" />
-              <div class="collapse-title font-semibold">Tasks List</div>
-              <div class="collapse-content text-sm px-2 @sm:px-4">
-                <ul
-                  class="list bg-base-200 rounded-box shadow-md overflow-y-auto max-h-40 list-scroll"
-                  v-if="item.tasks && item.tasks.length"
-                >
-                  <li
-                    v-for="task in item.tasks"
-                    :key="task.id"
-                    class="list-row gap-0 hover:bg-base-300 hover:cursor-pointer"
-                    @click="handleViewTask(task.id)"
-                  >
-                    <div>
-                      <div class="font-semibold truncate">
-                        {{ task.title }}
-                      </div>
-                      <div
-                        v-if="task.assignees && task.assignees.length > 0"
-                        class="avatar-group p-1 -space-x-1"
-                      >
-                        <div
-                          v-for="assignee in renderAssignees(task.assignees, 5)
-                            .visibleAssignees"
-                          class="avatar w-8 h-8 flex-none border-0 bg-neutral hover:z-10 hover:-mt-1 transition-all duration-200"
-                        >
-                          <div>
-                            <img :src="assignee.picture" />
-                          </div>
-                        </div>
-
-                        <div
-                          v-if="
-                            renderAssignees(task.assignees, 5).hiddenCount > 0
-                          "
-                          class="avatar w-8 h-8 flex-none border-0 placeholder hover:z-10 hover:-mt-1 transition-all duration-200"
-                        >
-                          <div class="bg-neutral text-neutral-content">
-                            <span class="font-bold flex mt-1.5 justify-center"
-                              >+{{
-                                renderAssignees(task.assignees).hiddenCount
-                              }}</span
-                            >
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </li>
-                </ul>
-                <div
-                  v-else
-                  role="alert"
-                  class="alert alert-warning alert-soft font-semibold"
-                >
-                  <span>No tasks found</span>
-                </div>
-              </div>
-            </div>
-            <div
-              class="collapse collapse-plus bg-base-100 border border-base-300 mt-1"
-            >
-              <input type="radio" name="my-accordion-3" />
-              <div class="collapse-title font-semibold">Issues List</div>
-              <div class="collapse-content text-sm">
-                <ul
-                  class="list bg-base-200 rounded-box shadow-md overflow-y-auto max-h-40 list-scroll"
-                  v-if="item.issues && item.issues.length"
-                >
-                  <li
-                    v-for="issue in item.issues"
-                    :key="issue.id"
-                    class="list-row hover:bg-base-300 hover:cursor-pointer"
-                    @click="handleViewIssue(issue.id)"
-                  >
-                    <div>
-                      <div class="font-semibold truncate">
-                        {{ issue.user_name }}
-                      </div>
-                      <div class="text-xs uppercase font-semibold opacity-60">
-                        {{ issue.title }}
-                      </div>
-                    </div>
-                  </li>
-                </ul>
-                <div
-                  v-else
-                  role="alert"
-                  class="alert alert-warning alert-soft font-semibold"
-                >
-                  <span>No issues found</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+      <template #right-panel="{ item }">
+        <ProjectPanel
+          :project="item"
+          :auth-user="authUser"
+          @view-task="handleViewTask"
+          @view-issue="handleViewIssue"
+        />
       </template>
     </DetailsModal>
 
@@ -847,217 +679,61 @@ const showResolveButton = computed(() => {
       title="TASK DETAILS"
       :fields="taskDetailFields"
       :panel-class="'w-full max-w-4xl'"
+      layout-type="default2"
       @close="closeTaskDetails(), (showReviseReason = false)"
     >
-      <!-- Custom Skeleton -->
-      <template #skeleton="{ skeletonFieldCount }">
-        <div
-          class="grid grid-cols-1 @2xl:grid-cols-[1.5fr_2.5fr] @3xl:grid-cols-[2fr_2fr] gap-4 py-6 px-0 @2xl:px-3"
-        >
-          <div class="space-y-3">
-            <div
-              v-for="i in skeletonFieldCount"
-              :key="`custom-skel-${i}`"
-              class="grid grid-cols-[1fr_3fr] gap-2 items-center"
-            >
-              <div class="skeleton h-6 @2xl:h-8 w-full" />
-              <div class="skeleton h-6 @2xl:h-8 w-full" />
-            </div>
+      <template #field-status="{ item }">
+        <div>
+          <div
+            class="text-sm bg-base-200 rounded-xl px-3 py-2 font-medium truncate flex justify-between"
+          >
+            <span :class="statusClassMap[item.status]">{{
+              item.status || "N/A"
+            }}</span>
+            <i
+              v-if="item.status === 'revision'"
+              class="pi pi-info-circle text-xl text-error cursor-pointer ml-2"
+              @click="toggleReviseReason"
+            ></i>
           </div>
-          <div class="rounded-xl bg-base-200 p-3">
+          <!-- Revision reason row (appears below status) -->
+          <transition
+            enter-active-class="transition-all duration-300 ease-out"
+            leave-active-class="transition-all duration-200 ease-in"
+            enter-from-class="opacity-0 max-h-0"
+            enter-to-class="opacity-100 max-h-20"
+            leave-from-class="opacity-100 max-h-20"
+            leave-to-class="opacity-0 max-h-0"
+          >
             <div
-              class="collapse collapse-plus bg-base-100 border border-base-300"
+              v-if="item && item.status === 'revision' && showReviseReason"
+              class="grid grid-cols-1 gap-4 items-center overflow-hidden"
             >
-              <input type="radio" name="my-accordion-1" checked="checked" />
-              <div class="collapse-title text-sm font-medium">
-                <div class="skeleton h-6 @2xl:h-8 w-full" />
-              </div>
-              <div class="collapse-content space-y-1">
-                <div class="skeleton h-6 @2xl:h-8 w-full" />
-                <div class="skeleton h-6 @2xl:h-8 w-full" />
+              <div
+                class="text-sm bg-base-200 rounded-xl px-3 py-2 mt-2 overflow-hidden space-y-2"
+              >
+                <label class="block text-sm font-bold">
+                  Reason for Revision:
+                </label>
+                <p class="truncate font-medium text-error">
+                  {{ item.revise_reason || "No reason provided" }}
+                </p>
               </div>
             </div>
-            <div
-              class="collapse collapse-plus bg-base-100 border border-base-300"
-            >
-              <input type="radio" name="my-accordion-2" checked="checked" />
-              <div class="collapse-title text-sm font-medium">
-                <div class="skeleton h-6 @2xl:h-8 w-full" />
-              </div>
-              <div class="collapse-content space-y-1">
-                <div class="skeleton h-6 @2xl:h-8 w-full" />
-                <div class="skeleton h-6 @2xl:h-8 w-full" />
-              </div>
-            </div>
-          </div>
+          </transition>
         </div>
       </template>
 
-      <!-- Custom Content Layout -->
-      <template #content="{ item, getFieldValue }">
-        <div
-          class="grid grid-cols-1 @2xl:grid-cols-[1.5fr_2.5fr] @3xl:grid-cols-[2fr_2fr] gap-4 py-6 px-0 @2xl:px-3"
-        >
-          <div class="space-y-3">
-            <div
-              v-for="field in taskDetailFields"
-              :key="field.key"
-              class="grid grid-cols-1 @3xl:grid-cols-[1fr_4fr] gap-1 @3xl:gap-2"
-            >
-              <label class="block text-sm font-bold mt-0 @3xl:mt-2">
-                {{ field.label }}
-              </label>
-
-              <!-- Status field with click handler -->
-              <div v-if="field.key === 'status'">
-                <div
-                  class="text-sm bg-base-200 rounded-xl px-3 py-2 font-medium truncate flex justify-between"
-                >
-                  <span :class="statusClassMap[item.status]">{{
-                    item.status || "N/A"
-                  }}</span>
-                  <i
-                    v-if="item.status === 'revision'"
-                    class="pi pi-info-circle text-xl text-error cursor-pointer ml-2"
-                    @click="toggleReviseReason"
-                  ></i>
-                </div>
-                <!-- Revision reason row (appears below status) -->
-                <transition
-                  enter-active-class="transition-all duration-300 ease-out"
-                  leave-active-class="transition-all duration-200 ease-in"
-                  enter-from-class="opacity-0 max-h-0"
-                  enter-to-class="opacity-100 max-h-20"
-                  leave-from-class="opacity-100 max-h-20"
-                  leave-to-class="opacity-0 max-h-0"
-                >
-                  <div
-                    v-if="
-                      item && item.status === 'revision' && showReviseReason
-                    "
-                    class="grid grid-cols-1 gap-4 items-center overflow-hidden"
-                  >
-                    <div
-                      class="text-sm bg-base-200 rounded-xl px-3 py-2 mt-2 overflow-hidden space-y-2"
-                    >
-                      <label class="block text-sm font-bold">
-                        Reason for Revision:
-                      </label>
-                      <p class="truncate font-medium text-error">
-                        {{ item.revise_reason || "No reason provided" }}
-                      </p>
-                    </div>
-                  </div>
-                </transition>
-              </div>
-
-              <p
-                v-else
-                :class="[
-                  'text-sm bg-base-200 rounded-xl px-3 py-2 font-medium text-wrap truncate',
-                  getFieldClass(field, item),
-                ]"
-              >
-                {{ getFieldValue(item, field) }}
-              </p>
-            </div>
-          </div>
-          <div class="rounded-xl bg-base-200 @sm:p-2 @3xl:p-3">
-            <div
-              class="collapse collapse-plus bg-base-100 border border-base-300"
-            >
-              <input type="radio" name="my-accordion-3" checked="checked" />
-              <div class="collapse-title font-semibold">History Updates</div>
-              <div class="collapse-content text-sm px-2 @sm:px-4">
-                <ul
-                  class="list bg-base-200 rounded-box shadow-md overflow-y-auto max-h-60 list-scroll"
-                  v-if="item.accomplishments && item.accomplishments.length"
-                >
-                  <li
-                    v-for="accomplishment in item.accomplishments"
-                    :key="accomplishment.id"
-                    class="list-row gap-0 hover:bg-base-300 hover:cursor-pointer"
-                    @click="handleViewAccomplish(accomplishment.id)"
-                  >
-                    <div>
-                      <div class="font-semibold truncate">
-                        {{ accomplishment.user_name }}
-                      </div>
-                      <div
-                        class="text-xs uppercase font-semibold opacity-60 truncate"
-                      >
-                        {{ accomplishment.title }}
-                      </div>
-                    </div>
-                  </li>
-                </ul>
-                <div
-                  v-else
-                  role="alert"
-                  class="alert alert-warning alert-soft font-semibold"
-                >
-                  <span>No accomplishment found</span>
-                </div>
-              </div>
-            </div>
-            <div
-              class="collapse collapse-plus bg-base-100 border border-base-300 mt-1"
-            >
-              <input type="radio" name="my-accordion-3" />
-              <div class="collapse-title font-semibold">Comments</div>
-              <div class="collapse-content text-sm px-2 @sm:px-4">
-                <ul
-                  class="list bg-base-200 rounded-box shadow-md overflow-y-auto max-h-full @3xl:max-h-60 list-scroll"
-                >
-                  <!-- Comments list -->
-                  <li
-                    v-for="comment in selectedTask.comments"
-                    :key="comment.id"
-                    class="list-row gap-0 p-2 pe-0"
-                  >
-                    <div class="chat chat-start">
-                      <div class="chat-image avatar">
-                        <div class="w-8 @4xl:w-10 rounded-full">
-                          <img
-                            :src="comment.user_picture"
-                            :alt="comment.user_name"
-                          />
-                        </div>
-                      </div>
-
-                      <div class="chat-bubble max-w-full whitespace-pre-wrap">
-                        {{ comment.message }}
-                        <div class="text-xs opacity-50">
-                          {{ comment.user_name }} -
-                          {{ shortDateTime(comment.created_at) }}
-                        </div>
-                      </div>
-                    </div>
-                  </li>
-
-                  <div class="m-3 grid grid-cols-[4fr_1fr]">
-                    <textarea
-                      v-model="commentForm.message"
-                      @keydown="handleEnterKey"
-                      placeholder="Write a comment..."
-                      class="textarea textarea-primary min-h-4 w-full textarea-sm"
-                      required
-                    ></textarea>
-                    <div class="flex justify-center items-center">
-                      <button
-                        @click="handleCommentSubmit"
-                        :disabled="!commentForm.message.trim()"
-                        class="btn btn-sm @md:btn-md btn-circle btn-primary"
-                      >
-                        <i class="pi pi-send text-lg" />
-                      </button>
-                    </div>
-                  </div>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
+      <template #right-panel="{ item }">
+        <TaskPanel
+          :task="item"
+          :comment-message="commentForm.message"
+          :comment-error="commentForm.errors.message"
+          @update:comment-message="commentForm.message = $event"
+          @clear-comment-error="commentForm.clearErrors('message')"
+          @submit-comment="handleCommentSubmit"
+          @view-accomplishment="handleViewAccomplish"
+        />
       </template>
 
       <template #custom-buttons>
@@ -1165,17 +841,3 @@ const showResolveButton = computed(() => {
     </FormModal>
   </div>
 </template>
-
-<style scoped>
-.list-scroll::-webkit-scrollbar {
-  width: 6px;
-}
-.list-scroll::-webkit-scrollbar-thumb {
-  border-radius: 3px;
-  background-color: var(--color-green-primary-1);
-}
-.list-scroll::-webkit-scrollbar-track {
-  margin: 6px;
-  background-color: transparent;
-}
-</style>

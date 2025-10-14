@@ -41,6 +41,11 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  layoutType: {
+    type: String,
+    default: "default",
+    validator: (value) => ["default", "default2"].includes(value),
+  },
 });
 
 const emit = defineEmits(["close"]);
@@ -72,6 +77,27 @@ const skeletonFieldCount = computed(() => {
 });
 
 const focusElement = ref(null);
+
+const statusClassMap = {
+  done: "text-success",
+  revision: "text-error",
+  "in progress": "text-accent",
+  pending: "text-info",
+};
+const priorityClassMap = {
+  low: "text-info",
+  medium: "text-accent",
+  high: "text-error",
+};
+function getFieldClass(field, item) {
+  if (field.key === "status") {
+    return statusClassMap[item.status] || "";
+  }
+  if (field.key === "priority") {
+    return priorityClassMap[item.priority] || "";
+  }
+  return "";
+}
 </script>
 
 <template>
@@ -122,7 +148,7 @@ const focusElement = ref(null);
               <div v-if="loading">
                 <slot name="skeleton" :skeletonFieldCount="skeletonFieldCount">
                   <!-- Default Skeleton -->
-                  <div class="space-y-4 my-5">
+                  <div v-if="layoutType === 'default'" class="space-y-4 my-5">
                     <div
                       v-for="i in skeletonFieldCount"
                       :key="`skeleton-field-${i}`"
@@ -130,6 +156,56 @@ const focusElement = ref(null);
                     >
                       <div class="skeleton h-5 @sm:h-7 w-1/3 @sm:w-full"></div>
                       <div class="skeleton h-6 @sm:h-7 w-full"></div>
+                    </div>
+                  </div>
+                  <!-- Default2 Skeleton -->
+                  <div
+                    v-else-if="layoutType === 'default2'"
+                    class="grid grid-cols-1 @2xl:grid-cols-[1.5fr_2.5fr] @3xl:grid-cols-[2fr_2fr] gap-4 py-6 px-0 @2xl:px-3"
+                  >
+                    <div class="space-y-3">
+                      <div
+                        v-for="i in skeletonFieldCount"
+                        :key="`custom-skel-${i}`"
+                        class="grid grid-cols-[1fr_3fr] gap-2 items-center"
+                      >
+                        <div class="skeleton h-6 @2xl:h-8 w-full" />
+                        <div class="skeleton h-6 @2xl:h-8 w-full" />
+                      </div>
+                    </div>
+                    <div class="rounded-xl bg-base-200 p-3">
+                      <div
+                        class="collapse collapse-plus bg-base-100 border border-base-300"
+                      >
+                        <input
+                          type="radio"
+                          name="my-accordion-1"
+                          checked="checked"
+                        />
+                        <div class="collapse-title text-sm font-medium">
+                          <div class="skeleton h-6 @2xl:h-8 w-full" />
+                        </div>
+                        <div class="collapse-content space-y-1">
+                          <div class="skeleton h-6 @2xl:h-8 w-full" />
+                          <div class="skeleton h-6 @2xl:h-8 w-full" />
+                        </div>
+                      </div>
+                      <div
+                        class="collapse collapse-plus bg-base-100 border border-base-300"
+                      >
+                        <input
+                          type="radio"
+                          name="my-accordion-2"
+                          checked="checked"
+                        />
+                        <div class="collapse-title text-sm font-medium">
+                          <div class="skeleton h-6 @2xl:h-8 w-full" />
+                        </div>
+                        <div class="collapse-content space-y-1">
+                          <div class="skeleton h-6 @2xl:h-8 w-full" />
+                          <div class="skeleton h-6 @2xl:h-8 w-full" />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </slot>
@@ -143,7 +219,7 @@ const focusElement = ref(null);
                   :getFieldValue="getFieldValue"
                 >
                   <!-- Default Content -->
-                  <div class="space-y-4 my-5">
+                  <div v-if="layoutType === 'default'" class="space-y-4 my-5">
                     <div
                       v-for="field in fields"
                       :key="field.key"
@@ -168,6 +244,41 @@ const focusElement = ref(null);
                         {{ getFieldValue(item, field) }}
                       </p>
                     </div>
+                  </div>
+
+                  <!-- Default2 Content -->
+                  <div
+                    v-if="layoutType === 'default2'"
+                    class="grid grid-cols-1 @2xl:grid-cols-[1.5fr_2.5fr] @3xl:grid-cols-[2fr_2fr] gap-4 py-6 px-0 @2xl:px-3"
+                  >
+                    <div class="space-y-3">
+                      <div
+                        v-for="field in fields"
+                        :key="field.key"
+                        class="grid grid-cols-1 @3xl:grid-cols-[1fr_4fr] gap-1 @3xl:gap-2"
+                      >
+                        <label class="block text-sm font-bold mt-0 @3xl:mt-2">
+                          {{ field.label }}
+                        </label>
+
+                        <slot
+                          :name="`field-${field.key}`"
+                          :item="item"
+                          :getFieldValue="getFieldValue"
+                        >
+                          <p
+                            :class="[
+                              'text-sm bg-base-200 rounded-xl px-3 py-2 font-medium text-wrap truncate',
+                              getFieldClass(field, item),
+                            ]"
+                          >
+                            {{ getFieldValue(item, field) }}
+                          </p>
+                        </slot>
+                      </div>
+                    </div>
+
+                    <slot name="right-panel" :item="item" />
                   </div>
                 </slot>
               </div>

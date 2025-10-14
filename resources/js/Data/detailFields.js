@@ -33,7 +33,11 @@ const attachFormatter = (attachment) => {
 
 export const accomplishDetailFields = [
   { key: "task_title", label: "Task" },
-  { key: "user_name", label: "From" },
+  {
+    key: "user",
+    label: "From",
+    formatter: (user) => (user ? user.name : "N/A"),
+  },
   { key: "title", label: "Title" },
   { key: "description", label: "Description" },
   {
