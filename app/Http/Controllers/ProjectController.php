@@ -75,6 +75,7 @@ class ProjectController extends Controller
             $assignees = $project->tasks->flatMap(fn($task) => $task->users)
                 ->unique('id')
                 ->map(fn($assignee) => [
+                    'id' => $assignee->id,
                     'name' => $assignee->name,
                     'picture' => $assignee->picture
                         ? Storage::url($assignee->picture)

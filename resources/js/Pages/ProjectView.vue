@@ -22,6 +22,8 @@ import {
 import { projectTableColumns } from "../Data/tableColumns";
 import TaskPanel from "../Components/modals/TaskPanel.vue";
 import ProjectPanel from "../Components/modals/ProjectPanel.vue";
+import AssigneeGroup from "../Components/AssigneeGroup.vue";
+import { statusText } from "../Composables/useClassMap";
 
 const props = defineProps({
   projects: {
@@ -409,12 +411,6 @@ const handleViewTask = (taskId) => {
   showReviseReason.value = false;
   fetchTaskDetails(taskId);
 };
-const statusClassMap = {
-  done: "text-success",
-  revision: "text-error",
-  "in progress": "text-accent",
-  pending: "text-info",
-};
 const toggleReviseReason = () => {
   showReviseReason.value = !showReviseReason.value;
 };
@@ -433,28 +429,6 @@ const handleViewAccomplish = (accomplishmentId) => {
   fetchAccomplishDetails(accomplishmentId);
 };
 
-// Assignee info
-const renderAssignees = (assignees, maximum = 3) => {
-  if (!assignees || assignees.length === 0) {
-    return [];
-  }
-
-  // Move current user to top (same logic as table)
-  let sortedAssignees = [...assignees];
-  const currentUserIndex = sortedAssignees.findIndex(
-    (a) => a.id === authUser.value.id
-  );
-  if (currentUserIndex > -1) {
-    const currentUser = sortedAssignees.splice(currentUserIndex, 1)[0];
-    sortedAssignees.unshift(currentUser);
-  }
-
-  const visibleAssignees = sortedAssignees.slice(0, maximum);
-  const hiddenCount = sortedAssignees.length - visibleAssignees.length;
-
-  return { visibleAssignees, hiddenCount };
-};
-
 const showResolveButton = computed(() => {
   const isSuperAdmin = authUser.value?.userType === "super_admin";
   const selectedStatus = selectedIssue.value?.status;
@@ -463,12 +437,10 @@ const showResolveButton = computed(() => {
   if (!isSuperAdmin) {
     return false;
   }
-
   // 2. Must have selected issue details
   if (!selectedIssue.value) {
     return false;
   }
-
   // 3. Must be in "pending" status
   if (selectedStatus !== "pending") {
     return false;
@@ -540,50 +512,7 @@ const showResolveButton = computed(() => {
               <div class="flex justify-between items-center overflow-hidden">
                 <!-- Assignees Avatar Group -->
                 <div class="flex-1">
-                  <div
-                    v-if="row.assignees && row.assignees.length > 0"
-                    class="avatar-group p-1 -space-x-3"
-                  >
-                    <!-- Visible assignees -->
-                    <div
-                      v-for="assignee in renderAssignees(row.assignees)
-                        .visibleAssignees"
-                      class="avatar border-0 bg-neutral w-9 h-9 @sm:w-11 @sm:h-11 cursor-pointer hover:z-10 hover:scale-110 transition-transform"
-                      :data-tippy-content="assignee.name"
-                    >
-                      <div>
-                        <img
-                          :src="
-                            assignee.picture || '/profile-images/default.png'
-                          "
-                          :alt="assignee.name"
-                        />
-                      </div>
-                    </div>
-
-                    <!-- Counter for hidden assignees -->
-                    <div
-                      v-if="renderAssignees(row.assignees).hiddenCount > 0"
-                      class="avatar w-9 h-9 @sm:w-11 @sm:h-11 border-0 placeholder cursor-pointer hover:z-10 hover:scale-110 transition-transform"
-                      :data-tippy-content="`${
-                        renderAssignees(row.assignees).hiddenCount
-                      } more assignees`"
-                    >
-                      <div class="bg-neutral text-neutral-content">
-                        <span
-                          class="font-bold flex mt-1.5 @sm:mt-2.5 justify-center"
-                          >+{{
-                            renderAssignees(row.assignees).hiddenCount
-                          }}</span
-                        >
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- No assignees state -->
-                  <div v-else class="text-gray-400 italic text-sm">
-                    Unassigned
-                  </div>
+                  <AssigneeGroup :assignees="row.assignees" />
                 </div>
 
                 <!-- View details button -->
@@ -687,7 +616,7 @@ const showResolveButton = computed(() => {
           <div
             class="text-sm bg-base-200 rounded-xl px-3 py-2 font-medium truncate flex justify-between"
           >
-            <span :class="statusClassMap[item.status]">{{
+            <span :class="statusText[item.status]">{{
               item.status || "N/A"
             }}</span>
             <i

@@ -1,4 +1,6 @@
 import { h, computed } from "vue";
+import AssigneeGroup from "../Components/AssigneeGroup.vue";
+import { statusBadge } from "../Composables/useClassMap";
 import {
   longDateTime,
   longDate,
@@ -6,16 +8,6 @@ import {
   formatTime,
   formatDate,
 } from "../Composables/useDateFormatter";
-
-const statusColor = {
-  "in progress": "badge-accent",
-  "for approval": "badge-info",
-  done: "badge-success",
-  revision: "badge-error",
-  pending: "badge-accent",
-  approved: "badge-success",
-  rejected: "badge-error",
-};
 
 /**
  * @param {Object} props - The component's props (specifically `activeTab`).
@@ -113,71 +105,18 @@ export function useTaskColumns(authUser, { handleViewDetails }) {
       accessorFn: (row) => row.assignees.map((a) => a.name).join(", "),
       header: "ASSIGNEES",
       cell: ({ row }) => {
-        let assignees = [...row.original.assignees];
-
-        if (!assignees || assignees.length === 0) {
+        // If there are no assignees
+        if (!row.original.assignees || row.original.assignees.length === 0) {
           return h("span", { class: "text-gray-400 italic" }, "Unassigned");
         }
 
-        // Move the current user to the top of the list
-        const currentUserIndex = assignees.findIndex(
-          (a) => a.id === authUser.value.id
-        );
-        if (currentUserIndex > -1) {
-          const currentUser = assignees.splice(currentUserIndex, 1)[0];
-          assignees.unshift(currentUser);
-        }
-
-        const visibleAssignees = assignees.slice(0, 3);
-        const hiddenAssigneesCount = assignees.length - visibleAssignees.length;
-
-        return h(
-          "div",
-          {
-            class: "avatar-group p-1 -space-x-4 flex justify-center",
-          },
-          [
-            ...visibleAssignees.map((assignee) =>
-              h(
-                "div",
-                {
-                  class: "cursor-pointer hover:z-10 hover:scale-110",
-                  "data-tippy-content": assignee.name,
-                  key: assignee.id,
-                },
-                [
-                  h("div", { class: "avatar" }, [
-                    h("div", { class: "w-10 @sm:w-12 bg-neutral" }, [
-                      h("img", {
-                        src: assignee.picture || "/profile-images/default.png",
-                        alt: assignee.name,
-                      }),
-                    ]),
-                  ]),
-                ]
-              )
-            ),
-            hiddenAssigneesCount > 0
-              ? h(
-                  "div",
-                  {
-                    class:
-                      "avatar cursor-pointer hover:z-10 hover:scale-110 avatar-placeholder flex-none",
-                    "data-tippy-content": `${hiddenAssigneesCount} more`,
-                  },
-                  [
-                    h(
-                      "div",
-                      {
-                        class: "w-10 @sm:w-12 bg-neutral text-neutral-content",
-                      },
-                      [`+${hiddenAssigneesCount}`]
-                    ),
-                  ]
-                )
-              : null,
-          ]
-        );
+        // Render the AssigneeGroup component using h()
+        return h(AssigneeGroup, {
+          assignees: row.original.assignees,
+          maxVisible: 3,
+          avatarSizeClass: "w-10 h-10 @sm:w-12 @sm:h-12",
+          spacingClass: "flex justify-center -space-x-4",
+        });
       },
     },
     {
@@ -193,7 +132,7 @@ export function useTaskColumns(authUser, { handleViewDetails }) {
       accessorKey: "status",
       cell: ({ row }) => {
         const status = row.original.status;
-        const badgeClass = statusColor[status] || "badge-primary";
+        const badgeClass = statusBadge[status] || "badge-primary";
         return h(
           "span",
           {
@@ -297,7 +236,7 @@ export function useLeaveColumns({ handleViewDetails }) {
       accessorKey: "status",
       cell: ({ row }) => {
         const status = row.original.status;
-        const badgeClass = statusColor[status] || "badge-primary";
+        const badgeClass = statusBadge[status] || "badge-primary";
         return h(
           "span",
           {

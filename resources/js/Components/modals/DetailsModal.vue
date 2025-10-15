@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref } from "vue";
+import { getTextClass } from "../../Composables/useClassMap";
 import {
   Dialog,
   DialogPanel,
@@ -77,27 +78,6 @@ const skeletonFieldCount = computed(() => {
 });
 
 const focusElement = ref(null);
-
-const statusClassMap = {
-  done: "text-success",
-  revision: "text-error",
-  "in progress": "text-accent",
-  pending: "text-info",
-};
-const priorityClassMap = {
-  low: "text-info",
-  medium: "text-accent",
-  high: "text-error",
-};
-function getFieldClass(field, item) {
-  if (field.key === "status") {
-    return statusClassMap[item.status] || "";
-  }
-  if (field.key === "priority") {
-    return priorityClassMap[item.priority] || "";
-  }
-  return "";
-}
 </script>
 
 <template>
@@ -269,7 +249,7 @@ function getFieldClass(field, item) {
                           <p
                             :class="[
                               'text-sm bg-base-200 rounded-xl px-3 py-2 font-medium text-wrap truncate',
-                              getFieldClass(field, item),
+                              getTextClass(field, item),
                             ]"
                           >
                             {{ getFieldValue(item, field) }}

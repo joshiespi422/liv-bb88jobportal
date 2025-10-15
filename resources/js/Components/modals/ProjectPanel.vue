@@ -1,4 +1,6 @@
 <script setup>
+import AssigneeGroup from "../AssigneeGroup.vue";
+
 const props = defineProps({
   project: {
     type: Object,
@@ -11,28 +13,6 @@ const props = defineProps({
 });
 
 const emit = defineEmits(["view-task", "view-issue"]);
-
-// Assignee info
-const renderAssignees = (assignees, maximum = 3) => {
-  if (!assignees || assignees.length === 0) {
-    return [];
-  }
-
-  // Move current user to top (same logic as table)
-  let sortedAssignees = [...assignees];
-  const currentUserIndex = sortedAssignees.findIndex(
-    (a) => a.id === props.authUser.id
-  );
-  if (currentUserIndex > -1) {
-    const currentUser = sortedAssignees.splice(currentUserIndex, 1)[0];
-    sortedAssignees.unshift(currentUser);
-  }
-
-  const visibleAssignees = sortedAssignees.slice(0, maximum);
-  const hiddenCount = sortedAssignees.length - visibleAssignees.length;
-
-  return { visibleAssignees, hiddenCount };
-};
 </script>
 
 <template>
@@ -55,31 +35,12 @@ const renderAssignees = (assignees, maximum = 3) => {
               <div class="font-semibold truncate">
                 {{ task.title }}
               </div>
-              <div
-                v-if="task.assignees && task.assignees.length > 0"
-                class="avatar-group p-1 -space-x-1"
-              >
-                <div
-                  v-for="assignee in renderAssignees(task.assignees, 5)
-                    .visibleAssignees"
-                  class="avatar w-8 h-8 flex-none border-0 bg-neutral hover:z-10 hover:-mt-1 transition-all duration-200"
-                >
-                  <div>
-                    <img :src="assignee.picture" />
-                  </div>
-                </div>
-
-                <div
-                  v-if="renderAssignees(task.assignees, 5).hiddenCount > 0"
-                  class="avatar w-8 h-8 flex-none border-0 placeholder hover:z-10 hover:-mt-1 transition-all duration-200"
-                >
-                  <div class="bg-neutral text-neutral-content">
-                    <span class="font-bold flex mt-1.5 justify-center"
-                      >+{{ renderAssignees(task.assignees).hiddenCount }}</span
-                    >
-                  </div>
-                </div>
-              </div>
+              <AssigneeGroup
+                :assignees="task.assignees"
+                :max-visible="5"
+                avatar-size-class="w-8 h-8"
+                spacing-class="-space-x-1"
+              />
             </div>
           </li>
         </ul>

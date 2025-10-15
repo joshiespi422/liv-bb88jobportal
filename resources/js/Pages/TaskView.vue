@@ -16,6 +16,7 @@ import {
 import { useDetailsModal } from "../Composables/useDetailsModal";
 import { taskDetailFields, accomplishDetailFields } from "../Data/detailFields";
 import { useTaskColumns } from "../Data/tableColumns";
+import { statusText } from "../Composables/useClassMap";
 
 const props = defineProps({
   tasks: {
@@ -439,12 +440,6 @@ const handleViewDetails = (task) => {
   showReviseReason.value = false;
   fetchTaskDetails(task.id);
 };
-const statusClassMap = {
-  done: "text-success",
-  revision: "text-error",
-  "in progress": "text-accent",
-  pending: "text-info",
-};
 const toggleReviseReason = () => {
   showReviseReason.value = !showReviseReason.value;
 };
@@ -755,7 +750,7 @@ const showNewButton = computed(() => {
           <div
             class="text-sm bg-base-200 rounded-xl px-3 py-2 font-medium truncate flex justify-between"
           >
-            <span :class="statusClassMap[item.status]">{{
+            <span :class="statusText[item.status]">{{
               item.status || "N/A"
             }}</span>
             <i

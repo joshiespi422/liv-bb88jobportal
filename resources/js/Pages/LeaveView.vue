@@ -14,6 +14,7 @@ import {
 import { useDetailsModal } from "../Composables/useDetailsModal";
 import { getLeaveDetailFields } from "../Data/detailFields";
 import { useLeaveColumns } from "../Data/tableColumns";
+import { statusText } from "../Composables/useClassMap";
 
 const props = defineProps({
   leaves: {
@@ -277,12 +278,6 @@ const handleViewDetails = (leaveId) => {
   showRejectReason.value = false;
   fetchLeaveDetails(leaveId);
 };
-const statusClassMap = {
-  approved: "text-success",
-  rejected: "text-error",
-  pending: "text-accent",
-};
-
 // core logic for the super_admin filter
 const selectedDepartment = computed({
   // GET: This runs on initial load and whenever props change.
@@ -492,7 +487,7 @@ const showValidateButton = computed(() => {
             <div
               class="text-sm bg-base-200 rounded-xl px-3 py-2 font-medium truncate flex justify-between"
             >
-              <span :class="statusClassMap[item.status]">{{
+              <span :class="statusText[item.status]">{{
                 item.status || "N/A"
               }}</span>
               <i
