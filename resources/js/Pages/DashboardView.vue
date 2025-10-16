@@ -49,10 +49,10 @@ const isTimeLoading = ref(false);
 // The time-in function that gets location and sends data
 const handleTimeIn = () => {
   if (authUser.value.userType === "super_admin") return;
+  isTimeLoading.value = true;
   if ("geolocation" in navigator) {
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        isTimeLoading.value = true;
         timeInform.latitude = position.coords.latitude;
         timeInform.longitude = position.coords.longitude;
         // Now send the form data to the backend
@@ -67,20 +67,31 @@ const handleTimeIn = () => {
           },
           onFinish: () => {
             timeInform.reset();
-            isTimeLoading.value = false;
+            setTimeout(() => {
+              isTimeLoading.value = false;
+            }, 1000);
           },
         });
       },
       (geolocationError) => {
         if (geolocationError.code === geolocationError.PERMISSION_DENIED) {
           error("Location access is required for time in");
+          setTimeout(() => {
+            isTimeLoading.value = false;
+          }, 1000);
         } else {
           error("Error getting location: " + geolocationError.message);
+          setTimeout(() => {
+            isTimeLoading.value = false;
+          }, 1000);
         }
       }
     );
   } else {
     error("Geolocation is not supported by your browser");
+    setTimeout(() => {
+      isTimeLoading.value = false;
+    }, 1000);
   }
 };
 

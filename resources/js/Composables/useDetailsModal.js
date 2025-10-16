@@ -52,7 +52,7 @@ export function useDetailsModal({ baseUrl, fetcher }) {
       console.error("Error fetching details:", error);
       isError.value = true;
     } finally {
-      await new Promise((resolve) => setTimeout(resolve, 600));
+      // await new Promise((resolve) => setTimeout(resolve, 500));
       isLoading.value = false;
     }
   };

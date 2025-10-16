@@ -14,6 +14,8 @@ use App\Models\TimeLog;
 use App\Http\Requests\StoreTimeInRequest;
 use App\Http\Requests\CheckTimeOutRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class DashboardController extends Controller
 {
@@ -262,16 +264,41 @@ class DashboardController extends Controller
      */
     public function store(StoreTimeInRequest $request)
     {
-        $user = $request->user();
+        $userId = $request->user()->id;
 
-        // The request has already been validated and passed all business rules
-        $user->timeLogs()->create([
-            'time_in' => now()->format('H:i:s'),
-            'date' => now()->toDateString(),
-            'ip_address' => $request->ip(),
-            'latitude' => $request->latitude,
-            'longitude' => $request->longitude,
-        ]);
+        try {
+            DB::transaction(function () use ($request, $userId) {
+                // lock the user row to prevent other requests for this user from proceeding
+                $user = User::lockForUpdate()->findOrFail($userId);
+                $today = now()->toDateString();
+
+                // perform the critical check INSIDE the transaction
+                $hasOpenTimeLog = $user->timeLogs()
+                                    ->where('date', $today)
+                                    ->whereNull('time_out')
+                                    ->exists();
+
+                if ($hasOpenTimeLog) {
+                    // if a log exists, manually fail the validation
+                    throw ValidationException::withMessages([
+                        'time_in' => "You've already timed in for today.",
+                    ]);
+                }
+
+                // if the check passes, create the new time log
+                $user->timeLogs()->create([
+                    'time_in' => now()->format('H:i:s'),
+                    'date' => $today,
+                    'ip_address' => $request->ip(),
+                    'latitude' => $request->latitude,
+                    'longitude' => $request->longitude,
+                ]);
+
+            }, 5); // the number of times to retry the transaction if a deadlock occurs
+
+        } catch (ValidationException $e) {
+            throw $e;
+        }
 
         return back()->with('success', 'Time in recorded successfully!');
     }
