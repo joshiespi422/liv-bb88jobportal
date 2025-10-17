@@ -11,7 +11,7 @@ createInertiaApp({
   resolve: (name) => {
     const pages = import.meta.glob("./Pages/**/*.vue", { eager: true });
     const page = pages[`./Pages/${name}.vue`];
-
+    // fallback layout
     if (page.default.layout === undefined) {
       page.default.layout = AppLayout;
     }
@@ -19,6 +19,11 @@ createInertiaApp({
     return page;
   },
   setup({ el, App, props, plugin }) {
+    // always unmount any existing app to prevent duplicate hydration
+    if (el.__vue_app__) {
+      el.__vue_app__.unmount();
+    }
+
     const app = createApp({ render: () => h(App, props) });
     app.use(plugin);
     app.use(ZiggyVue);
