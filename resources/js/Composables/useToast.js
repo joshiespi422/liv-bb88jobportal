@@ -17,6 +17,7 @@ export function useToast() {
 
   return {
     toasts,
+    removeToast,
     showToast,
     success: (message, duration) => showToast(message, "success", duration),
     error: (message, duration) => showToast(message, "error", duration),

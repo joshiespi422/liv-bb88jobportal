@@ -2,7 +2,11 @@
 import Toast from "./Toast.vue";
 import { useToast } from "../../Composables/useToast";
 
-const { toasts } = useToast();
+const { toasts, removeToast } = useToast();
+
+const handleClose = (id) => {
+  removeToast(id);
+};
 </script>
 
 <template>
@@ -12,5 +16,6 @@ const { toasts } = useToast();
     :type="toast.type"
     :message="toast.message"
     :duration="toast.duration"
+    @close="handleClose(toast.id)"
   />
 </template>
