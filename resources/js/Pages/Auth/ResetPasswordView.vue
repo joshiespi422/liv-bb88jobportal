@@ -27,6 +27,7 @@ const submit = () => {
 </script>
 
 <template>
+  <Head title="Reset Password" />
   <main
     class="bg-[url('../assets/img/login-bg.png')] h-screen flex items-center justify-center"
   >

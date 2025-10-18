@@ -252,6 +252,7 @@ const closeQrModal = () => {
 </script>
 
 <template>
+  <Head title="Profile" />
   <div class="p-2 @lg:p-4 @3xl:p-8 @5xl:p-10 @7xl:p-12">
     <div
       class="border-4 border-green-primary-1 max-w-6xl mx-auto rounded-3xl shadow-xl/20 overflow-hidden"

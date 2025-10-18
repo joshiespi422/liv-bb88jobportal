@@ -14,6 +14,7 @@ defineProps({
 </script>
 
 <template>
+  <Head title="User Info" />
   <div
     class="@container flex items-center justify-center min-h-screen bg-gray-200"
   >

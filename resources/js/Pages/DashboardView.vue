@@ -262,6 +262,7 @@ watch(selectedUser, (newUser) => {
 </script>
 
 <template>
+  <Head title="Dashboard" />
   <div class="p-2 @lg:p-4 @3xl:p-8 @5xl:p-10 @7xl:p-12">
     <div
       v-if="authUser?.userType !== 'super_admin'"

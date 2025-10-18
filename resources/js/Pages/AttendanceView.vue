@@ -117,6 +117,7 @@ const attendanceTitle = computed(() => {
 </script>
 
 <template>
+  <Head title="Attendance" />
   <div class="p-2 @lg:p-4 @3xl:p-8 @5xl:p-10 @7xl:p-12">
     <h1
       class="text-lg @sm:text-2xl @4xl:text-3xl font-bold text-center @2xl:text-start mb-3 @2xl:mb-5"

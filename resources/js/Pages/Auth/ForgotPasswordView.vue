@@ -69,6 +69,7 @@ const submit = () => {
 </script>
 
 <template>
+  <Head title="Forgot Password" />
   <main
     class="bg-[url('../assets/img/login-bg.png')] bg-cover bg-center h-screen flex items-center justify-center"
   >

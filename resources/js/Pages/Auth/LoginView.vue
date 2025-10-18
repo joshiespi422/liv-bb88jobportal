@@ -20,6 +20,7 @@ const handleLogin = () => {
 </script>
 
 <template>
+  <Head title="Login" />
   <main
     class="bg-[url('../assets/img/login-bg.png')] bg-cover bg-center h-screen flex items-center justify-center"
   >
