@@ -245,26 +245,32 @@ class TaskController extends Controller
         
         if (!$isLeader && $user->userType->type_name !== 'super_admin') {
             abort(403, 'not authorized');
-        } elseif ($task->status->status_name !== 'for approval') {
-            abort(403, 'task is not for approval');
         }
 
         // Validation
         $request->validate([
-            'status' => 'required|in:done,revision',
+            'status' => 'required|in:done,revision,dropped',
             'revise_reason' => 'nullable|required_if:status,revision|string|max:1000',
+            'drop_reason' => 'nullable|required_if:status,dropped|string|max:1000',
         ]);
+        // extra validation for done status
+        if ($request->status === 'done' && !$task->accomplishments()->exists()) {
+            return back()->withErrors(['status' => 'Task cannot be marked as done without accomplishments.']);
+        }
 
         // Logic
         DB::transaction(function () use ($request, $task) {
             $newStatus = Status::where('status_name', $request->status)->firstOrFail();
             $task->status_id = $newStatus->id;
 
-            // If status is 'revision', save the reason. Otherwise, clear it.
+            // If status is 'revision', or 'dropped', save the reason. Otherwise, clear it.
             if ($request->status === 'revision') {
                 $task->revise_reason = $request->revise_reason;
-            } else {
-                $task->revise_reason = null; // Clear reason if marked as done
+            }elseif ($request->status === 'dropped') {
+                $task->drop_reason = $request->drop_reason;
+            }else {
+                $task->revise_reason = null; 
+                $task->drop_reason = null;
             }
 
             $task->save();

@@ -26,6 +26,7 @@ return new class extends Migration
             ['id' => 6, 'status_name' => 'approved'],
             ['id' => 7, 'status_name' => 'rejected'], 
             ['id' => 8, 'status_name' => 'resolved'],
+            ['id' => 9, 'status_name' => 'dropped']
         ]);
     }
 

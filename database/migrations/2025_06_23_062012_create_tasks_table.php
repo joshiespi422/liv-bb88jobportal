@@ -22,6 +22,7 @@ return new class extends Migration
             $table->string('collateral');
             $table->enum('priority', ['high', 'medium', 'low'])->default('low');
             $table->text('revise_reason')->nullable();
+            $table->text('drop_reason')->nullable();
             $table->timestamps();
         });
     }

@@ -541,7 +541,6 @@ const showUpdateButton = computed(() => {
 const showValidateButton = computed(() => {
   const isSuperAdmin = authUser.value?.userType === "super_admin";
   const isLeader = authUser.value?.hierarchy === "Leader";
-  const selectedStatus = selectedTask.value?.status;
 
   // 1. Must be super admin or leader
   if (!isSuperAdmin && !isLeader) {
@@ -553,10 +552,6 @@ const showValidateButton = computed(() => {
   }
   // 3. Must be in "active" tab
   if (props.activeTab !== "active") {
-    return false;
-  }
-  // 4. Must be in "for approval" status
-  if (selectedStatus !== "for approval") {
     return false;
   }
 

@@ -189,6 +189,7 @@ export function useValidateTaskFormFields(form, selectedDetails) {
           options: [
             { value: "done", label: "Mark as Done" },
             { value: "revision", label: "For Revision" },
+            { value: "dropped", label: "Drop" },
           ],
         },
       },
@@ -198,6 +199,18 @@ export function useValidateTaskFormFields(form, selectedDetails) {
       fields.push({
         key: "revise_reason",
         label: "Reason for Revision",
+        component: TextArea,
+        attrs: {
+          required: true,
+          placeholder: "Please provide a reason",
+        },
+      });
+    }
+
+    if (form.status === "dropped") {
+      fields.push({
+        key: "drop_reason",
+        label: "Reason for Dropping",
         component: TextArea,
         attrs: {
           required: true,
