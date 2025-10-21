@@ -102,7 +102,7 @@ class TaskController extends Controller
     {
         // For performance, you could consider caching these status/type lookups
         $userTypeId = UserType::where('type_name', $taskType)->value('id');
-        $statuses = Status::whereIn('status_name', ['in progress', 'for approval', 'done', 'revision'])->pluck('id', 'status_name');
+        $statuses = Status::whereIn('status_name', ['in progress', 'for approval', 'done', 'revision', 'dropped'])->pluck('id', 'status_name');
 
         $query = Task::with(['users:id,name,picture', 'status:id,status_name'])
             ->select('id', 'title', 'created_at', 'priority', 'status_id')
@@ -110,6 +110,7 @@ class TaskController extends Controller
             ->where('user_type_id', $userTypeId);
 
         $activeStatuses = [$statuses['in progress'], $statuses['for approval'], $statuses['revision']];
+        $archivedStatuses = [$statuses['done'], $statuses['dropped']];
 
         // Apply tab-specific filters
         switch ($activeTab) {
@@ -119,7 +120,7 @@ class TaskController extends Controller
             case 'active':
                 return $query->whereIn('status_id', $activeStatuses);
             case 'archived':
-                return $query->where('status_id', $statuses['done']);
+                return $query->whereIn('status_id', $archivedStatuses);
             default:
                 return $query;
         }
@@ -358,6 +359,7 @@ class TaskController extends Controller
             'priority' => $task->priority,
             'status' => $task->status->status_name,
             'revise_reason' => $task->revise_reason,
+            'drop_reason' => $task->drop_reason,
             'assignees' => $task->users->map(fn ($user) => [
                 'id' => $user->id,
                 'name' => $user->name

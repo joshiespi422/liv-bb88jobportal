@@ -5,6 +5,8 @@ export const statusText = {
   pending: "text-accent",
   approved: "text-success",
   rejected: "text-error",
+  "for approval": "text-info",
+  dropped: "text-error",
 };
 export const priorityText = {
   low: "text-info",
@@ -29,4 +31,5 @@ export const statusBadge = {
   pending: "badge-accent",
   approved: "badge-success",
   rejected: "badge-error",
+  dropped: "badge-error",
 };

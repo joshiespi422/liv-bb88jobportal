@@ -85,6 +85,7 @@ const updateTaskForm = useForm({
 const validateTaskForm = useForm({
   status: "",
   revise_reason: "",
+  drop_reason: "",
 });
 // new task form state
 const assigneesList = ref([]);
@@ -119,7 +120,7 @@ const {
 // Auto-handle 'open' parameter on mount
 onMountedHandleParameter("open", fetchTaskDetails);
 // state for showing revision reason
-const showReviseReason = ref(false);
+const showReasonForStatus = ref(null);
 // watchers for updating comment form
 watch(selectedTask, (newTask) => {
   if (newTask && newTask.id) {
@@ -437,11 +438,31 @@ const handleCommentSubmit = () => {
 
 // Handler for viewing task details and details modal function
 const handleViewDetails = (task) => {
-  showReviseReason.value = false;
+  showReasonForStatus.value = null;
   fetchTaskDetails(task.id);
 };
-const toggleReviseReason = () => {
-  showReviseReason.value = !showReviseReason.value;
+// Show reason for status if available
+const reasonConfig = {
+  revision: {
+    reasonKey: "revise_reason",
+    label: "Reason for Revision:",
+  },
+  dropped: {
+    reasonKey: "drop_reason",
+    label: "Reason for Dropping:",
+  },
+};
+const currentReasonConfig = computed(() => {
+  if (!showReasonForStatus.value) {
+    return null;
+  }
+  return reasonConfig[showReasonForStatus.value];
+});
+const toggleReason = (status) => {
+  if (reasonConfig[status]) {
+    showReasonForStatus.value =
+      showReasonForStatus.value === status ? null : status;
+  }
 };
 
 // Handle back navigation from accomplishment modal
@@ -739,7 +760,7 @@ const showNewButton = computed(() => {
       :fields="taskDetailFields"
       :panel-class="'w-full max-w-4xl'"
       layout-type="default2"
-      @close="closeTaskDetails(), (showReviseReason = false)"
+      @close="closeTaskDetails(), (showReasonForStatus = false)"
     >
       <template #field-status="{ item }">
         <div>
@@ -750,9 +771,9 @@ const showNewButton = computed(() => {
               item.status || "N/A"
             }}</span>
             <i
-              v-if="item.status === 'revision'"
+              v-if="reasonConfig[item.status]"
               class="pi pi-info-circle text-xl text-error cursor-pointer ml-2"
-              @click="toggleReviseReason"
+              @click="toggleReason(item.status)"
             ></i>
           </div>
           <!-- Revision reason row (appears below status) -->
@@ -765,17 +786,19 @@ const showNewButton = computed(() => {
             leave-to-class="opacity-0 max-h-0"
           >
             <div
-              v-if="item && item.status === 'revision' && showReviseReason"
+              v-if="showReasonForStatus === item.status && currentReasonConfig"
               class="grid grid-cols-1 gap-4 items-center overflow-hidden"
             >
               <div
                 class="text-sm bg-base-200 rounded-xl px-3 py-2 mt-2 overflow-hidden space-y-2"
               >
                 <label class="block text-sm font-bold">
-                  Reason for Revision:
+                  {{ currentReasonConfig.label }}
                 </label>
                 <p class="truncate font-medium text-error">
-                  {{ item.revise_reason || "No reason provided" }}
+                  {{
+                    item[currentReasonConfig.reasonKey] || "No reason provided"
+                  }}
                 </p>
               </div>
             </div>
