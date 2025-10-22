@@ -32,4 +32,9 @@ export const statusBadge = {
   approved: "badge-success",
   rejected: "badge-error",
   dropped: "badge-error",
+  active: "badge-info",
+  resigned: "badge-error",
+  terminated: "badge-error",
+  ongoing: "badge-info",
+  completed: "badge-success",
 };

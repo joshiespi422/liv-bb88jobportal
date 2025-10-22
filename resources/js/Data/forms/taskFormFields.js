@@ -169,6 +169,15 @@ export function useUpdateTaskFormFields(selectedDetails, statusOptions) {
  */
 export function useValidateTaskFormFields(form, selectedDetails) {
   return computed(() => {
+    const allStatusOptions = [
+      { value: "done", label: "Mark as Done" },
+      { value: "revision", label: "For Revision" },
+      { value: "dropped", label: "Drop" },
+    ];
+    const filteredStatusOptions = allStatusOptions.filter(
+      (opt) => opt.value !== selectedDetails.value?.status
+    );
+
     const fields = [
       {
         key: "task_title",
@@ -186,11 +195,7 @@ export function useValidateTaskFormFields(form, selectedDetails) {
         attrs: {
           required: true,
           placeholder: "Select a status",
-          options: [
-            { value: "done", label: "Mark as Done" },
-            { value: "revision", label: "For Revision" },
-            { value: "dropped", label: "Drop" },
-          ],
+          options: filteredStatusOptions,
         },
       },
     ];

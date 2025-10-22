@@ -67,6 +67,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the status that owns the user.
+     */
+    public function status(): BelongsTo
+    {
+        return $this->belongsTo(Status::class);
+    }
+
+    /**
      * Defines a one-to-one relationship with users and user_employees
      */
     public function employeeDetails(): HasOne

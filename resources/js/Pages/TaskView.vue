@@ -535,7 +535,7 @@ const tabs = computed(() => {
 });
 
 // Tanstack Table columns definition
-const taskTableColumns = useTaskColumns(authUser, { handleViewDetails });
+const taskTableColumns = useTaskColumns({ handleViewDetails });
 
 const capitalizedType = computed(() => {
   if (!props.currentType) return "";

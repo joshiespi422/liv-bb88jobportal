@@ -3,6 +3,7 @@ import { computed } from "vue";
 import TextInput from "../../Components/fields/TextInput.vue";
 import SelectInput from "../../Components/fields/SelectInput.vue";
 import PasswordInput from "../../Components/fields/PasswordInput.vue";
+import TextArea from "../../Components/fields/TextArea.vue";
 
 /**
  * @param {import('vue').ComputedRef<Object>} authUser - A computed ref for the authenticated user.
@@ -80,4 +81,56 @@ export function useEmployeeFormFields(authUser, props) {
       attrs: { required: true, placeholder: "Enter password" },
     },
   ]);
+}
+
+/**
+ * @param {import('@inertiajs/vue3').Form} form - The reactive form object from useForm.
+ * @param {import('vue').Ref<Object>} selectedEmployee - A ref to the selected employee details.
+ */
+export function useUpdateFormFields(form, selectedEmployee) {
+  return computed(() => {
+    const allStatusOptions = [
+      { value: "active", label: "Active" },
+      { value: "resigned", label: "Mark as Resigned" },
+      { value: "terminated", label: "Mark as Terminated" },
+    ];
+    const filteredStatusOptions = allStatusOptions.filter(
+      (opt) => opt.value !== selectedEmployee.value?.status
+    );
+
+    const fields = [
+      {
+        key: "employee_name",
+        label: "Selected",
+        component: TextInput,
+        attrs: {
+          disabled: true,
+          value: selectedEmployee.value?.name || "N/A",
+        },
+      },
+      {
+        key: "status",
+        label: "Status",
+        component: SelectInput,
+        attrs: {
+          required: true,
+          options: filteredStatusOptions,
+          placeholder: "Select a status",
+        },
+      },
+    ];
+
+    if (form.status === "terminated") {
+      fields.push({
+        key: "terminate_reason",
+        label: "Reason for Termination",
+        component: TextArea,
+        attrs: {
+          required: true,
+          placeholder: "Please provide a reason",
+        },
+      });
+    }
+    return fields;
+  });
 }

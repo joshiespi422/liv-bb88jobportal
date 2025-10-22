@@ -31,6 +31,11 @@ const attachFormatter = (attachment) => {
     </div>`;
 };
 
+// Formatter for capitalize first letter
+const capitalizeFirst = (string) => {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+};
+
 export const accomplishDetailFields = [
   { key: "task_title", label: "Task" },
   {
@@ -106,8 +111,10 @@ export const employeeDetailFields = [
   { key: "email", label: "Email" },
   { key: "picture", label: "Picture" },
   { key: "position", label: "Position" },
+  { key: "status", label: "Status", formatter: capitalizeFirst },
   { key: "deptName", label: "Department" },
   { key: "hierarchy", label: "Hierarchy" },
+  { key: "qrCode", label: "QR Code" },
   { key: "address", label: "Address" },
   { key: "gender", label: "Gender" },
   { key: "bday", label: "Birthday", formatter: formatDate },

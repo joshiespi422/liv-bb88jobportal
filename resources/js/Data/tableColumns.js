@@ -88,12 +88,11 @@ export function useAccomplishmentColumns(props, { handleViewDetails }) {
 }
 
 /**
- * @param {ComputedRef<Object>} authUser - A computed ref for the authenticated user.
  * @param {Object} handlers - An object containing handler functions from the parent.
  * @param {Function} handlers.handleViewDetails - The function to call when 'View Details' is clicked.
  * @returns {Array} The static column definition array.
  */
-export function useTaskColumns(authUser, { handleViewDetails }) {
+export function useTaskColumns({ handleViewDetails }) {
   return [
     {
       accessorKey: "title",
@@ -321,6 +320,21 @@ export function useEmployeeColumns({ handleViewDetails }) {
     {
       accessorKey: "hierarchy",
       header: "HIERARCHY",
+    },
+    {
+      header: "STATUS",
+      accessorKey: "status",
+      cell: ({ row }) => {
+        const status = row.original.status;
+        const badgeClass = statusBadge[status] || "badge-primary";
+        return h(
+          "span",
+          {
+            class: `badge badge-soft ${badgeClass} text-sm px-3.5 py-3.5`,
+          },
+          status
+        );
+      },
     },
     {
       id: "details",

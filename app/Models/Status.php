@@ -31,4 +31,10 @@ class Status extends Model
     {
         return $this->hasMany(ProjectIssue::class);
     }
+
+    // relationship to users, one status can have many users
+    public function users() : HasMany
+    {
+        return $this->hasMany(User::class);
+    }
 }

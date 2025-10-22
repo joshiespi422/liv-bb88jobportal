@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('address')->nullable();
             $table->enum('gender', ['Male', 'Female', 'Other', 'Prefer not to say' ])->nullable();
             $table->date('bday')->nullable();
+            $table->text('terminate_reason')->nullable();
         });
     }
 
@@ -39,7 +40,8 @@ return new class extends Migration
                 'picture',
                 'address',
                 'gender',
-                'bday'
+                'bday',
+                'terminate_reason'
             ]);
         });
     }

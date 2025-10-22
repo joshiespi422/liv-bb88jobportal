@@ -26,7 +26,12 @@ return new class extends Migration
             ['id' => 6, 'status_name' => 'approved'],
             ['id' => 7, 'status_name' => 'rejected'], 
             ['id' => 8, 'status_name' => 'resolved'],
-            ['id' => 9, 'status_name' => 'dropped']
+            ['id' => 9, 'status_name' => 'dropped'],
+            ['id' => 10, 'status_name' => 'active'],
+            ['id' => 11, 'status_name' => 'resigned'],
+            ['id' => 12, 'status_name' => 'terminated'],
+            ['id' => 13, 'status_name' => 'ongoing'],
+            ['id' => 14, 'status_name' => 'completed']
         ]);
     }
 
