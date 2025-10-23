@@ -1,12 +1,15 @@
 <script setup>
 import { ref, computed } from "vue";
-import { useForm, usePage, router } from "@inertiajs/vue3";
+import { useForm, usePage, router, Link } from "@inertiajs/vue3";
 import DataTable from "../Components/DataTable.vue";
 import DetailsModal from "../Components/modals/DetailsModal.vue";
 import FormModal from "../Components/modals/FormModal.vue";
 import ConfirmModal from "../Components/modals/ConfirmModal.vue";
 import ListBox from "../Components/ListBox.vue";
-import { useInternFormFields } from "../Data/forms/internFormFields";
+import {
+  useInternFormFields,
+  useUpdateFormFields,
+} from "../Data/forms/internFormFields";
 import { useDetailsModal } from "../Composables/useDetailsModal";
 import { internDetailFields } from "../Data/detailFields";
 import { useInternColumns } from "../Data/tableColumns";
@@ -25,6 +28,7 @@ const props = defineProps({
     type: Number,
     default: null,
   },
+  activeTab: String,
 });
 // logged in user data
 const page = usePage();
@@ -32,6 +36,8 @@ const authUser = computed(() => page.props.auth.user);
 
 // For adding new intern and toast
 const isFormModalOpen = ref(false);
+// For updating intern
+const isUpdateModalOpen = ref(false);
 // confirmation before adding
 const showConfirmModal = ref(false);
 const isConfirmLoading = ref(false);
@@ -44,6 +50,14 @@ const addForm = useForm({
   department_id: getDefaultDepartment(),
   school: "",
   password: "",
+});
+
+// Update form state
+const updateForm = useForm({
+  status: "",
+  qr_code: "",
+  position: "",
+  hierarchy: "",
 });
 
 // Set the default department for the "Add" form based on user role
@@ -89,6 +103,36 @@ const submitAddForm = () => {
   });
 };
 
+// after confirmation for updating
+const submitUpdateForm = () => {
+  isConfirmLoading.value = true;
+  updateForm.patch(
+    route("team.interns.update", { intern: selectedIntern.value.id }),
+    {
+      onSuccess: () => {
+        isUpdateModalOpen.value = false;
+        updateForm.reset();
+      },
+      onFinish: () => {
+        closeConfirmModal();
+        setTimeout(() => {
+          isConfirmLoading.value = false;
+        }, 500);
+      },
+    }
+  );
+};
+
+// tab handling navigation
+const tabs = computed(() => {
+  const items = [
+    { id: "ongoing", label: "Ongoing" },
+    { id: "completed", label: "Completed" },
+  ];
+
+  return items;
+});
+
 // core logic for the super_admin filter
 const selectedDepartment = computed({
   // GET: This runs on initial load and whenever props change.
@@ -130,6 +174,27 @@ const handleViewDetails = (intern) => {
   fetchInternDetails(intern.id);
 };
 
+// Form field configuration for updating intern
+const updateFormFields = useUpdateFormFields(updateForm, selectedIntern);
+// update intern modal state
+const handleUpdateIntern = () => {
+  if (!selectedIntern.value) return;
+  isUpdateModalOpen.value = true;
+  isInternModalOpen.value = false;
+};
+// control update back button visibility
+const showBackButtonInUpdate = computed(() => {
+  return isUpdateModalOpen.value && selectedIntern.value !== null;
+});
+// handle update back navigation
+const handleBackFromUpdate = () => {
+  isUpdateModalOpen.value = false;
+  isInternModalOpen.value = true;
+};
+const handleUpdateSubmit = () => {
+  showConfirmModal.value = true;
+};
+
 // computed property for custom details field separation
 const customDetails = computed(() => {
   const fields = internDetailFields;
@@ -143,6 +208,10 @@ const customDetails = computed(() => {
 
 // Tanstack Table columns definition
 const internTableColumns = useInternColumns({ handleViewDetails });
+
+const showUpdateButton = computed(() => {
+  //
+});
 </script>
 
 <template>
@@ -164,6 +233,26 @@ const internTableColumns = useInternColumns({ handleViewDetails });
           placeholder="Select a department"
         />
       </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs tabs-box my-3 tabs-sm @sm:tabs-md">
+      <Link
+        v-for="tab in tabs"
+        :key="tab.id"
+        :href="route('team.interns', { ...route().params, tab: tab.id })"
+        :class="[
+          'tab',
+          activeTab === tab.id
+            ? 'tab-active font-bold pointer-events-none'
+            : 'hover:bg-base-300',
+        ]"
+        preserve-state
+        preserve-scroll
+        replace
+      >
+        {{ tab.label }}
+      </Link>
     </div>
 
     <!-- Intern Table -->
@@ -204,6 +293,35 @@ const internTableColumns = useInternColumns({ handleViewDetails });
         confirmText="Yes, Add Intern"
         :loading="addForm.processing"
         @confirm="submitAddForm"
+        @cancel="closeConfirmModal"
+      />
+    </FormModal>
+
+    <!-- Update Intern Modal -->
+    <FormModal
+      :isOpen="isUpdateModalOpen"
+      :showBackButton="showBackButtonInUpdate"
+      title="UPDATE INTERN"
+      :form="updateForm"
+      :fields="updateFormFields"
+      submitText="Submit"
+      disabledButton
+      @close="isUpdateModalOpen = false"
+      @back="handleBackFromUpdate"
+      @submit="handleUpdateSubmit"
+    >
+      <!-- Confirmation Modal -->
+      <ConfirmModal
+        :show="showConfirmModal"
+        title="Confirm Intern Update"
+        message="Are you sure you want to update this intern?"
+        iconName="pi pi-user-edit"
+        iconColor="text-blue-600"
+        iconBgColor="bg-blue-100"
+        confirmButtonBg="bg-blue-600 hover:bg-blue-700"
+        confirmText="Yes, Update Intern"
+        :loading="isConfirmLoading"
+        @confirm="submitUpdateForm"
         @cancel="closeConfirmModal"
       />
     </FormModal>
@@ -280,6 +398,15 @@ const internTableColumns = useInternColumns({ handleViewDetails });
             </div>
           </div>
         </div>
+      </template>
+
+      <template #custom-buttons>
+        <button
+          @click="handleUpdateIntern"
+          class="btn btn-sm @sm:btn-md rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3 me-2"
+        >
+          Update
+        </button>
       </template>
     </DetailsModal>
   </div>

@@ -284,6 +284,21 @@ export function useInternColumns({ handleViewDetails }) {
       header: "SCHOOL",
     },
     {
+      header: "STATUS",
+      accessorKey: "status",
+      cell: ({ row }) => {
+        const status = row.original.status;
+        const badgeClass = statusBadge[status] || "badge-primary";
+        return h(
+          "span",
+          {
+            class: `badge badge-soft ${badgeClass} text-sm px-3.5 py-3.5`,
+          },
+          status
+        );
+      },
+    },
+    {
       id: "details",
       header: "DETAILS",
       cell: ({ row }) =>

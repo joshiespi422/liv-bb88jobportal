@@ -27,6 +27,7 @@ class User extends Authenticatable
         'email',
         'password',
         'user_type_id',
+        'status_id',
         'qr_code',
         'position',
         'picture',

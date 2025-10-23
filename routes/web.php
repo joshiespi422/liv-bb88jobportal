@@ -50,6 +50,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/interns', [InternController::class, 'index'])->name('interns');
             Route::get('/interns/{id}', [InternController::class, 'show'])->name('interns.show');
             Route::post('/interns', [InternController::class, 'store'])->name('interns.store');
+            Route::patch('/interns/{intern}', [InternController::class, 'update'])->name('interns.update');
         });
     });
     

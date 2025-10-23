@@ -65,3 +65,76 @@ export function useInternFormFields(authUser, props) {
     },
   ]);
 }
+
+/**
+ * @param {import('@inertiajs/vue3').Form} form - The reactive form object from useForm.
+ * @param {import('vue').Ref<Object>} selectedIntern - A ref to the selected intern details.
+ */
+export function useUpdateFormFields(form, selectedIntern) {
+  return computed(() => {
+    const allStatusOptions = [
+      { value: "completed", label: "Mark as Completed" },
+      { value: "active", label: "Promote to Employee" },
+    ];
+    const filteredStatusOptions = allStatusOptions.filter(
+      (opt) => opt.value !== selectedIntern.value?.status
+    );
+
+    const fields = [
+      {
+        key: "intern_name",
+        label: "Selected",
+        component: TextInput,
+        attrs: {
+          disabled: true,
+          value: selectedIntern.value?.name || "N/A",
+        },
+      },
+      {
+        key: "status",
+        label: "Status",
+        component: SelectInput,
+        attrs: {
+          required: true,
+          options: filteredStatusOptions,
+          placeholder: "Select a status",
+        },
+      },
+    ];
+
+    if (form.status === "active") {
+      fields.push(
+        {
+          key: "qr_code",
+          label: "QR Code",
+          component: TextInput,
+          attrs: {
+            placeholder: "02-E0001-1925",
+            pattern: "^[A-Z0-9]{2}-[A-Z0-9]{5}-[A-Z0-9]{4}$",
+          },
+        },
+        {
+          key: "position",
+          label: "Position",
+          component: TextInput,
+          attrs: { required: true, placeholder: "Software Engineer" },
+        },
+        {
+          key: "hierarchy",
+          label: "Hierarchy",
+          component: SelectInput,
+          attrs: {
+            required: true,
+            options: [
+              { value: "Leader", label: "Leader" },
+              { value: "Member", label: "Member" },
+            ],
+            placeholder: "Select a hierarchy",
+          },
+        }
+      );
+    }
+
+    return fields;
+  });
+}

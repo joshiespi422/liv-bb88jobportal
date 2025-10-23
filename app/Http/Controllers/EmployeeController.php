@@ -144,8 +144,9 @@ class EmployeeController extends Controller
 
 
         DB::transaction(function () use ($request) {
-            // Find employee user type
+            // Find employee user type, and active status
             $employeeType = UserType::where('type_name', 'employee')->firstOrFail();
+            $activeStatus = Status::where('status_name', 'active')->firstOrFail();
 
             // Create user
             $user = User::create([
@@ -153,6 +154,7 @@ class EmployeeController extends Controller
                 'email' => $request->email,
                 'password' => bcrypt($request->password),
                 'user_type_id' => $employeeType->id,
+                'status_id' => $activeStatus->id,
                 'position' => $request->position,
                 'qr_code' => $request->qr_code,
             ]);
@@ -165,7 +167,7 @@ class EmployeeController extends Controller
             ]);
         });
         
-        return back()->with('success', 'Employee created successfully');
+        return back()->with('success', 'Employee created successfully!');
     }
 
     /**
@@ -175,11 +177,11 @@ class EmployeeController extends Controller
     {
         $employee = User::with([
                 'status:id,status_name',
-                'employeeDetails:user_id,hierarchy,department_id',
+                'employeeDetails:user_id,hierarchy,department_id,terminate_reason',
                 'employeeDetails.department:id,dept_name'
             ])
             ->whereHas('employeeDetails')
-            ->select('id', 'status_id', 'name', 'email', 'position', 'qr_code', 'picture', 'address', 'gender', 'bday', 'terminate_reason')
+            ->select('id', 'status_id', 'name', 'email', 'position', 'qr_code', 'picture', 'address', 'gender', 'bday')
             ->findOrFail($id);
 
         $employeeDetails = [
@@ -195,7 +197,7 @@ class EmployeeController extends Controller
             'address' => $employee->address,
             'gender' => $employee->gender,
             'bday' => $employee->bday,
-            'terminate_reason' => $employee->terminate_reason,
+            'terminate_reason' => $employee->employeeDetails->terminate_reason,
             'deptName' => $employee->employeeDetails && $employee->employeeDetails->department
                             ? $employee->employeeDetails->department->dept_name
                             : null,
@@ -221,7 +223,7 @@ class EmployeeController extends Controller
     {
         // Authorization - must be super_admin, and updating an employee
         $user = $request->user()->loadMissing('userType');
-        $employee->loadMissing('userType');
+        $employee->loadMissing('userType', 'employeeDetails');
         if (!$user || $user->userType->type_name !== 'super_admin') {
             return abort(403, 'not authorized');
         } elseif ($employee->userType->type_name !== 'employee') {
@@ -241,9 +243,9 @@ class EmployeeController extends Controller
 
             // If status is 'terminated', save the reason. Otherwise, clear it.
             if ($request->status === 'terminated') {
-                $employee->terminate_reason = $request->terminate_reason;
+                $employee->employeeDetails->terminate_reason = $request->terminate_reason;
             } else {
-                $employee->terminate_reason = null; 
+                $employee->employeeDetails->terminate_reason = null;
             }
 
             $employee->save();

@@ -2,6 +2,7 @@ import {
   longDate,
   longDateTime,
   formatDate,
+  shortDate,
 } from "../Composables/useDateFormatter";
 
 // Formatter for assignees (can be shared)
@@ -125,11 +126,22 @@ export const internDetailFields = [
   { key: "email", label: "Email" },
   { key: "picture", label: "Picture" },
   { key: "position", label: "Position" },
+  { key: "status", label: "Status", formatter: capitalizeFirst },
   { key: "deptName", label: "Department" },
   { key: "school", label: "School" },
   { key: "address", label: "Address" },
   { key: "gender", label: "Gender" },
   { key: "bday", label: "Birthday", formatter: formatDate },
+  {
+    key: "timeline",
+    label: "Timeline",
+    formatter: (timeline) =>
+      `${shortDate(timeline.created_at)} - ${
+        timeline.completion_date
+          ? shortDate(timeline.completion_date)
+          : "Present"
+      } `,
+  },
 ];
 
 // fields that needs reactive data
