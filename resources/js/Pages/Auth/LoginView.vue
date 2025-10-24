@@ -5,7 +5,9 @@ export default {
 </script>
 
 <script setup>
+import { ref } from "vue";
 import { useForm, Link } from "@inertiajs/vue3";
+import ConfirmModal from "../../Components/modals/ConfirmModal.vue";
 
 const form = useForm({
   email: null,
@@ -14,9 +16,16 @@ const form = useForm({
 
 const handleLogin = () => {
   form.post(route("login"), {
-    onError: () => form.reset("password"),
+    onError: () => {
+      form.reset("password");
+      if (form.errors.custom) {
+        showConfirmModal.value = true;
+      }
+    },
   });
 };
+
+const showConfirmModal = ref(false);
 </script>
 
 <template>
@@ -134,5 +143,23 @@ const handleLogin = () => {
         />
       </div>
     </div>
+
+    <ConfirmModal
+      :show="showConfirmModal"
+      title="Account Disabled"
+      :message="form.errors.custom"
+      icon-name="pi pi-exclamation-circle"
+      disabled-button
+      @close="showConfirmModal = false"
+    >
+      <template #custom-buttons>
+        <button
+          @click="showConfirmModal = false"
+          class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-gray-300 hover:bg-gray-300 sm:mt-0 sm:w-auto cursor-pointer"
+        >
+          Okay
+        </button>
+      </template>
+    </ConfirmModal>
   </main>
 </template>

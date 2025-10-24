@@ -45,6 +45,10 @@ defineProps({
     type: String,
     default: "bg-red-600 hover:bg-red-700",
   },
+  disabledButton: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 defineEmits(["confirm", "cancel"]);
@@ -114,7 +118,11 @@ defineEmits(["confirm", "cancel"]);
               <div
                 class="bg-base-200 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6"
               >
+                <!-- custom buttons here -->
+                <slot name="custom-buttons" />
+
                 <button
+                  v-if="!disabledButton"
                   type="button"
                   class="inline-flex w-full justify-center rounded-md px-3 py-2 text-sm font-semibold text-white shadow-xs sm:ml-3 sm:w-auto"
                   :class="[
@@ -134,6 +142,7 @@ defineEmits(["confirm", "cancel"]);
                   {{ loading ? "Processing..." : confirmText }}
                 </button>
                 <button
+                  v-if="!disabledButton"
                   type="button"
                   class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-gray-300 hover:bg-gray-300 sm:mt-0 sm:w-auto"
                   :class="{
