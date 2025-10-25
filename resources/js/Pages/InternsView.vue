@@ -5,7 +5,7 @@ import DataTable from "../Components/DataTable.vue";
 import DetailsModal from "../Components/modals/DetailsModal.vue";
 import FormModal from "../Components/modals/FormModal.vue";
 import ConfirmModal from "../Components/modals/ConfirmModal.vue";
-import ListBox from "../Components/ListBox.vue";
+import Department from "../Components/Department.vue";
 import {
   useInternFormFields,
   useUpdateFormFields,
@@ -133,32 +133,6 @@ const tabs = computed(() => {
   return items;
 });
 
-// core logic for the super_admin filter
-const selectedDepartment = computed({
-  // GET: This runs on initial load and whenever props change.
-  get() {
-    return props.currentDepartmentId;
-  },
-  // SET: This runs when the user selects a new item in the ListBox.
-  set(newDeptId) {
-    if (authUser.value.userType === "super_admin" && newDeptId) {
-      router.get(
-        route("team.interns"),
-        { dept: newDeptId },
-        {
-          preserveState: true, // Keeps Vue component state
-          preserveScroll: true, // Keeps scroll position
-          replace: true, // Avoids polluting browser history
-        }
-      );
-    }
-  },
-});
-// format of departments for the ListBox component
-const departmentOptions = computed(() => {
-  return props.departments.map((d) => ({ value: d.id, label: d.dept_name }));
-});
-
 // -- Intern Details Logic --
 const {
   isOpen: isInternModalOpen,
@@ -227,10 +201,11 @@ const showUpdateButton = computed(() => {
         v-if="authUser?.userType === 'super_admin'"
         class="w-52 md:w-60 lg:w-72"
       >
-        <ListBox
-          v-model="selectedDepartment"
-          :options="departmentOptions"
-          placeholder="Select a department"
+        <Department
+          :departments="props.departments"
+          :current-department-id="props.currentDepartmentId"
+          :auth-user="authUser"
+          route-name="team.interns"
         />
       </div>
     </div>

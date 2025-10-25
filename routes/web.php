@@ -13,6 +13,7 @@ use App\Http\Controllers\CommentController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\DepartmentController;
 use Illuminate\Support\Facades\Route;
 
 // Profile info for the qr code
@@ -60,6 +61,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance');
         Route::get('/attendance/user/{id}/{date}', [AttendanceController::class, 'show'])->name('attendance.show');
         Route::get('/attendance/dept/{deptId}/{date}', [AttendanceController::class, 'showDeptLog'])->name('attendance.show.dept');
+        Route::post('/department', [DepartmentController::class, 'store'])->name('department.store');
     });
     
     Route::get('/task', [TaskController::class, 'index'])->name('task');

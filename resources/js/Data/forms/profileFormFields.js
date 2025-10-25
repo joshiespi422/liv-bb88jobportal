@@ -5,7 +5,7 @@ import SelectInput from "../../Components/fields/SelectInput.vue";
 import PasswordInput from "../../Components/fields/PasswordInput.vue";
 import DateInput from "../../Components/fields/DateInput.vue";
 
-export function usePasswordFormFields(authUser, props) {
+export function usePasswordFormFields() {
   return computed(() => [
     {
       key: "current_password",

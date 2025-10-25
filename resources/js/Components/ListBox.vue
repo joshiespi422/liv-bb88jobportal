@@ -21,6 +21,10 @@ const props = defineProps({
     type: String,
     default: "Select an option",
   },
+  hasFooter: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits(["update:modelValue"]);
@@ -37,6 +41,7 @@ const selectedLabel = computed(() => {
   <Listbox
     :model-value="props.modelValue"
     @update:model-value="(value) => emit('update:modelValue', value)"
+    v-slot="{ open }"
   >
     <div class="relative">
       <ListboxButton
@@ -58,41 +63,56 @@ const selectedLabel = computed(() => {
         leave-from-class="opacity-100"
         leave-to-class="opacity-0"
       >
-        <ListboxOptions
-          class="text-sm @sm:text-base absolute mt-2 max-h-64 w-full overflow-auto rounded-md bg-base-100 py-1 ring-2 ring-green-primary-1 ring-opacity-5 focus:outline-none sm:text-sm z-10 list-scroll"
+        <div
+          v-if="open"
+          class="absolute mt-2 w-full rounded-md bg-base-100 ring-2 ring-green-primary-1 ring-opacity-5 z-10 overflow-hidden"
         >
-          <ListboxOption
-            v-for="option in props.options"
-            :key="option.value"
-            :value="option.value"
-            v-slot="{ active, selected }"
-            as="template"
+          <!-- Scrollable list -->
+          <ListboxOptions
+            class="text-sm @sm:text-base max-h-64 overflow-auto py-1 focus:outline-none list-scroll"
           >
-            <li
-              :class="[
-                active ? 'bg-green-primary-2 text-white' : '',
-                'py-1 @sm:py-2 relative cursor-pointer select-none  pl-10 pr-4',
-              ]"
+            <ListboxOption
+              v-for="option in props.options"
+              :key="option.value"
+              :value="option.value"
+              v-slot="{ active, selected }"
+              as="template"
             >
-              <span
+              <li
                 :class="[
-                  selected ? 'font-medium' : 'font-normal',
-                  'block truncate',
-                ]"
-                >{{ option.label }}</span
-              >
-              <span
-                v-if="selected"
-                :class="[
-                  'absolute inset-y-0 left-0 flex items-center pl-3 text-lg',
-                  active ? 'text-white' : 'text-green-primary-1',
+                  active ? 'bg-green-primary-2 text-white' : '',
+                  'py-1 @sm:py-2 relative cursor-pointer select-none pl-10 pr-4',
                 ]"
               >
-                <i class="pi pi-check h-5 w-5" aria-hidden="true" />
-              </span>
-            </li>
-          </ListboxOption>
-        </ListboxOptions>
+                <span
+                  :class="[
+                    selected ? 'font-medium' : 'font-normal',
+                    'block truncate',
+                  ]"
+                >
+                  {{ option.label }}
+                </span>
+                <span
+                  v-if="selected"
+                  :class="[
+                    'absolute inset-y-0 left-0 flex items-center pl-3 text-lg',
+                    active ? 'text-white' : 'text-green-primary-1',
+                  ]"
+                >
+                  <i class="pi pi-check h-5 w-5" aria-hidden="true" />
+                </span>
+              </li>
+            </ListboxOption>
+          </ListboxOptions>
+
+          <!-- Non-scrollable footer -->
+          <div
+            v-if="hasFooter"
+            class="border-t border-green-primary-1 bg-base-100 p-2"
+          >
+            <slot name="footer" />
+          </div>
+        </div>
       </transition>
     </div>
   </Listbox>

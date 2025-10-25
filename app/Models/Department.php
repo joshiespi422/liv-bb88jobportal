@@ -10,9 +10,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 class Department extends Model
 {
     use HasFactory;
+    
+    public $timestamps = false;
 
     protected $fillable = [
-        //
+        'dept_name',
     ];
 
     // Define a one-to-many relationship between departments and user_employees (one department can have many employees)

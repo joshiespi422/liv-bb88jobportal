@@ -3,7 +3,7 @@ import { ref, computed, reactive, watch } from "vue";
 import { usePage, router, useForm, Link } from "@inertiajs/vue3";
 import { useUrlParameter } from "../Composables/useUrlParameter";
 import DataTable from "../Components/DataTable.vue";
-import ListBox from "../Components/ListBox.vue";
+import Department from "../Components/Department.vue";
 import DetailsModal from "../Components/modals/DetailsModal.vue";
 import FormModal from "../Components/modals/FormModal.vue";
 import ConfirmModal from "../Components/modals/ConfirmModal.vue";
@@ -278,35 +278,6 @@ const handleViewDetails = (leaveId) => {
   showRejectReason.value = false;
   fetchLeaveDetails(leaveId);
 };
-// core logic for the super_admin filter
-const selectedDepartment = computed({
-  // GET: This runs on initial load and whenever props change.
-  get() {
-    return props.currentDepartmentId;
-  },
-  // SET: This runs when the user selects a new item in the ListBox.
-  set(newDeptId) {
-    if (
-      (authUser.value.userType === "super_admin" ||
-        authUser.value.department.name === "Admin") &&
-      newDeptId
-    ) {
-      router.get(
-        route("leave"),
-        { dept: newDeptId },
-        {
-          preserveState: true, // Keeps Vue component state
-          preserveScroll: true, // Keeps scroll position
-          replace: true, // Avoids polluting browser history
-        }
-      );
-    }
-  },
-});
-// format of departments for the ListBox component
-const departmentOptions = computed(() => {
-  return props.departments.map((d) => ({ value: d.id, label: d.dept_name }));
-});
 
 // tab handling navigation
 const tabs = computed(() => {
@@ -370,10 +341,11 @@ const showValidateButton = computed(() => {
         "
         class="w-52 md:w-60 lg:w-72"
       >
-        <ListBox
-          v-model="selectedDepartment"
-          :options="departmentOptions"
-          placeholder="Select a department"
+        <Department
+          :departments="props.departments"
+          :current-department-id="props.currentDepartmentId"
+          :auth-user="authUser"
+          route-name="leave"
         />
       </div>
     </div>
