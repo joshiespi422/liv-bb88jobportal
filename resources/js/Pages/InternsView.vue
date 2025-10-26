@@ -183,8 +183,35 @@ const customDetails = computed(() => {
 // Tanstack Table columns definition
 const internTableColumns = useInternColumns({ handleViewDetails });
 
+const showAddButton = computed(() => {
+  const isSuperAdmin = authUser.value?.userType === "super_admin";
+  const isLeader = authUser.value?.hierarchy === "Leader";
+
+  // 1. Must be super admin
+  if (!isSuperAdmin && !isLeader) {
+    return false;
+  }
+  // 2. Must be in "ongoing" tab
+  if (props.activeTab !== "ongoing") {
+    return false;
+  }
+
+  return true;
+});
 const showUpdateButton = computed(() => {
-  //
+  const isSuperAdmin = authUser.value?.userType === "super_admin";
+  const isLeader = authUser.value?.hierarchy === "Leader";
+
+  // 1. Must be super admin or leader
+  if (!isSuperAdmin && !isLeader) {
+    return false;
+  }
+  // 2. Must have selected employee
+  if (!selectedEmployee.value) {
+    return false;
+  }
+
+  return true;
 });
 </script>
 
@@ -238,6 +265,7 @@ const showUpdateButton = computed(() => {
     >
       <template #custom-actions>
         <button
+          v-if="showAddButton"
           @click="handleAddNewIntern"
           class="btn btn-sm @sm:btn-md rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
         >
@@ -377,6 +405,7 @@ const showUpdateButton = computed(() => {
 
       <template #custom-buttons>
         <button
+          v-if="showUpdateButton"
           @click="handleUpdateIntern"
           class="btn btn-sm @sm:btn-md rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3 me-2"
         >

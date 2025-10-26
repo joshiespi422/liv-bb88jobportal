@@ -128,6 +128,13 @@ class InternController extends Controller
      */
     public function store(Request $request)
     {
+        // Authorization - must be super_admin or employee leader
+        $user = $request->user()->loadMissing('userType', 'employeeDetails');
+        if ($user->userType->type_name !== 'super_admin'
+             && $user->employeeDetails?->hierarchy !== 'Leader') {
+            return abort(403, 'not authorized');
+        }
+
         $request->validate([
             'email' => 'required|email|unique:users,email|max:255',
             'name' => 'required|string|max:255',
@@ -162,7 +169,6 @@ class InternController extends Controller
         });
         
         return back()->with('success', 'Intern created successfully!');
-     
     }
 
     /**

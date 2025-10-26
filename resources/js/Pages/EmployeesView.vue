@@ -203,10 +203,25 @@ const customDetails = computed(() => {
 // Tanstack Table columns definition
 const employeeTableColumns = useEmployeeColumns({ handleViewDetails });
 
+const showAddButton = computed(() => {
+  const isSuperAdmin = authUser.value?.userType === "super_admin";
+  const isLeader = authUser.value?.hierarchy === "Leader";
+
+  // 1. Must be super admin
+  if (!isSuperAdmin && !isLeader) {
+    return false;
+  }
+  // 2. Must be in "active" tab
+  if (props.activeTab !== "active") {
+    return false;
+  }
+
+  return true;
+});
 const showUpdateButton = computed(() => {
   const isSuperAdmin = authUser.value?.userType === "super_admin";
 
-  // 1. Must be super admin or leader
+  // 1. Must be super admin
   if (!isSuperAdmin) {
     return false;
   }
@@ -269,6 +284,7 @@ const showUpdateButton = computed(() => {
     >
       <template #custom-actions>
         <button
+          v-if="showAddButton"
           @click="handleAddNewEmployee"
           class="btn btn-sm @sm:btn-md rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
         >
