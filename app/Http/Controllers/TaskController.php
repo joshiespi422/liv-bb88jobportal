@@ -154,21 +154,29 @@ class TaskController extends Controller
     public function fetchAssignees(Request $request, Department $department): JsonResponse
     {
         $type = $request->query('type', 'employee'); // Default to 'employee'
+        $statusMap = [
+            'employee' => 'active',
+            'intern'   => 'ongoing',
+        ];
+        $statusId = Status::where('status_name', $statusMap[$type])->value('id');
 
-        // Ensure the type is valid
-        if (!in_array($type, ['employee', 'intern'])) {
+        if (!array_key_exists($type, $statusMap)) {
             return response()->json(['error' => 'Invalid user type specified.'], 400);
         }
 
-        $query = User::query()
-            ->whereHas($type === 'employee' ? 'employeeDetails' : 'internDetails', function ($q) use ($department) {
+        // Get the status_id for the given type
+        $relation = $type === 'employee' ? 'employeeDetails' : 'internDetails';
+        // Build query with eager loading
+        $users = User::with($relation)
+            ->where('status_id', $statusId)
+            ->whereHas($relation, function ($q) use ($department) {
                 $q->where('department_id', $department->id);
             })
             ->select('id', 'name')
             ->orderBy('name')
             ->get();
 
-        return response()->json($query);
+        return response()->json($users);
     }
 
     public function fetchProjects(Department $department): JsonResponse
