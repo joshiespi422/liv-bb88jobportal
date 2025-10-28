@@ -78,14 +78,17 @@ class ProfileController extends Controller
         $user = Auth::user();
 
         // Delete old picture if exists
-        if ($user->picture) {
-            Storage::disk('public')->delete($user->picture);
+        if ($user->picture && Storage::disk('public')->exists($user->picture)) {
+            $oldPath = $user->picture;
+            $filename = basename($oldPath);
+            $archivedPath = 'archived/' . $filename;
+
+            Storage::disk('public')->move($oldPath, $archivedPath);
         }
 
         // Store new picture
-        $path = $request->file('picture')->store('profile-images', 'public');
-        $user->picture = $path;
-        $user->save();
+        $newPath = $request->file('picture')->store('profile-images', 'public');
+        $user->update(['picture' => $newPath]);
 
         return back()->with('success', 'Profile picture updated!');
     }
@@ -95,8 +98,12 @@ class ProfileController extends Controller
         /** @var \App\Models\User $user */
         $user = Auth::user();
 
-        if ($user->picture) {
-            Storage::disk('public')->delete($user->picture);
+        if ($user->picture && Storage::disk('public')->exists($user->picture)) {
+            $oldPath = $user->picture;
+            $filename = basename($oldPath);
+            $archivedPath = 'archived/' . $filename;
+
+            Storage::disk('public')->move($oldPath, $archivedPath);
             $user->update(['picture' => null]);
         }
 
