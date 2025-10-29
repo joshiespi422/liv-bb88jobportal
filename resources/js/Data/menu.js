@@ -122,6 +122,12 @@ export const menuItems = [
         userType: ["super_admin", "employee"], // Different from parent
         routeName: "leave",
       },
+      {
+        name: "PATEEX",
+        icon: "pi pi-wave-pulse",
+        userType: ["super_admin"], // Different from parent
+        routeName: "pateex",
+      },
     ],
   },
 ];

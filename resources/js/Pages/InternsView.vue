@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed } from "vue";
-import { useForm, usePage, router, Link } from "@inertiajs/vue3";
+import { useForm, usePage, Link } from "@inertiajs/vue3";
 import DataTable from "../Components/DataTable.vue";
 import DetailsModal from "../Components/modals/DetailsModal.vue";
 import FormModal from "../Components/modals/FormModal.vue";
@@ -206,8 +206,8 @@ const showUpdateButton = computed(() => {
   if (!isSuperAdmin && !isLeader) {
     return false;
   }
-  // 2. Must have selected employee
-  if (!selectedEmployee.value) {
+  // 2. Must have selected intern details
+  if (!selectedIntern.value) {
     return false;
   }
 
