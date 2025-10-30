@@ -504,3 +504,40 @@ export function useDeptAttendanceColumns({ openDeptLogModal }) {
     },
   ];
 }
+
+/**
+ * For Pateex Table Columns.
+ * Temporary table columns for the Registrant Logs page
+ */
+export const registrantLogsColumns = [
+  {
+    accessorKey: "full_name",
+    header: "NAME",
+  },
+  {
+    accessorKey: "email",
+    header: "EMAIL",
+  },
+  {
+    accessorKey: "mobile_number",
+    header: "MOBILE NUMBER",
+  },
+  {
+    accessorKey: "age",
+    header: "AGE",
+  },
+  {
+    accessorKey: "gate",
+    header: "GATE",
+  },
+  {
+    header: "TIME IN",
+    accessorFn: (row) =>
+      row.time_in !== "N/A" ? formatTime(row.time_in) : "N/A",
+  },
+  {
+    header: "TIME OUT",
+    accessorFn: (row) =>
+      row.time_out !== "N/A" ? formatTime(row.time_out) : "N/A",
+  },
+];

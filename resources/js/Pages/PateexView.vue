@@ -1,69 +1,79 @@
 <script setup>
+import { computed, ref, onMounted, onUnmounted } from "vue";
+import { usePage, router } from "@inertiajs/vue3";
+import DataTable from "../Components/DataTable.vue";
+import { formatDate, formatTime } from "../Composables/useDateFormatter";
+import LocationMap from "../Components/LocationMap.vue";
+import { registrantLogsColumns } from "../Data/tableColumns";
+
+// logged in user data
+const page = usePage();
+const authUser = computed(() => page.props.auth.user);
+
 const props = defineProps({
   registrantLogs: Array,
+});
+
+// Auto-refresh logic
+let refreshInterval = null;
+let activityTimeout = null;
+const userIsActive = ref(true);
+
+// Marks user as active and resets the inactivity timer
+const handleUserActivity = () => {
+  userIsActive.value = true;
+  clearTimeout(activityTimeout);
+  activityTimeout = setTimeout(() => {
+    userIsActive.value = false; // set false after 3 minutes of inactivity
+  }, 3 * 60 * 1000);
+};
+
+// Fetches fresh data using an efficient partial reload
+const refreshRegistrantLogs = () => {
+  if (authUser.value?.userType === "super_admin" && userIsActive.value) {
+    router.reload({
+      only: ["registrantLogs"], // IMPORTANT: Only fetch the 'registrantLogs' prop
+      preserveState: true,
+      preserveScroll: true,
+      onSuccess: () => console.log("Refreshed online users."),
+    });
+  }
+};
+
+// Set up listeners and intervals when the component is mounted
+onMounted(() => {
+  if (authUser.value?.userType === "super_admin") {
+    window.addEventListener("mousemove", handleUserActivity);
+    window.addEventListener("keydown", handleUserActivity);
+    handleUserActivity(); // Initial call
+    refreshInterval = setInterval(refreshRegistrantLogs, 2 * 60 * 1000); // Refresh every 2 minutes
+  }
+});
+
+// Clean up listeners and intervals to prevent memory leaks
+onUnmounted(() => {
+  if (authUser.value?.userType === "super_admin") {
+    clearInterval(refreshInterval);
+    clearTimeout(activityTimeout);
+    window.removeEventListener("mousemove", handleUserActivity);
+    window.removeEventListener("keydown", handleUserActivity);
+  }
 });
 </script>
 
 <template>
-  <div class="p-8 font-sans">
-    <h1 class="text-3xl font-bold mb-6">Patex - Daily Registrant Logs</h1>
-
-    <!-- Check if there are logs to display -->
-    <div v-if="props.registrantLogs && props.registrantLogs.length > 0">
-      <div class="bg-white shadow-md rounded-lg overflow-hidden">
-        <table class="min-w-full leading-normal">
-          <thead>
-            <tr
-              class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal"
-            >
-              <th class="py-3 px-6 text-left">Full Name</th>
-              <th class="py-3 px-6 text-left">Email</th>
-              <th class="py-3 px-6 text-left">Mobile</th>
-              <th class="py-3 px-6 text-center">Age</th>
-              <th class="py-3 px-6 text-center">Time In</th>
-              <th class="py-3 px-6 text-center">Time Out</th>
-            </tr>
-          </thead>
-          <tbody class="text-gray-600 text-sm font-light">
-            <!-- Loop through each log entry -->
-            <tr
-              v-for="log in props.registrantLogs"
-              :key="log.email"
-              class="border-b border-gray-200 hover:bg-gray-100"
-            >
-              <td class="py-3 px-6 text-left whitespace-nowrap">
-                {{ log.full_name }}
-              </td>
-              <td class="py-3 px-6 text-left">
-                {{ log.email }}
-              </td>
-              <td class="py-3 px-6 text-left">
-                {{ log.mobile_number }}
-              </td>
-              <td class="py-3 px-6 text-center">
-                {{ log.age }}
-              </td>
-              <td class="py-3 px-6 text-center font-mono">
-                {{ log.time_in }}
-              </td>
-              <td class="py-3 px-6 text-center font-mono">
-                <!-- Display 'N/A' if time_out is null or empty -->
-                {{ log.time_out || "N/A" }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Show a message if no logs were found -->
-    <div
-      v-else
-      class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 rounded-md"
-      role="alert"
+  <Head title="Pateex" />
+  <div class="p-2 @lg:p-4 @3xl:p-8 @5xl:p-10 @7xl:p-12">
+    <h1
+      class="text-lg @sm:text-2xl @4xl:text-3xl font-bold text-center @2xl:text-start mb-3 @2xl:mb-5"
     >
-      <p class="font-bold">No Data</p>
-      <p>No registrant logs found for today.</p>
-    </div>
+      Pateex Logs
+    </h1>
+
+    <DataTable
+      :data="props.registrantLogs"
+      :columns="registrantLogsColumns"
+      :enable-view-toggle="true"
+    />
   </div>
 </template>
