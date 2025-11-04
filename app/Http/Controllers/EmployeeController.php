@@ -36,6 +36,9 @@ class EmployeeController extends Controller
                 return [
                     'id' => $user->id,
                     'name' => $user->name,
+                    'picture' => $user->picture
+                        ? Storage::url($user->picture)  // Generates full URL for stored image
+                        : Storage::url('profile-images/default.png'),  // Fallback to default image
                     'deptName' => $user->employeeDetails->department->dept_name ?? null,
                     'hierarchy' => $user->employeeDetails->hierarchy ?? null,
                     'status' => $user->status->status_name
@@ -94,7 +97,7 @@ class EmployeeController extends Controller
             'employeeDetails.department:id,dept_name'
         ])
             ->whereHas('employeeDetails')
-            ->select('id', 'status_id', 'name');
+            ->select('id', 'status_id', 'name', 'picture');
 
         // Apply department filter if needed
         if ($departmentId) {

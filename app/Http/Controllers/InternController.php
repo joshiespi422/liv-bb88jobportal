@@ -35,6 +35,9 @@ class InternController extends Controller
                 return [
                     'id' => $user->id,
                     'name' => $user->name,
+                    'picture' => $user->picture
+                        ? Storage::url($user->picture)  // Generates full URL for stored image
+                        : Storage::url('profile-images/default.png'),  // Fallback to default image
                     'deptName' => $user->internDetails->department->dept_name ?? null,
                     'school' => $user->internDetails->school ?? null,
                     'status' => $user->status->status_name
@@ -93,7 +96,7 @@ class InternController extends Controller
             'internDetails.department:id,dept_name'
         ])
             ->whereHas('internDetails')
-            ->select('id', 'status_id', 'name');
+            ->select('id', 'status_id', 'name', 'picture');
 
         // Apply department filter if needed
         if ($departmentId) {

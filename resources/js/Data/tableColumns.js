@@ -271,9 +271,31 @@ export function useLeaveColumns({ handleViewDetails }) {
 export function useInternColumns({ handleViewDetails }) {
   return [
     {
-      accessorKey: "name",
       header: "NAME",
       size: 200,
+      accessorFn: (row) => row.name,
+      cell: ({ cell }) => {
+        const userPicture = cell.row.original.picture;
+        return h(
+          "span",
+          {
+            class: "flex items-center justify-center gap-2",
+          },
+          [
+            h("img", {
+              src: userPicture || "/profile-images/default.png",
+              class: "avatar w-10 rounded-full",
+            }),
+            h(
+              "span",
+              {
+                class: "truncate",
+              },
+              cell.getValue()
+            ),
+          ]
+        );
+      },
     },
     {
       accessorKey: "deptName",
@@ -324,9 +346,31 @@ export function useInternColumns({ handleViewDetails }) {
 export function useEmployeeColumns({ handleViewDetails }) {
   return [
     {
-      accessorKey: "name",
       header: "NAME",
       size: 200,
+      accessorFn: (row) => row.name,
+      cell: ({ cell }) => {
+        const userPicture = cell.row.original.picture;
+        return h(
+          "span",
+          {
+            class: "flex items-center justify-center gap-2",
+          },
+          [
+            h("img", {
+              src: userPicture || "/profile-images/default.png",
+              class: "avatar w-10 rounded-full",
+            }),
+            h(
+              "span",
+              {
+                class: "truncate",
+              },
+              cell.getValue()
+            ),
+          ]
+        );
+      },
     },
     {
       accessorKey: "deptName",
