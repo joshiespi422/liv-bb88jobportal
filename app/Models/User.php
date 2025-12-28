@@ -148,6 +148,22 @@ class User extends Authenticatable
     }
 
     /**
+     * Defines a one-to-many relationship with users and material_requests (requester)
+     */
+    public function materialRequestsSubmitted(): HasMany
+    {
+        return $this->hasMany(MaterialRequest::class, 'requested_by');
+    }
+
+    /**
+     * Defines a one-to-many relationship with users and material_requests (approver)
+     */ 
+    public function materialRequestsApproved(): HasMany
+    {
+        return $this->hasMany(MaterialRequest::class, 'accepted_by');
+    }
+
+    /**
      * Check if the user has a specific role.
      *
      * @param string $typeName
