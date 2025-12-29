@@ -123,6 +123,12 @@ export const menuItems = [
         routeName: "leave",
       },
       {
+        name: "MATERIAL FORM",
+        icon: "pi pi-file-edit",
+        userType: ["super_admin", "employee"], // Different from parent
+        routeName: "material.request",
+      },
+      {
         name: "PATEEX",
         icon: "pi pi-wave-pulse",
         userType: ["super_admin"], // Different from parent

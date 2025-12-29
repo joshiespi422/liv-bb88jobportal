@@ -15,6 +15,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\PateexController;
+use App\Http\Controllers\MaterialRequestController;
 use Illuminate\Support\Facades\Route;
 
 // Profile info for the qr code
@@ -109,7 +110,10 @@ Route::middleware('auth')->group(function () {
         Route::post('/leave', [LeaveController::class, 'store'])->name('leave.store');
         Route::post('/leave/{leave}/validate', [LeaveController::class, 'validateLeave'])->name('leave.validate');
     });
-    
+
+    Route::middleware('user.type:super_admin,employee')->group(function () {
+        Route::get('/material-request', [MaterialRequestController::class, 'index'])->name('material.request');
+    });
 });
 
 

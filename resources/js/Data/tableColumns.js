@@ -585,3 +585,78 @@ export const registrantLogsColumns = [
       row.time_out !== "N/A" ? formatTime(row.time_out) : "N/A",
   },
 ];
+
+/**
+ * @param {Object} handlers - An object containing handler functions from the parent.
+ * @param {Function} handlers.handleViewDetails - The function to call when 'View Details' is clicked.
+ * @returns {Array} The static column definition array.
+ */
+export function useMaterialReqColumns({ handleViewDetails }) {
+  return [
+    {
+      id: "requester",
+      header: "REQUESTED BY",
+      accessorFn: (row) => row.requester.name,
+      cell: ({ cell }) => {
+        const requesterPicture = cell.row.original.requester.picture;
+        return h(
+          "span",
+          {
+            class: "flex items-center justify-center gap-2",
+          },
+          [
+            h("img", {
+              src: requesterPicture || "/profile-images/default.png",
+              class: "avatar w-10 rounded-full",
+            }),
+            h(
+              "span",
+              {
+                class: "truncate",
+              },
+              cell.getValue()
+            ),
+          ]
+        );
+      },
+    },
+    {
+      header: "SUBMITTED",
+      accessorFn: (row) => longDateTime(row.created_at),
+      id: "submitted-date",
+      cell: ({ cell }) => {
+        return h("span", {}, cell.getValue());
+      },
+    },
+    {
+      header: "STATUS",
+      accessorKey: "status",
+      cell: ({ row }) => {
+        const status = row.original.status;
+        const badgeClass = statusBadge[status] || "badge-primary";
+        return h(
+          "span",
+          {
+            class: `badge badge-soft ${badgeClass} text-sm px-3.5 py-3.5`,
+          },
+          status
+        );
+      },
+    },
+    {
+      id: "details",
+      header: "DETAILS",
+      cell: ({ row }) =>
+        h(
+          "button",
+          {
+            onClick: () => handleViewDetails(row.original.id),
+            class:
+              "btn btn-sm @sm:btn-md rounded-full bg-green-primary-1 text-white hover:bg-green-primary-3",
+          },
+          "View Details"
+        ),
+      enableSorting: false,
+    },
+  ];
+}
