@@ -113,6 +113,7 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('user.type:super_admin,employee')->group(function () {
         Route::get('/material-request', [MaterialRequestController::class, 'index'])->name('material.request');
+        Route::get('/material-request/{id}', [MaterialRequestController::class, 'show'])->name('material.request.show');
     });
 });
 

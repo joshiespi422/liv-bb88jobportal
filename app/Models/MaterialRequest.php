@@ -14,6 +14,7 @@ class MaterialRequest extends Model
         'status_id',
         'purpose',
         'description',
+        'amount',
     ];
 
     // Define a one-to-many relationship between material_requests and users (requester)

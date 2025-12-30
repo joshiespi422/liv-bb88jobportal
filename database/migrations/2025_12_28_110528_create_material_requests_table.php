@@ -24,6 +24,7 @@ return new class extends Migration
             $table->decimal('amount', 10, 2);
             $table->date('date_needed');
             $table->text('remarks')->nullable();
+            $table->text('reject_reason')->nullable();
             $table->timestamps();
         });
     }

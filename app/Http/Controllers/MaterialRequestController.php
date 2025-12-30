@@ -142,7 +142,30 @@ class MaterialRequestController extends Controller
      */
     public function show(string $id)
     {
-        //
+        // Eager load related data for efficiency
+        $materialRequest = MaterialRequest::with([
+            'requester:id,name', 
+            'department:id,dept_name',
+            'approver:id,name',
+            'status:id,status_name'
+        ])->findOrFail($id);
+
+        return response()->json([
+            'id' => $materialRequest->id,
+            'material' => $materialRequest->name,
+            'quantity' => $materialRequest->quantity,
+            'purpose' => $materialRequest->purpose,
+            'date_needed' => $materialRequest->date_needed,
+            'amount' => $materialRequest->amount,
+            'description' => $materialRequest->description,
+            'remarks' => $materialRequest->remarks ?? 'N/A',
+            'created_at' => $materialRequest->created_at,
+            'dept_name' => $materialRequest->department->dept_name,
+            'requester' => $materialRequest->requester->name,
+            'approver' => optional($materialRequest->approver)->name ?? 'N/A',
+            'status' => $materialRequest->status->status_name,
+            'reject_reason' => $materialRequest->reject_reason
+        ]);
     }
 
     /**

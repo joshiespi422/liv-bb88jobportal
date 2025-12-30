@@ -37,6 +37,14 @@ const capitalizeFirst = (string) => {
   return string.charAt(0).toUpperCase() + string.slice(1);
 };
 
+// Formatter for currency
+const currencyFormatter = (value) => {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "PHP",
+  }).format(value);
+};
+
 export const accomplishDetailFields = [
   { key: "task_title", label: "Task" },
   {
@@ -142,6 +150,20 @@ export const internDetailFields = [
           : "Present"
       } `,
   },
+];
+
+export const materialReqDetailFields = [
+  { key: "requester", label: "Requested By" },
+  { key: "dept_name", label: "Department" },
+  { key: "material", label: "Material" },
+  { key: "quantity", label: "Quantity" },
+  { key: "amount", label: "Amount", formatter: currencyFormatter },
+  { key: "purpose", label: "Purpose" },
+  { key: "description", label: "Description" },
+  { key: "status", label: "Status", formatter: capitalizeFirst },
+  { key: "approver", label: "Approved By" },
+  { key: "date_needed", label: "Date Needed", formatter: longDate },
+  { key: "created_at", label: "Submitted", formatter: longDateTime },
 ];
 
 // fields that needs reactive data
