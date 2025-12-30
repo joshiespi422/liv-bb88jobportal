@@ -66,7 +66,7 @@ class MaterialRequestController extends Controller
     private function getMaterialRequestsQuery($user, $canViewByDepartment, $departmentId): Builder
     {
         $query = MaterialRequest::with(['requester:id,name,picture', 'status:id,status_name'])
-        ->select('id', 'created_at', 'requested_by', 'status_id');
+        ->select('id', 'name', 'created_at', 'requested_by', 'status_id');
     
         // Apply filters based on user role
         if ($canViewByDepartment) {
@@ -91,6 +91,7 @@ class MaterialRequestController extends Controller
         return $materialRequests->map(function ($materialRequest) {
             return [
                 'id' => $materialRequest->id,
+                'material' => $materialRequest->name,
                 'created_at' => $materialRequest->created_at,
                 'status' => $materialRequest->status->status_name,
                 'requester' => [

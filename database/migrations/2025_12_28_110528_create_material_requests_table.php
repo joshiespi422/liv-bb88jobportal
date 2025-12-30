@@ -21,6 +21,7 @@ return new class extends Migration
             $table->string('name');
             $table->text('description');
             $table->unsignedTinyInteger('quantity');
+            $table->decimal('amount', 10, 2);
             $table->date('date_needed');
             $table->text('remarks')->nullable();
             $table->timestamps();

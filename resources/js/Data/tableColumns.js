@@ -621,6 +621,10 @@ export function useMaterialReqColumns({ handleViewDetails }) {
       },
     },
     {
+      header: "MATERIAL",
+      accessorKey: "material",
+    },
+    {
       header: "SUBMITTED",
       accessorFn: (row) => longDateTime(row.created_at),
       id: "submitted-date",
