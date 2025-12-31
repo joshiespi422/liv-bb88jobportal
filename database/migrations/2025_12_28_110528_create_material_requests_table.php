@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('material_requests', function (Blueprint $table) {
             $table->id();
             $table->foreignId('requested_by')->constrained('users')->onDelete('restrict');
-            $table->foreignId('accepted_by')->nullable()->constrained('users')->onDelete('restrict');
+            $table->foreignId('signed_by')->nullable()->constrained('users')->onDelete('restrict');
             $table->foreignId('department_id')->constrained('departments')->onDelete('restrict');
             $table->foreignId('status_id')->constrained('statuses')->onDelete('restrict');
             $table->text('purpose');

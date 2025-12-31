@@ -161,7 +161,7 @@ export const materialReqDetailFields = [
   { key: "purpose", label: "Purpose" },
   { key: "description", label: "Description" },
   { key: "status", label: "Status", formatter: capitalizeFirst },
-  { key: "approver", label: "Approved By" },
+  { key: "signer", label: "Signed By" },
   { key: "date_needed", label: "Date Needed", formatter: longDate },
   { key: "created_at", label: "Submitted", formatter: longDateTime },
 ];

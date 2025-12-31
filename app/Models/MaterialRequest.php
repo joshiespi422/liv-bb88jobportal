@@ -9,7 +9,7 @@ class MaterialRequest extends Model
 {
     protected $fillable = [
         'requested_by',
-        'accepted_by',
+        'signed_by',
         'department_id',
         'status_id',
         'purpose',
@@ -23,10 +23,10 @@ class MaterialRequest extends Model
         return $this->belongsTo(User::class, 'requested_by');
     }
 
-    // Define a one-to-many relationship between material_requests and users (approver)
-    public function approver(): BelongsTo
+    // Define a one-to-many relationship between material_requests and users
+    public function signer(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'accepted_by');
+        return $this->belongsTo(User::class, 'signed_by');
     }
 
     // Define a one-to-many relationship between material_requests and departments
