@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class MaterialRequest extends Model
 {
     protected $fillable = [
+        'name',
+        'quantity',
         'requested_by',
         'signed_by',
         'department_id',
@@ -15,6 +17,9 @@ class MaterialRequest extends Model
         'purpose',
         'description',
         'amount',
+        'remarks',
+        'date_needed',
+        'reject_reason',
     ];
 
     // Define a one-to-many relationship between material_requests and users (requester)

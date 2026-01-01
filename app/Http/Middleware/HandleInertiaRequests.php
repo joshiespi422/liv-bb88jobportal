@@ -51,7 +51,7 @@ class HandleInertiaRequests extends Middleware
             if ($userType === 'employee') {
                 // Efficient single query with relationship constraints
                 $user->loadMissing([
-                    'employeeDetails' => fn($q) => $q->select('user_id', 'hierarchy', 'department_id'),
+                    'employeeDetails' => fn($q) => $q->select('user_id', 'hierarchy', 'is_head', 'department_id'),
                     'employeeDetails.department' => fn($q) => $q->select('id', 'dept_name')
                 ]);
 
@@ -95,7 +95,8 @@ class HandleInertiaRequests extends Middleware
                     'department' => $department ? [
                         'id' => $department->id,
                         'name' => $department->dept_name
-                    ] : null
+                    ] : null,
+                    'isHead' => $user->employeeDetails ? $user->employeeDetails->is_head : null
                 ] : null,
             ],
             'flash' => [
