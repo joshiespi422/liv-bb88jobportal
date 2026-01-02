@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\MaterialRequest;
 use App\Models\Department;
+use App\Models\Status;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -77,7 +78,7 @@ class MaterialRequestController extends Controller
         }
     
         if ($user->userType->type_name === 'employee') {
-            return $query->where('user_id', $user->id);
+            return $query->where('department_id', $user->employeeDetails?->department_id);
         }
     
         return $query->whereRaw('1 = 0'); // User has no material request access
@@ -134,7 +135,46 @@ class MaterialRequestController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        // Authorization
+        $user = $request->user();
+        $isEmployee = $user->userType->type_name === 'employee';
+        $isHead = $user->employeeDetails?->is_head;
+        
+        $statusId = $isHead 
+            ? Status::where('status_name', 'for approval')->value('id') 
+            : Status::where('status_name', 'pending')->value('id');
+
+        if (!$isEmployee) {
+            abort(403, 'not authorized');
+        }
+
+        // Validation
+        $request->validate([
+            'purpose' => 'required|string|max:1000',
+            'name' => 'required|string|max:255',
+            'description' => 'required|string|max:1000',
+            'quantity' => 'required|integer|min:1|max:99',
+            'amount' => 'required|numeric|min:0',
+            'remarks' => 'nullable|string|max:1000',
+            'date_needed' => 'required|date|after_or_equal:today',
+        ]);
+
+        // Create Material Request
+        $materialRequest = MaterialRequest::create([
+            'requested_by' => $user->id,
+            'name' => $request->name,
+            'quantity' => $request->quantity,
+            'purpose' => $request->purpose,
+            'date_needed' => $request->date_needed,
+            'amount' => $request->amount,
+            'description' => $request->description,
+            'remarks' => $request->remarks,
+            'status_id' => $statusId,
+            'department_id' => $user->employeeDetails?->department_id,
+            'signed_by' => $isHead ? $user->id : null,
+        ]);
+
+        return back()->with('success', 'Material request submitted successfully');
     }
 
     /**
@@ -146,7 +186,7 @@ class MaterialRequestController extends Controller
         $materialRequest = MaterialRequest::with([
             'requester:id,name', 
             'department:id,dept_name',
-            'approver:id,name',
+            'signer:id,name',
             'status:id,status_name'
         ])->findOrFail($id);
 
@@ -162,7 +202,7 @@ class MaterialRequestController extends Controller
             'created_at' => $materialRequest->created_at,
             'dept_name' => $materialRequest->department->dept_name,
             'requester' => $materialRequest->requester->name,
-            'approver' => optional($materialRequest->approver)->name ?? 'N/A',
+            'signer' => optional($materialRequest->signer)->name ?? 'N/A',
             'status' => $materialRequest->status->status_name,
             'reject_reason' => $materialRequest->reject_reason
         ]);

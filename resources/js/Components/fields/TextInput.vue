@@ -2,13 +2,17 @@
 defineProps({
   modelValue: [String, Number],
   disabled: Boolean,
+  type: {
+    type: String,
+    default: "text",
+  },
 });
 defineEmits(["update:modelValue"]);
 </script>
 
 <template>
   <input
-    type="text"
+    :type="type"
     :value="modelValue"
     @input="$emit('update:modelValue', $event.target.value)"
     :disabled="disabled"
