@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Collection;
 use Inertia\Inertia;
+use App\Events\MaterialRequestCreated;
 
 class MaterialRequestController extends Controller
 {
@@ -173,6 +174,9 @@ class MaterialRequestController extends Controller
             'department_id' => $user->employeeDetails?->department_id,
             'signed_by' => $isHead ? $user->id : null,
         ]);
+
+        // dispatch event
+        MaterialRequestCreated::dispatch($materialRequest);
 
         return back()->with('success', 'Material request submitted successfully');
     }
