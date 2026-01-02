@@ -31,6 +31,8 @@ const props = defineProps({
 // logged in user data
 const page = usePage();
 const authUser = computed(() => page.props.auth.user);
+// for notification click
+const { onMountedHandleParameter } = useUrlParameter();
 
 // State for modals for forms
 const isRequestModalOpen = ref(false);
@@ -79,7 +81,8 @@ const {
   open: fetchMaterialReqDetails,
   close: closeMaterialReqModal,
 } = useDetailsModal({ baseUrl: "/material-request" });
-
+// Auto-handle 'open' parameter on mount
+onMountedHandleParameter("open", fetchMaterialReqDetails);
 // state for showing rejection reason
 const showRejectReason = ref(false);
 

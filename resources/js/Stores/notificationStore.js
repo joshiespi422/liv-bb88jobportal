@@ -121,6 +121,9 @@ export const useNotificationStore = defineStore("notification", {
               break;
           }
           break;
+        case "App\\Models\\MaterialRequest":
+          this.navigateToMaterialReq(notification);
+          break;
         // Add more cases as needed
       }
     },
@@ -212,6 +215,25 @@ export const useNotificationStore = defineStore("notification", {
       }
 
       router.visit(route("leave", routeParams), {
+        preserveState: false,
+        preserveScroll: true,
+        replace: false,
+      });
+    },
+
+    navigateToMaterialReq(notification) {
+      const materialReq = notification.notifiable;
+
+      const routeParams = {
+        open: materialReq.id,
+      };
+
+      // Add dept only for super_admin
+      if (authUser.value.userType === "super_admin") {
+        routeParams.dept = materialReq.department?.id;
+      }
+
+      router.visit(route("material.request", routeParams), {
         preserveState: false,
         preserveScroll: true,
         replace: false,

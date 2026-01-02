@@ -10,6 +10,7 @@ use App\Models\Accomplishment;
 use App\Models\Leave;
 use App\Models\Project;
 use App\Models\Comment;
+use App\Models\MaterialRequest;
 
 class NotificationController extends Controller
 {
@@ -37,6 +38,7 @@ class NotificationController extends Controller
                                 Project::class => [],
                             ]);
                         }],
+                        MaterialRequest::class => [],
                     ]);
                 }
             ])
@@ -68,6 +70,7 @@ class NotificationController extends Controller
                                 Project::class => [],
                             ]);
                         }],
+                        MaterialRequest::class => ['department'],
                     ]);
                 }
             ])
