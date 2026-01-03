@@ -11,7 +11,10 @@ import { useDetailsModal } from "../Composables/useDetailsModal";
 import { materialReqDetailFields } from "../Data/detailFields";
 import { useMaterialReqColumns } from "../Data/tableColumns";
 import { statusText } from "../Composables/useClassMap";
-import { useRequestMaterialFormFields } from "../Data/forms/materialFormFields";
+import {
+  useRequestMaterialFormFields,
+  useValidateMaterialFormFields,
+} from "../Data/forms/materialFormFields";
 
 const props = defineProps({
   materialRequests: {
@@ -36,6 +39,7 @@ const { onMountedHandleParameter } = useUrlParameter();
 
 // State for modals for forms
 const isRequestModalOpen = ref(false);
+const isValidateModalOpen = ref(false);
 // Holds the action to be executed on confirmation
 const pendingAction = ref(null);
 // confirmation before request
@@ -71,6 +75,11 @@ const requestForm = useForm({
   remarks: "",
   date_needed: "",
 });
+// validate form state
+const validateForm = useForm({
+  status: "",
+  reject_reason: "",
+});
 
 // -- Material Request Details Logic --
 const {
@@ -86,19 +95,58 @@ onMountedHandleParameter("open", fetchMaterialReqDetails);
 // state for showing rejection reason
 const showRejectReason = ref(false);
 
+// Function to toggle rejection reason
+const toggleRejectReason = () => {
+  showRejectReason.value = !showRejectReason.value;
+};
 // Handler for viewing material request and details modal function
 const handleViewDetails = (materialReqId) => {
+  showRejectReason.value = false;
   fetchMaterialReqDetails(materialReqId);
 };
 
+// handle validate material
+const handleValidateMaterialReq = () => {
+  if (!selectedMaterialReq.value) return;
+  isValidateModalOpen.value = true;
+  isMaterialReqModalOpen.value = false;
+};
 // handle request material
 const handleRequestMaterial = () => {
   isRequestModalOpen.value = true;
 };
 const closeAllModal = () => {
   isRequestModalOpen.value = false;
+  isValidateModalOpen.value = false;
   isConfirmModalOpen.value = false;
 };
+
+// control validate back button visibility
+const showBackButtonInValidate = computed(() => {
+  return isValidateModalOpen.value && selectedMaterialReq.value !== null;
+});
+// handle validate back navigation
+const handleBackFromValidate = () => {
+  isValidateModalOpen.value = false;
+  isMaterialReqModalOpen.value = true;
+};
+
+// for min attribute
+const today = computed(() => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+});
+// Form field configuration for requesting material
+const requestFormFields = useRequestMaterialFormFields(today);
+
+// form field configuration for validating material
+const validateFormFields = useValidateMaterialFormFields(
+  validateForm,
+  selectedMaterialReq
+);
 
 // -- Request Material Flow --
 const handleRequestSubmit = () => {
@@ -165,16 +213,40 @@ const handleSignSubmit = () => {
   isConfirmModalOpen.value = true;
 };
 
-// for min attribute
-const today = computed(() => {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-});
-// Form field configuration for requesting material
-const requestFormFields = useRequestMaterialFormFields(today);
+// -- Validate Material Flow --
+const handleValidateSubmit = () => {
+  Object.assign(confirmModalProps, {
+    title: "Validate Material Request",
+    message: "Are you sure you want to validate this request?",
+    confirmText: "Validate",
+    confirmButtonBg: "bg-blue-600 hover:bg-blue-700",
+    iconName: "pi pi-file-edit",
+    iconColor: "text-blue-600",
+    iconBgColor: "bg-blue-100",
+  });
+
+  pendingAction.value = () => {
+    isConfirmLoading.value = true;
+    validateForm.patch(
+      route("material.request.validate", selectedMaterialReq.value.id),
+      {
+        preserveScroll: true,
+        onSuccess: () => {
+          closeAllModal();
+          validateForm.reset();
+        },
+        onError: () => closeConfirmModal(),
+        onFinish: () => {
+          setTimeout(() => {
+            isConfirmLoading.value = false;
+          }, 500);
+        },
+      }
+    );
+  };
+
+  isConfirmModalOpen.value = true;
+};
 
 // Tanstack Table columns definition
 const materialReqTableColumns = useMaterialReqColumns({ handleViewDetails });
@@ -207,6 +279,24 @@ const showSignButton = computed(() => {
   }
   // 4. Must be in "pending" status
   if (selectedMaterialReq.value.status !== "pending") {
+    return false;
+  }
+
+  return true;
+});
+const showValidateButton = computed(() => {
+  const isSuperAdmin = authUser.value?.userType === "super_admin";
+
+  // 1. Must be super admin
+  if (!isSuperAdmin) {
+    return false;
+  }
+  // 2. Must have selected material request details
+  if (!selectedMaterialReq.value) {
+    return false;
+  }
+  // 3. Must be in "for approval" status
+  if (selectedMaterialReq.value.status !== "for approval") {
     return false;
   }
 
@@ -266,6 +356,29 @@ const showSignButton = computed(() => {
     submitText="Request"
     @close="closeAllModal"
     @submit="handleRequestSubmit"
+  >
+    <!-- Confirmation Modal -->
+    <ConfirmModal
+      :show="isConfirmModalOpen"
+      v-bind="confirmModalProps"
+      :loading="isConfirmLoading"
+      @cancel="closeConfirmModal"
+      @confirm="executeConfirm"
+    />
+  </FormModal>
+
+  <!-- Validate Material Modal -->
+  <FormModal
+    :isOpen="isValidateModalOpen"
+    :showBackButton="showBackButtonInValidate"
+    title="VALIDATE MATERIAL REQUEST"
+    :form="validateForm"
+    :fields="validateFormFields"
+    submitText="Submit"
+    disabledButton
+    @close="closeAllModal"
+    @back="handleBackFromValidate"
+    @submit="handleValidateSubmit"
   >
     <!-- Confirmation Modal -->
     <ConfirmModal
@@ -367,6 +480,13 @@ const showSignButton = computed(() => {
         class="btn btn-sm @sm:btn-md rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3 me-2"
       >
         Sign
+      </button>
+      <button
+        v-if="showValidateButton"
+        @click="handleValidateMaterialReq"
+        class="btn btn-sm @sm:btn-md rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3 me-2"
+      >
+        Validate
       </button>
     </template>
 

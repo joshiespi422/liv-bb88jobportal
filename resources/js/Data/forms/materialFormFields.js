@@ -3,6 +3,7 @@ import { computed } from "vue";
 import TextInput from "../../Components/fields/TextInput.vue";
 import TextArea from "../../Components/fields/TextArea.vue";
 import DateInput from "../../Components/fields/DateInput.vue";
+import SelectInput from "../../Components/fields/SelectInput.vue";
 
 /**
  * @param {import('vue').ComputedRef<String>} today - A computed ref for today's date string.
@@ -72,6 +73,55 @@ export function useRequestMaterialFormFields(today) {
         },
       },
     ];
+
+    return fields;
+  });
+}
+
+/**
+ * Generates fields for the material validation form.
+ * @param {import('@inertiajs/vue3').Form} form - The reactive form object from useForm (validateForm).
+ * @param {import('vue').Ref<Object>} selectedDetails - A ref to the selected material details.
+ */
+export function useValidateMaterialFormFields(form, selectedDetails) {
+  return computed(() => {
+    const fields = [
+      {
+        key: "material_selected",
+        label: "Material Request Selected",
+        component: TextInput,
+        attrs: {
+          disabled: true,
+          value: selectedDetails.value?.material || "N/A",
+        },
+      },
+      {
+        key: "status",
+        label: "Status",
+        component: SelectInput,
+        attrs: {
+          required: true,
+          placeholder: "Select a status",
+          options: [
+            { value: "approved", label: "Approved" },
+            { value: "rejected", label: "Rejected" },
+          ],
+        },
+      },
+    ];
+
+    // If the selected status is 'rejected', add the reason text input
+    if (form.status === "rejected") {
+      fields.push({
+        key: "reject_reason",
+        label: "Reason",
+        component: TextArea,
+        attrs: {
+          required: true,
+          placeholder: "Reason for rejection",
+        },
+      });
+    }
 
     return fields;
   });

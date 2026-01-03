@@ -124,7 +124,7 @@ class MaterialRequestController extends Controller
         return $props;
     }
 
-    public function sign(MaterialRequest $materialRequest)
+    public function signMaterialRequest(MaterialRequest $materialRequest)
     {
         // Authorization
         $user = Auth::user();
@@ -148,6 +148,47 @@ class MaterialRequestController extends Controller
         ]);
         
         return back()->with('success', 'Material request signed successfully!');
+    }
+
+    public function validateMaterialRequest(Request $request, MaterialRequest $materialRequest)
+    {
+        // Authorization
+        $user = Auth::user();
+        $isSuperAdmin = $user->userType->type_name === 'super_admin';
+        if (!$isSuperAdmin) { 
+            abort(403, 'not authorized'); 
+        }
+
+        $materialRequest->loadMissing([
+            'status:id,status_name',
+        ]);
+
+        if ($materialRequest->status->status_name !== 'for approval') {
+            abort(403, 'material request is not for approval');
+        }
+
+        // Validation
+        $request->validate([
+            'status' => 'required|in:approved,rejected',
+            'reject_reason' => 'nullable|required_if:status,rejected|string|max:1000',
+        ]);
+
+         //Logic
+        DB::transaction(function () use ($request, $materialRequest) {
+            $newStatus = Status::where('status_name', $request->status)->firstOrFail();
+            $materialRequest->status_id = $newStatus->id;
+
+            // If status is 'rejected', save the reason. Otherwise, clear it.
+            if ($request->status === 'rejected') {
+                $materialRequest->reject_reason = $request->reject_reason;
+            } else {
+                $materialRequest->reject_reason = null;
+            }
+
+            $materialRequest->save();
+        });
+        
+        return back()->with('success', 'Material request validated successfully!');
     }
 
     /**
