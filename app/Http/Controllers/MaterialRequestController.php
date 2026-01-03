@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Collection;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Auth;
 use App\Events\MaterialRequestCreated;
 
 class MaterialRequestController extends Controller
@@ -121,6 +122,32 @@ class MaterialRequestController extends Controller
         }
 
         return $props;
+    }
+
+    public function sign(MaterialRequest $materialRequest)
+    {
+        // Authorization
+        $user = Auth::user();
+        $isHead = $user->employeeDetails?->is_head;
+        $isSuperAdmin = $user->userType->type_name === 'super_admin';
+        if (!$isHead || $isSuperAdmin) { 
+            abort(403, 'not authorized'); 
+        }
+
+        $materialRequest->loadMissing([
+            'status:id,status_name',
+        ]);
+
+        if ($materialRequest->status->status_name !== 'pending') {
+            abort(403, 'material request is not pending');
+        }
+
+        $forApprovalStatusId = Status::where('status_name', 'for approval')->value('id');
+        $materialRequest->update([
+            'status_id' => $forApprovalStatusId,
+        ]);
+        
+        return back()->with('success', 'Material request signed successfully!');
     }
 
     /**

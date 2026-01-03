@@ -115,6 +115,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/material-request', [MaterialRequestController::class, 'index'])->name('material.request');
         Route::get('/material-request/{id}', [MaterialRequestController::class, 'show'])->name('material.request.show');
         Route::post('/material-request', [MaterialRequestController::class, 'store'])->name('material.request.store');
+        Route::patch('/material-request/{materialRequest}/sign', [MaterialRequestController::class, 'sign'])->name('material.request.sign');
     });
 });
 
