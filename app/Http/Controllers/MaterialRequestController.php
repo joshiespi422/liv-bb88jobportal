@@ -13,6 +13,8 @@ use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
 use App\Events\MaterialRequestCreated;
+use App\Events\MaterialRequestSigned;
+use App\Events\MaterialRequestValidated;
 
 class MaterialRequestController extends Controller
 {
@@ -142,10 +144,17 @@ class MaterialRequestController extends Controller
             abort(403, 'material request is not pending');
         }
 
-        $forApprovalStatusId = Status::where('status_name', 'for approval')->value('id');
-        $materialRequest->update([
-            'status_id' => $forApprovalStatusId,
-        ]);
+        // Logic
+        DB::transaction(function () use ($materialRequest, $user) {
+            $forApprovalStatusId = Status::where('status_name', 'for approval')->value('id');
+            $materialRequest->update([
+                'status_id' => $forApprovalStatusId,
+                'signed_by' => $user->id
+            ]);
+
+            // Dispatch event
+            MaterialRequestSigned::dispatch($materialRequest);
+        });
         
         return back()->with('success', 'Material request signed successfully!');
     }
@@ -186,6 +195,8 @@ class MaterialRequestController extends Controller
             }
 
             $materialRequest->save();
+
+            MaterialRequestValidated::dispatch($materialRequest);
         });
         
         return back()->with('success', 'Material request validated successfully!');
@@ -228,23 +239,26 @@ class MaterialRequestController extends Controller
             'date_needed' => 'required|date|after_or_equal:today',
         ]);
 
-        // Create Material Request
-        $materialRequest = MaterialRequest::create([
-            'requested_by' => $user->id,
-            'name' => $request->name,
-            'quantity' => $request->quantity,
-            'purpose' => $request->purpose,
-            'date_needed' => $request->date_needed,
-            'amount' => $request->amount,
-            'description' => $request->description,
-            'remarks' => $request->remarks,
-            'status_id' => $statusId,
-            'department_id' => $user->employeeDetails?->department_id,
-            'signed_by' => $isHead ? $user->id : null,
-        ]);
+        //Logic
+        DB::transaction(function () use ($request, $user, $isHead, $statusId) {
+            // Create Material Request
+            $materialRequest = MaterialRequest::create([
+                'requested_by' => $user->id,
+                'name' => $request->name,
+                'quantity' => $request->quantity,
+                'purpose' => $request->purpose,
+                'date_needed' => $request->date_needed,
+                'amount' => $request->amount,
+                'description' => $request->description,
+                'remarks' => $request->remarks,
+                'status_id' => $statusId,
+                'department_id' => $user->employeeDetails?->department_id,
+                'signed_by' => $isHead ? $user->id : null,
+            ]);
 
-        // dispatch event
-        MaterialRequestCreated::dispatch($materialRequest);
+            // dispatch event
+            MaterialRequestCreated::dispatch($materialRequest);
+        });
 
         return back()->with('success', 'Material request submitted successfully');
     }

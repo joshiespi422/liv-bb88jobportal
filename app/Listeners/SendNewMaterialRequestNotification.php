@@ -51,7 +51,7 @@ class SendNewMaterialRequestNotification
         if ($recipientIds->isEmpty()) return;
 
         // Prepare notification message
-        $message = "New material request has been submitted by {$materialRequest->requester->name}.";
+        $message = "New material request {$materialRequest->name} has been submitted by {$materialRequest->requester->name}.";
         $now = now();
 
         // Prepare an array of notification data, bulk insert
