@@ -156,11 +156,19 @@ class User extends Authenticatable
     }
 
     /**
-     * Defines a one-to-many relationship with users and material_requests (approver)
+     * Defines a one-to-many relationship with users and material_requests (signer)
      */ 
-    public function materialRequestsApproved(): HasMany
+    public function materialRequestsSigned(): HasMany
     {
-        return $this->hasMany(MaterialRequest::class, 'accepted_by');
+        return $this->hasMany(MaterialRequest::class, 'signed_by');
+    }
+
+    /**
+     * Defines a one-to-many relationship with users and salaries
+     */
+    public function salaries(): HasMany
+    {
+        return $this->hasMany(Salary::class);
     }
 
     /**

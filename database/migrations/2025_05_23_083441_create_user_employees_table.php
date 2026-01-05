@@ -15,6 +15,7 @@ return new class extends Migration
             $table->unsignedBigInteger('user_id')->primary();
             $table->foreignId('department_id')->constrained('departments')->onDelete('restrict');
             $table->enum('hierarchy', ['Leader', 'Member'])->default('Member');
+            $table->decimal('current_salary', 10, 2)->nullable();
             $table->text('terminate_reason')->nullable();
             $table->timestamps();
 
