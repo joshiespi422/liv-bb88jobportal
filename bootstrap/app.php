@@ -23,11 +23,6 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
     })
-    ->withSchedule(function (Schedule $schedule) {
-        $schedule->command('app:update-open-time-logs')
-                 ->cron('0 10,12,15 * * *') // Runs at 10:00, 12:00, and 15:00
-                 ->timezone('Asia/Manila');
-    })
     ->withExceptions(function (Exceptions $exceptions) {
         //
     })->create();
