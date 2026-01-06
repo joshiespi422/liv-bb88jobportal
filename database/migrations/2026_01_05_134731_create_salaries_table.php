@@ -21,6 +21,8 @@ return new class extends Migration
             $table->unsignedTinyInteger('overtime_hour')->nullable();
             $table->decimal('overtime_amount', 10, 2)->nullable();
             $table->decimal('gross_pay', 10, 2);
+            $table->date('start_date');
+            $table->date('end_date');
             $table->timestamps();
         });
     }
