@@ -19,4 +19,10 @@ class Salary extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    // Define a one-to-many relationship between salaries and salary_periods
+    public function salaryPeriod(): BelongsTo
+    {
+        return $this->belongsTo(SalaryPeriod::class);
+    }
 }
