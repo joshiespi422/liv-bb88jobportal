@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('salaries', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('restrict');
+            $table->foreignId('salary_period_id')->constrained('salary_periods')->onDelete('restrict');
             $table->decimal('rate_day', 10, 2);
             $table->decimal('rate_month', 10, 2);
             $table->unsignedTinyInteger('absent_day')->nullable();
