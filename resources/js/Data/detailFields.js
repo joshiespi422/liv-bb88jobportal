@@ -33,7 +33,7 @@ const attachFormatter = (attachment) => {
 };
 
 // Formatter for capitalize first letter
-const capitalizeFirst = (string) => {
+export const capitalizeFirst = (string) => {
   return string.charAt(0).toUpperCase() + string.slice(1);
 };
 

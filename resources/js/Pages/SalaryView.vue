@@ -7,6 +7,7 @@ import Department from "../Components/Department.vue";
 import DetailsModal from "../Components/modals/DetailsModal.vue";
 import FormModal from "../Components/modals/FormModal.vue";
 import ConfirmModal from "../Components/modals/ConfirmModal.vue";
+import { useSalaryColumns } from "../Data/tableColumns";
 
 const props = defineProps({
   salaryPeriods: {
@@ -20,7 +21,18 @@ const page = usePage();
 const authUser = computed(() => page.props.auth.user);
 
 // Tanstack Table columns definition
-const salaryTableColumns = useSalaryColumns({ handleViewDetails });
+const salaryTableColumns = useSalaryColumns(authUser, {
+  openEmployeeList,
+  openPayslip,
+});
+
+function openPayslip(row) {
+  //
+}
+
+function openEmployeeList(row) {
+  //
+}
 </script>
 
 <template>
@@ -30,7 +42,7 @@ const salaryTableColumns = useSalaryColumns({ handleViewDetails });
       class="flex flex-col items-center gap-2 sm:flex-row sm:justify-between sm:gap-0 mx-4 mb-5"
     >
       <h1 class="text-lg @sm:text-2xl @4xl:text-3xl font-bold">
-        Salary Management
+        Salary Payslip
       </h1>
     </div>
 

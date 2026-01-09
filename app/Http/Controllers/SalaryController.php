@@ -12,11 +12,14 @@ class SalaryController extends Controller
      * Display a listing of the resource.
      */
     public function index()
-    {
-        $salaryPeriods = SalaryPeriod::all();
-        // Render the view
-        return Inertia::render('SalaryView', $salaryPeriods);
-    }
+{
+    $salaryPeriods = SalaryPeriod::all();
+
+    return Inertia::render('SalaryView', [
+        'salaryPeriods' => $salaryPeriods, 
+    ]);
+}
+
 
     /**
      * Show the form for creating a new resource.

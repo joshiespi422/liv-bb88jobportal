@@ -8,6 +8,7 @@ import {
   formatTime,
   formatDate,
 } from "../Composables/useDateFormatter";
+import { capitalizeFirst } from "./detailFields";
 
 /**
  * @param {Object} props - The component's props (specifically `activeTab`).
@@ -626,4 +627,60 @@ export function useMaterialReqColumns({ handleViewDetails }) {
       enableSorting: false,
     },
   ];
+}
+
+/**
+ * @param {Object} authUser - The authenticated user.
+ * @param {Object} handlers - An object containing handler functions from the parent.
+ * @param {Function} handlers.openPayslip - The function to call when 'View Details' is clicked.
+ * @param {Function} handlers.openEmployeeList - The function to call when 'View Details' is clicked.
+ * @returns {Array} The static column definition array.
+ */
+export function useSalaryColumns(authUser, { openEmployeeList, openPayslip }) {
+  return computed(() => {
+    const columns = [
+      {
+        accessorFn: (row) => capitalizeFirst(row.month),
+        header: "MONTH",
+      },
+      {
+        accessorFn: (row) =>
+          `${row.cycle} half of ${capitalizeFirst(row.month)}`,
+        header: "PERIOD",
+      },
+    ];
+
+    if (authUser.value.userType === "super_admin") {
+      columns.push({
+        header: "DETAILS",
+        cell: ({ row }) =>
+          h(
+            "button",
+            {
+              onClick: () => openEmployeeList(row.original.id),
+              class:
+                "btn btn-sm @sm:btn-md rounded-full bg-green-primary-1 text-white hover:bg-green-primary-3",
+            },
+            "View Details"
+          ),
+        enableSorting: false,
+      });
+    } else {
+      columns.push({
+        header: "DETAILS",
+        cell: ({ row }) =>
+          h(
+            "button",
+            {
+              onClick: () => openPayslip(row.original.id),
+              class:
+                "btn btn-sm @sm:btn-md rounded-full bg-green-primary-1 text-white hover:bg-green-primary-3",
+            },
+            "View Details"
+          ),
+        enableSorting: false,
+      });
+    }
+    return columns;
+  });
 }

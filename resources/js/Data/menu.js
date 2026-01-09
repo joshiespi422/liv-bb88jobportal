@@ -117,6 +117,12 @@ export const menuItems = [
         routeName: "profile",
       },
       {
+        name: "SALARY PAYSLIP",
+        userType: ["super_admin", "employee"], // Different from parent
+        icon: "pi pi-wallet",
+        routeName: "salary",
+      },
+      {
         name: "LEAVE FORM",
         icon: "pi pi-folder-open",
         userType: ["super_admin", "employee"], // Different from parent
