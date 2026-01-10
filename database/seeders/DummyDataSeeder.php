@@ -72,6 +72,7 @@ class DummyDataSeeder extends Seeder
                 'user_id' => $user_id,
                 'department_id' => $developer_dept_id,
                 'hierarchy' => $hierarchy,
+                'current_salary' => rand(20000, 40000),
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -94,6 +95,7 @@ class DummyDataSeeder extends Seeder
                 'user_id' => $user_id,
                 'department_id' => $admin_dept_id,
                 'hierarchy' => $hierarchy,
+                'current_salary' => rand(20000, 40000),
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
