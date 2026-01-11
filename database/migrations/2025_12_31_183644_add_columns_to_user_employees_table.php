@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::table('user_employees', function (Blueprint $table) {
             $table->boolean('is_head')->default(0)->after('department_id');
+            $table->decimal('current_salary', 10, 2)->nullable()->after('hierarchy');
         });
     }
 
@@ -23,6 +24,7 @@ return new class extends Migration
     {
         Schema::table('user_employees', function (Blueprint $table) {
             $table->dropColumn('is_head');
+            $table->dropColumn('current_salary');
         });
     }
 };
