@@ -54,9 +54,13 @@ const addForm = useForm({
 });
 
 // Update form state
+const editableFields = ref({});
 const updateForm = useForm({
   status: "",
   terminate_reason: "",
+  qr_code: "",
+  position: "",
+  current_salary: "",
 });
 
 // Form field configuration for adding new employee
@@ -105,21 +109,30 @@ const submitAddForm = () => {
 // after confirmation for updating
 const submitUpdateForm = () => {
   isConfirmLoading.value = true;
-  updateForm.patch(
-    route("team.employees.update", { employee: selectedEmployee.value.id }),
-    {
-      onSuccess: () => {
-        isUpdateModalOpen.value = false;
-        updateForm.reset();
-      },
-      onFinish: () => {
-        closeConfirmModal();
-        setTimeout(() => {
-          isConfirmLoading.value = false;
-        }, 500);
-      },
+  // Filter only editable fields to send to the backend
+  const dataToSubmit = {};
+  Object.keys(editableFields.value).forEach((key) => {
+    if (editableFields.value[key]) {
+      dataToSubmit[key] = updateForm[key];
     }
-  );
+  });
+
+  updateForm
+    .transform(() => dataToSubmit)
+    .patch(
+      route("team.employees.update", { employee: selectedEmployee.value.id }),
+      {
+        onSuccess: () => {
+          isUpdateModalOpen.value = false;
+          editableFields.value = {};
+          updateForm.reset();
+        },
+        onFinish: () => {
+          closeConfirmModal();
+          isConfirmLoading.value = false;
+        },
+      }
+    );
 };
 
 // tab handling navigation
@@ -169,10 +182,31 @@ const toggleReason = (status) => {
 };
 
 // Form field configuration for updating employee
-const updateFormFields = useUpdateFormFields(updateForm, selectedEmployee);
+const updateFormFields = useUpdateFormFields(
+  updateForm,
+  selectedEmployee,
+  editableFields
+);
+// toggle editable fields
+const toggleEdit = (key) => {
+  editableFields.value[key] = !editableFields.value[key];
+
+  // If we just disabled the field, reset its value to the original
+  if (!editableFields.value[key]) {
+    updateForm[key] = selectedEmployee.value[key] || "";
+    updateForm.clearErrors(key);
+  }
+};
 // update employee modal state
 const handleUpdateEmployee = () => {
   if (!selectedEmployee.value) return;
+  // Pre-populate the form with current employee data
+  updateForm.position = selectedEmployee.value.position || "";
+  updateForm.qr_code = selectedEmployee.value.qr_code || "";
+  updateForm.current_salary = selectedEmployee.value.current_salary || "";
+  // Reset editable states whenever we open the modal
+  editableFields.value = {};
+
   isUpdateModalOpen.value = true;
   isEmployeeModalOpen.value = false;
 };
@@ -188,6 +222,12 @@ const handleBackFromUpdate = () => {
 const handleUpdateSubmit = () => {
   showConfirmModal.value = true;
 };
+// disable submit button in update form
+const isUpdateDisabled = computed(() => {
+  return !Object.keys(editableFields.value).some(
+    (key) => editableFields.value[key]
+  );
+});
 
 // computed property for custom details field separation
 const customDetails = computed(() => {
@@ -328,10 +368,54 @@ const showUpdateButton = computed(() => {
       :fields="updateFormFields"
       submitText="Submit"
       disabledButton
+      :confirm-disabled="isUpdateDisabled"
       @close="isUpdateModalOpen = false"
       @back="handleBackFromUpdate"
       @submit="handleUpdateSubmit"
     >
+      <template #custom-fields="{ fields, form }">
+        <div v-for="field in fields" :key="field.key">
+          <label :for="field.key" class="block text-sm font-bold ms-3">
+            {{ field.label }}
+          </label>
+          <div class="flex items-center gap-2">
+            <div class="w-full">
+              <component
+                :is="field.component"
+                :id="field.key"
+                v-bind="field.attrs"
+                v-model="form[field.key]"
+                :class="{
+                  'ring-error': form.errors[field.key],
+                  'focus:ring-indigo-600': !form.errors[field.key],
+                  'w-full': true,
+                }"
+                @change="form.clearErrors(field.key)"
+              />
+            </div>
+            <i
+              v-if="
+                field.key !== 'employee_name' &&
+                field.key !== 'terminate_reason'
+              "
+              @click="toggleEdit(field.key)"
+              :class="[
+                'text-xl cursor-pointer ml-2 transition-colors',
+                editableFields[field.key]
+                  ? 'pi pi-times text-error'
+                  : 'pi pi-pen-to-square text-blue-500',
+              ]"
+            ></i>
+          </div>
+          <p
+            v-if="form.errors[field.key]"
+            class="mt-1 text-sm font-semibold text- ms-3"
+          >
+            {{ form.errors[field.key] }}
+          </p>
+        </div>
+      </template>
+
       <!-- Confirmation Modal -->
       <ConfirmModal
         :show="showConfirmModal"

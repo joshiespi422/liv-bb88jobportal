@@ -87,35 +87,54 @@ export function useEmployeeFormFields(authUser, props) {
  * @param {import('@inertiajs/vue3').Form} form - The reactive form object from useForm.
  * @param {import('vue').Ref<Object>} selectedEmployee - A ref to the selected employee details.
  */
-export function useUpdateFormFields(form, selectedEmployee) {
+export function useUpdateFormFields(form, selectedEmployee, editableFields) {
   return computed(() => {
-    const allStatusOptions = [
-      { value: "active", label: "Active" },
-      { value: "resigned", label: "Mark as Resigned" },
-      { value: "terminated", label: "Mark as Terminated" },
-    ];
-    const filteredStatusOptions = allStatusOptions.filter(
-      (opt) => opt.value !== selectedEmployee.value?.status
-    );
-
     const fields = [
-      {
-        key: "employee_name",
-        label: "Selected",
-        component: TextInput,
-        attrs: {
-          disabled: true,
-          value: selectedEmployee.value?.name || "N/A",
-        },
-      },
       {
         key: "status",
         label: "Status",
         component: SelectInput,
         attrs: {
-          required: true,
-          options: filteredStatusOptions,
+          disabled: !editableFields.value.status,
+          required: !!editableFields.value.status,
           placeholder: "Select a status",
+          options: [
+            { value: "active", label: "Active" },
+            { value: "resigned", label: "Mark as Resigned" },
+            { value: "terminated", label: "Mark as Terminated" },
+          ].filter((opt) => opt.value !== selectedEmployee.value?.status),
+        },
+      },
+      {
+        key: "position",
+        label: "Position",
+        component: TextInput,
+        attrs: {
+          disabled: !editableFields.value.position,
+          required: !!editableFields.value.position,
+          placeholder: "Software Engineer",
+        },
+      },
+      {
+        key: "qr_code",
+        label: "QR Code",
+        component: TextInput,
+        attrs: {
+          disabled: !editableFields.value.qr_code,
+          required: !!editableFields.value.qr_code,
+          placeholder: "02-E0001-1925",
+          pattern: "^[A-Z0-9]{2}-[A-Z0-9]{5}-[A-Z0-9]{4}$",
+        },
+      },
+      {
+        key: "current_salary",
+        label: "Current Salary",
+        component: TextInput,
+        attrs: {
+          type: "number",
+          disabled: !editableFields.value.current_salary,
+          required: !!editableFields.value.current_salary,
+          placeholder: "15000.00",
         },
       },
     ];
@@ -125,10 +144,7 @@ export function useUpdateFormFields(form, selectedEmployee) {
         key: "terminate_reason",
         label: "Reason for Termination",
         component: TextArea,
-        attrs: {
-          required: true,
-          placeholder: "Please provide a reason",
-        },
+        attrs: { required: true, placeholder: "Please provide a reason" },
       });
     }
     return fields;

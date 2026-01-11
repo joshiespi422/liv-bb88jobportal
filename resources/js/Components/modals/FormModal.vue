@@ -24,6 +24,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  confirmDisabled: {
+    type: Boolean,
+    default: false,
+  },
   panelClass: {
     type: String,
     default: "w-full max-w-md",
@@ -134,7 +138,7 @@ const focusElement = ref(null);
                   <button
                     ref="focusElement"
                     type="submit"
-                    :disabled="form.processing"
+                    :disabled="form.processing || confirmDisabled"
                     class="btn btn-sm @sm:btn-md btn-soft px-7 rounded-full text-white bg-green-primary-1 hover:bg-green-primary-3 border-2 border-base-content shadow-md"
                   >
                     {{ submitText }}

@@ -9,6 +9,7 @@ use App\Models\UserEmployee;
 use App\Models\UserType;
 use App\Models\Status;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -185,9 +186,12 @@ class EmployeeController extends Controller
      */
     public function show(string $id)
     {
+        $user = Auth::user();
+        $isSuperAdmin = $user && $user->userType->type_name === 'super_admin';
+
         $employee = User::with([
                 'status:id,status_name',
-                'employeeDetails:user_id,hierarchy,department_id,terminate_reason',
+                'employeeDetails:user_id,hierarchy,department_id,terminate_reason,current_salary',
                 'employeeDetails.department:id,dept_name'
             ])
             ->whereHas('employeeDetails')
@@ -200,7 +204,7 @@ class EmployeeController extends Controller
             'email' => $employee->email,
             'position' => $employee->position,
             'status' => $employee->status->status_name,
-            'qrCode' => $employee->qr_code,
+            'qr_code' => $employee->qr_code,
             'picture' => $employee->picture
                 ? Storage::url($employee->picture)  // Generates full URL for stored image
                 : Storage::url('profile-images/default.png'),  // Fallback to default image
@@ -214,6 +218,9 @@ class EmployeeController extends Controller
             'hierarchy' => $employee->employeeDetails
                             ? $employee->employeeDetails->hierarchy
                             : null,
+            'current_salary' => ($isSuperAdmin && $employee->employeeDetails && $employee->employeeDetails->current_salary)
+                                ? $employee->employeeDetails->current_salary
+                                : null
         ];
         return response()->json($employeeDetails);
     }
@@ -241,24 +248,41 @@ class EmployeeController extends Controller
         }
 
         // Validation
-         $request->validate([
-            'status' => 'required|in:active,resigned,terminated',
-            'terminate_reason' => 'nullable|required_if:status,terminated|string|max:1000',
-        ]);
+        $rules = [
+            'status' => 'sometimes|required|in:active,resigned,terminated',
+            'terminate_reason' => 'required_if:status,terminated|string|max:1000',
+            'position' => 'sometimes|required|string|max:255',
+            'qr_code' => 'sometimes|required|string|unique:users,qr_code,' . $employee->id,
+            'current_salary' => 'sometimes|required|numeric|min:0',
+        ];
+        $request->validate($rules);
 
         // Logic
         DB::transaction(function () use ($request, $employee) {
-            $newStatus = Status::where('status_name', $request->status)->firstOrFail();
-            $employee->status_id = $newStatus->id;
+            // 1. Update User table fields
+            $employee->fill($request->only(['position', 'qr_code']));
 
-            // If status is 'terminated', save the reason. Otherwise, clear it.
-            if ($request->status === 'terminated') {
-                $employee->employeeDetails->terminate_reason = $request->terminate_reason;
-            } else {
-                $employee->employeeDetails->terminate_reason = null;
+            // 2. Handle Status logic
+            if ($request->has('status')) {
+                $newStatus = Status::where('status_name', $request->status)->firstOrFail();
+                $employee->status_id = $newStatus->id;
+                
+                $employee->loadMissing('employeeDetails');
+                $employee->employeeDetails->terminate_reason = ($request->status === 'terminated') 
+                    ? $request->terminate_reason 
+                    : null;
+            }
+
+            // 3. Update employeeDetails table fields
+            if ($request->has('current_salary')) {
+                $employee->loadMissing('employeeDetails');
+                $employee->employeeDetails->current_salary = $request->current_salary;
             }
 
             $employee->save();
+            if ($employee->relationLoaded('employeeDetails')) {
+                $employee->employeeDetails->save();
+            }
         });
 
         return back()->with('success', 'Employee updated successfully!');

@@ -123,7 +123,7 @@ export const employeeDetailFields = [
   { key: "status", label: "Status", formatter: capitalizeFirst },
   { key: "deptName", label: "Department" },
   { key: "hierarchy", label: "Hierarchy" },
-  { key: "qrCode", label: "QR Code" },
+  { key: "qr_code", label: "QR Code" },
   { key: "address", label: "Address" },
   { key: "gender", label: "Gender" },
   { key: "bday", label: "Birthday", formatter: formatDate },
