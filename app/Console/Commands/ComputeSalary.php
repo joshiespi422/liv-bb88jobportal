@@ -5,9 +5,10 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use App\Models\User;
 use App\Models\Salary;
+use App\Models\Status;
+use App\Models\SalaryPeriod;
 use App\Models\TimeLog;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 
 class ComputeSalary extends Command
 {
@@ -31,79 +32,103 @@ class ComputeSalary extends Command
     public function handle()
     {
         $today = Carbon::today();
-        $startDate = null;
-        $endDate = null;
-
-        // 1. Determine the date range based on today's date
+        
+        // 1. Determine Dates and Cycle
         if ($today->day === 16) {
-            // Computing for 1st to 15th of current month
-            $startDate = $today->copy()->startOfMonth();
-            $endDate = $today->copy()->day(15);
+            $start = $today->copy()->startOfMonth();
+            $end = $today->copy()->day(15);
+            $cycle = '1st';
         } elseif ($today->day === 1) {
-            // Computing for 16th to end of previous month
-            $startDate = $today->copy()->subMonth()->day(16);
-            $endDate = $today->copy()->subMonth()->endOfMonth();
+            $start = $today->copy()->subMonth()->day(16);
+            $end = $today->copy()->subMonth()->endOfMonth();
+            $cycle = '2nd';
         } else {
-            $this->info('Today is not a computation day.');
+            $this->warn('Computation only runs on the 1st and 16th.');
             return;
         }
 
-        // 2. Get active employees with details
-        $employees = User::whereHas('employeeDetails')
-            ->whereHas('status', fn($q) => $q->where('status_name', 'active'))
-            ->with('employeeDetails')
-            ->get();
+        // 2. Get or Create Salary Period
+        $period = SalaryPeriod::firstOrCreate([
+            'month'      => $start->format('F'),
+            'start_date' => $start->toDateString(),
+            'end_date'   => $end->toDateString(),
+            'year'       => $start->year,
+            'cycle'      => $cycle,
+        ]);
 
-        foreach ($employees as $employee) {
-            $this->computeForEmployee($employee, $startDate, $endDate);
-        }
-
-        $this->info("Salary computation completed for {$startDate->toDateString()} to {$endDate->toDateString()}");
-    }
-
-    private function computeForEmployee($user, $start, $end)
-    {
-        $currentSalary = $user->employeeDetails->current_salary;
-        $halfSalary = $currentSalary / 2;
-        
-        // 3. Identify Workdays (Mon-Sat) in the period
-        $workDaysInPeriod = [];
+        // 3. Determine Workdays (Mon-Sat) in this period
+        $workdaysInPeriod = [];
         $tempDate = $start->copy();
         while ($tempDate->lte($end)) {
             if (!$tempDate->isSunday()) {
-                $workDaysInPeriod[] = $tempDate->toDateString();
+                $workdaysInPeriod[] = $tempDate->toDateString();
             }
             $tempDate->addDay();
         }
+        $totalWorkdaysCount = count($workdaysInPeriod);
 
-        $totalWorkDaysCount = count($workDaysInPeriod);
-        
-        // 4. Get Time Logs for the period (excluding Sundays)
-        $logs = TimeLog::where('user_id', $user->id)
-            ->whereBetween('date', [$start->toDateString(), $end->toDateString()])
-            ->whereRaw('DAYOFWEEK(date) != 1') // 1 is Sunday in MySQL
-            ->pluck('date')
-            ->unique()
-            ->toArray();
+        // 4. Process Employees in Chunks (Efficient for large data)
+        User::whereHas('employeeDetails', function ($query) {
+                $query->whereNotNull('current_salary'); // Skip if salary is null
+            })
+            ->whereHas('status', function ($query) {
+                $query->where('status_name', 'active'); // Skip if not active
+            })
+            ->with('employeeDetails')
+            ->chunk(100, function ($employees) use ($start, $end, $period, $totalWorkdaysCount) {
+                
+                $bulkData = [];
+                $userIds = $employees->pluck('id');
+                $pendingStatusId = Status::where('status_name', 'pending')->first()->id;
 
-        $daysWorkedCount = count($logs);
-        $absentDaysCount = $totalWorkDaysCount - $daysWorkedCount;
+                // Bulk fetch logs for all employees in this chunk to avoid N+1 queries
+                $allLogs = TimeLog::whereIn('user_id', $userIds)
+                    ->whereBetween('date', [$start->toDateString(), $end->toDateString()])
+                    ->whereRaw('DAYOFWEEK(date) != 1') // Exclude Sundays
+                    ->get()
+                    ->groupBy('user_id');
 
-        // 5. Logic: Compute Deductions
-        // Per your requirement: Daily rate = (Half Salary) / 13
-        $dailyRate = $halfSalary / 13; 
-        $absentDeduction = $absentDaysCount * $dailyRate;
-        $grossPay = $halfSalary - $absentDeduction;
+                foreach ($employees as $employee) {
+                    $currentSalary = $employee->employeeDetails->current_salary;
+                    $halfSalary = $currentSalary / 2;
+                    
+                    // Get unique dates worked for this employee
+                    $daysWorked = isset($allLogs[$employee->id]) 
+                        ? $allLogs[$employee->id]->pluck('date')->unique()->count() 
+                        : 0;
 
-        // 6. Save to Salaries table
-        Salary::create([
-            'user_id' => $user->id,
-            'rate_day' => $dailyRate,
-            'rate_month' => $currentSalary,
-            'absent_day' => $absentDaysCount,
-            'absent_deduction' => $absentDeduction,
-            'gross_pay' => max($grossPay, 0), // Ensure it doesn't go negative
-            'created_at' => now(),
-        ]);
+                    $absentDays = max(0, $totalWorkdaysCount - $daysWorked);
+                    
+                    // Logic: Daily Rate = Half Salary / 13
+                    $overtimeAmount = 0; // Placeholder for future implementation
+                    $grossPay = $halfSalary + $overtimeAmount;
+                    $netPay = max(0, $grossPay - $absentDeduction);
+                    $dailyRate = $halfSalary / 13;
+                    $absentDeduction = $absentDays * $dailyRate;
+
+                    $bulkData[] = [
+                        'user_id'           => $employee->id,
+                        'status_id'         => $pendingStatusId,
+                        'salary_period_id'  => $period->id,
+                        'rate_day'          => round($dailyRate, 2),
+                        'rate_month'        => $currentSalary,
+                        'absent_day'        => $absentDays,
+                        'absent_deduction'  => round($absentDeduction, 2),
+                        'overtime_hour'     => 0, // Placeholder
+                        'overtime_amount'   => 0, // Placeholder
+                        'gross_pay'         => round($grossPay, 2),
+                        'net_pay'           => round($netPay, 2),
+                        'created_at'        => now(),
+                        'updated_at'        => now(),
+                    ];
+                }
+
+                // 5. Bulk Insert for this chunk
+                if (!empty($bulkData)) {
+                    Salary::insert($bulkData);
+                }
+            });
+
+        $this->info("Successfully computed salaries for period ID: {$period->id}");
     }
 }
