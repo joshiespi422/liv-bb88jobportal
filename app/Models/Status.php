@@ -37,4 +37,10 @@ class Status extends Model
     {
         return $this->hasMany(User::class);
     }
+
+    // relationship to salaries, one status can have many salaries
+    public function salaries() : HasMany
+    {
+        return $this->hasMany(Salary::class);
+    }
 }

@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('salaries', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('restrict');
+            $table->foreignId('status_id')->constrained('statuses')->onDelete('restrict');
             $table->foreignId('salary_period_id')->constrained('salary_periods')->onDelete('restrict');
             $table->decimal('rate_day', 10, 2);
             $table->decimal('rate_month', 10, 2);
@@ -22,9 +23,10 @@ return new class extends Migration
             $table->unsignedTinyInteger('overtime_hour')->nullable();
             $table->decimal('overtime_amount', 10, 2)->nullable();
             $table->decimal('gross_pay', 10, 2);
-            $table->date('start_date');
-            $table->date('end_date');
+            $table->decimal('net_pay', 10, 2);
             $table->timestamps();
+
+            $table->unique(['user_id', 'salary_period_id']);
         });
     }
 
