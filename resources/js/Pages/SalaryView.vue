@@ -27,24 +27,26 @@ const authUser = computed(() => page.props.auth.user);
 const selectedEmployeeId = ref(props.employees[0]?.id);
 // Find the selected employee object and their salary for this period
 const selectedEmployee = computed(() =>
-  props.employees.find((e) => e.id === selectedEmployeeId.value)
+  props.employees.find((e) => e.id === selectedEmployeeId.value),
 );
-
 const salaryData = computed(
-  () => selectedEmployee.value?.salaries?.[0] || null
+  () => selectedEmployee.value?.salaries?.[0] || null,
+);
+const employeeHasSetSalary = computed(
+  () => selectedEmployee.value?.employee_details?.current_salary,
 );
 
-const isApproved = computed(
-  () => salaryData.value?.status_id !== 5 // Assuming 5 is 'pending' from your migration
-);
+// checker if all employee salaries are approved
+const computeAllChecker = computed(() => {
+  if (props.employees.length === 0) return false;
 
-// Formatter
-const formatCurrency = (val) => {
-  return new Intl.NumberFormat("en-PH", {
-    style: "currency",
-    currency: "PHP",
-  }).format(val || 0);
-};
+  return props.employees.every((employee) => {
+    const salary = employee.salaries?.[0];
+    const hasCurrentSalary = employee.employee_details?.current_salary;
+    // Check if they have an approved salary OR if they are missing their base current_salary
+    return (salary && salary.status_name === "approved") || !hasCurrentSalary;
+  });
+});
 </script>
 
 <template>
@@ -62,15 +64,66 @@ const formatCurrency = (val) => {
 
         <div class="w-80">
           <ListBox
-            v-model="selectedEmployee"
+            v-model="selectedEmployeeId"
             :options="employees.map((e) => ({ value: e.id, label: e.name }))"
             placeholder="Filter by employee..."
           />
         </div>
       </div>
 
+      <!-- Actions -->
+      <div class="flex justify-between gap-2 mx-4 mb-5">
+        <button
+          :disabled="computeAllChecker"
+          class="btn btn-sm @sm:btn-md rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
+        >
+          <i class="pi pi-undo mr-1" />
+          Re-compute All
+        </button>
+
+        <div class="flex gap-2">
+          <button
+            class="btn btn-sm @sm:btn-md rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
+          >
+            <i class="pi pi-check-circle mr-1" />
+            Approve
+          </button>
+          <button
+            class="btn btn-sm @sm:btn-md rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
+          >
+            <i class="pi pi-undo mr-1" />
+            Re-compute
+          </button>
+        </div>
+      </div>
+
+      <div
+        v-if="!salaryData"
+        class="text-center py-20 border-2 border-dashed rounded-2xl"
+      >
+        <div role="alert" class="alert alert-error alert-soft w-1/2 mx-auto">
+          <i class="pi pi-exclamation-circle text-xl"></i>
+          <span v-if="!employeeHasSetSalary"
+            >No current salary is set for this employee. Please set a salary in
+            users page</span
+          >
+          <span v-else
+            >No payroll data found for this employee in the current
+            period.</span
+          >
+        </div>
+        <button
+          v-if="employeeHasSetSalary"
+          @click="recomputeSingle"
+          class="mt-5 text-blue-500 font-semibold underline cursor-pointer"
+        >
+          Generate Initial Computation
+        </button>
+      </div>
+
       <!-- Payslip -->
       <div
+        v-if="salaryData"
         class="border-4 border-green-primary-1 rounded-2xl shadow-xl/20 overflow-hidden"
       >
         <div class="grid grid-cols-[1fr_auto] items-center">
@@ -148,7 +201,7 @@ const formatCurrency = (val) => {
                 <span
                   class="font-semibold flex w-full justify-center border-b-2"
                 >
-                  1
+                  {{ salaryData.absent_day }}
                 </span>
                 <span>(days)</span>
               </div>
@@ -159,7 +212,7 @@ const formatCurrency = (val) => {
                 <span
                   class="font-semibold flex w-full justify-center border-b-2"
                 >
-                  14
+                  {{ salaryData.overtime_hour }}
                 </span>
                 <span>(hrs)</span>
               </div>
@@ -171,7 +224,7 @@ const formatCurrency = (val) => {
               <span class="ms-5">Total Pay</span>
               <div class="flex justify-between w-2/3 px-2 border-b-2">
                 <span class="font-semibold flex w-full"> ₱ </span>
-                <span>9,000.00</span>
+                <span>{{ salaryData.rate_month / 2 }}</span>
               </div>
             </div>
             <div class="grid grid-cols-[1fr_2fr]">
@@ -194,7 +247,7 @@ const formatCurrency = (val) => {
               <span class="ps-5">Overtime</span>
               <div class="flex justify-between w-2/3 px-2 border-b-2">
                 <span class="font-semibold flex w-full"> ₱ </span>
-                <span>1,211.54</span>
+                <span>{{ salaryData.overtime_amount }}</span>
               </div>
             </div>
             <div class="grid grid-cols-[1fr_2fr]">
@@ -207,7 +260,7 @@ const formatCurrency = (val) => {
                 <span class="font-semibold flex w-full border-b-2 px-2">
                   ₱
                 </span>
-                <span class="border-b-2 px-2">10,626.92</span>
+                <span class="border-b-2 px-2">{{ salaryData.gross_pay }}</span>
               </div>
             </div>
           </div>
@@ -223,7 +276,7 @@ const formatCurrency = (val) => {
               <span class="ms-10">Absent</span>
               <div class="flex justify-between w-2/5 px-2 border-b-2">
                 <span class="font-semibold flex w-full"> ₱ </span>
-                <span>692.31</span>
+                <span>{{ salaryData.absent_deduction }}</span>
               </div>
             </div>
             <div class="grid grid-cols-[1fr_2.5fr]">

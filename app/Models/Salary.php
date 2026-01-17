@@ -11,7 +11,17 @@ class Salary extends Model
     use HasFactory;
 
     protected $fillable = [
-        //
+        'user_id',
+        'status_id',
+        'salary_period_id',
+        'rate_day',
+        'rate_month',
+        'absent_day',
+        'absent_deduction',
+        'overtime_hour',
+        'overtime_amount',
+        'gross_pay',
+        'net_pay',
     ];
 
     // Define a one-to-many relationship between salaries and users

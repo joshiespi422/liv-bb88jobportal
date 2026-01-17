@@ -10,8 +10,14 @@ class SalaryPeriod extends Model
 {
     use HasFactory;
 
+    public $timestamps = false;
+
     protected $fillable = [
-        //
+        'month',
+        'start_date',
+        'end_date',
+        'year',
+        'cycle',
     ];
 
     // relationship to salaries, one salary_period can have many salaries

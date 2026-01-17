@@ -102,9 +102,9 @@ class ComputeSalary extends Command
                     // Logic: Daily Rate = Half Salary / 13
                     $overtimeAmount = 0; // Placeholder for future implementation
                     $grossPay = $halfSalary + $overtimeAmount;
-                    $netPay = max(0, $grossPay - $absentDeduction);
                     $dailyRate = $halfSalary / 13;
                     $absentDeduction = $absentDays * $dailyRate;
+                    $netPay = max(0, $grossPay - $absentDeduction);
 
                     $bulkData[] = [
                         'user_id'           => $employee->id,
