@@ -172,6 +172,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Defines a one-to-many relationship with users and salaries (approver)
+     */
+    public function salariesApproved(): HasMany
+    {
+        return $this->hasMany(Salary::class);
+    }
+
+    /**
      * Check if the user has a specific role.
      *
      * @param string $typeName

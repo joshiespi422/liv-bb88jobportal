@@ -30,6 +30,12 @@ class Salary extends Model
         return $this->belongsTo(User::class);
     }
 
+    // Define a one-to-many relationship between salaries and users (approver)
+    public function approver(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approver_id');
+    }
+
     // Define a one-to-many relationship between salaries and salary_periods
     public function salaryPeriod(): BelongsTo
     {

@@ -9,6 +9,7 @@ use App\Models\Salary;
 use App\Models\TimeLog;
 use App\Models\Status;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
@@ -32,7 +33,7 @@ class SalaryController extends Controller
         $employees = User::query()
             ->whereHas('employeeDetails')
             ->whereHas('status', fn($q) => $q->where('status_name', 'active'))
-            ->with(['employeeDetails', 'salaries' => function($q) use ($period) {
+            ->with(['employeeDetails:user_id,current_salary', 'salaries.status', 'salaries' => function($q) use ($period) {
                 $q->where('salary_period_id', $period?->id);
             }])
             ->select(['id', 'name', 'qr_code', 'position'])
@@ -158,6 +159,28 @@ class SalaryController extends Controller
                 ]
             );
         }
+    }
+
+    public function approve(Salary $salary)
+    {
+        // Authorization
+        $user = Auth::user();
+        $isSuperAdmin = $user->userType->type_name === 'super_admin';
+        if (!$isSuperAdmin) { 
+            abort(403, 'not authorized'); 
+        }
+
+        // Status guard
+        $pendingStatusId = Status::where('status_name', 'pending')->value('id');
+        if ($salary->status_id !== $pendingStatusId) {
+            abort(403, 'salary is not pending');
+        }
+
+        $salary->status_id = Status::where('status_name', 'approved')->value('id');
+        $salary->approver_id = $user->id;
+        $salary->save();
+
+        return back()->with('success', 'Salary approved successfully!');
     }
 
     /**

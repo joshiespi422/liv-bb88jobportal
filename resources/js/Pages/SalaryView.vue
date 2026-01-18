@@ -60,6 +60,9 @@ const salaryData = computed(
 const employeeHasSetSalary = computed(
   () => selectedEmployee.value?.employee_details?.current_salary
 );
+const isPendingSalary = computed(
+  () => salaryData.value?.status.status_name === "pending"
+);
 
 // Handle re-compute single
 const recomputeSingle = () => {
@@ -96,8 +99,40 @@ const recomputeSingle = () => {
   isConfirmModalOpen.value = true;
 };
 
+// Handle approve single
+const approveSingle = () => {
+  Object.assign(confirmModalProps, {
+    title: "Approve Salary",
+    message: `Are you sure you want to approve ${selectedEmployee.value.name}'s salary?`,
+    confirmText: "Approve",
+    confirmButtonBg: "bg-blue-600 hover:bg-blue-700",
+    iconName: "pi pi-wallet",
+    iconColor: "text-blue-600",
+    iconBgColor: "bg-blue-100",
+  });
+
+  pendingAction.value = () => {
+    isConfirmLoading.value = true;
+    router.patch(
+      route("salary.approve", salaryData.value.id),
+      {},
+      {
+        preserveScroll: true,
+        onFinish: () => {
+          closeConfirmModal();
+          setTimeout(() => {
+            isConfirmLoading.value = false;
+          }, 500);
+        },
+      }
+    );
+  };
+
+  isConfirmModalOpen.value = true;
+};
+
 // Handle re-compute all
-const HandleRecomputeAll = () => {
+const recomputeAll = () => {
   Object.assign(confirmModalProps, {
     title: "Re-Compute All Salaries",
     message: `Are you sure you want to re-compute all pending salaries in ${props.periodDates.label}?`,
@@ -130,7 +165,7 @@ const HandleRecomputeAll = () => {
   isConfirmModalOpen.value = true;
 };
 
-// checker if all employee salaries are approved
+// checker for compute all
 const computeAllChecker = computed(() => {
   if (props.employees.length === 0) return false;
 
@@ -142,13 +177,22 @@ const computeAllChecker = computed(() => {
   });
 });
 
-// checker if selected employee salary is approved
+// checker for compute single
 const computeSingleChecker = computed(() => {
   const salary = selectedEmployee.value?.salaries?.[0];
   const hasCurrentSalary =
     selectedEmployee.value?.employee_details?.current_salary;
   // Check if they have an approved salary OR if they are missing their base current_salary
   return (salary && salary.status_name === "approved") || !hasCurrentSalary;
+});
+
+// checker for approve single
+const approveSingleChecker = computed(() => {
+  const hasSalaryRecord = !!salaryData.value;
+  const hasBaseSalarySet = !!employeeHasSetSalary.value;
+  const isPending = isPendingSalary.value;
+  // If DON'T have a record, OR DON'T have base salary, OR it's NOT pending
+  return !(hasSalaryRecord && hasBaseSalarySet && isPending);
 });
 
 const formatCurrency = (value) => {
@@ -189,7 +233,7 @@ const formatCurrency = (value) => {
       <div class="flex justify-between gap-2 mx-4 mb-5">
         <button
           :disabled="computeAllChecker"
-          @click="HandleRecomputeAll"
+          @click="recomputeAll"
           class="btn btn-sm @sm:btn-md rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
         >
           <i class="pi pi-undo mr-1" />
@@ -198,6 +242,8 @@ const formatCurrency = (value) => {
 
         <div class="flex gap-2">
           <button
+            :disabled="approveSingleChecker"
+            @click="approveSingle"
             class="btn btn-sm @sm:btn-md rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
           >
             <i class="pi pi-check-circle mr-1" />
@@ -224,12 +270,12 @@ const formatCurrency = (value) => {
         >
           <i class="pi pi-exclamation-circle text-xl"></i>
           <span v-if="!employeeHasSetSalary"
-            >No current salary is set for this employee. Please set a salary in
-            users page</span
+            >No current salary is set for {{ selectedEmployee?.name }}. Please
+            set a salary in users page</span
           >
           <span v-else
-            >No payroll data found for this employee in the current
-            period.</span
+            >No payroll data found for {{ selectedEmployee?.name }} in the
+            current period.</span
           >
         </div>
         <button
@@ -248,9 +294,25 @@ const formatCurrency = (value) => {
         </Link>
       </div>
 
+      <div
+        v-if="!isPendingSalary && salaryData"
+        class="text-center py-20 border-2 border-dashed rounded-2xl"
+      >
+        <div
+          role="alert"
+          class="alert alert-success alert-soft w-1/2 mx-auto mb-5"
+        >
+          <i class="pi pi-exclamation-circle text-xl"></i>
+          <span
+            >{{ selectedEmployee?.name }} salary payroll has been approved for
+            the current period</span
+          >
+        </div>
+      </div>
+
       <!-- Payslip -->
       <div
-        v-if="salaryData && employeeHasSetSalary"
+        v-if="salaryData && employeeHasSetSalary && isPendingSalary"
         class="border-4 border-green-primary-1 rounded-2xl shadow-xl/20 overflow-hidden"
       >
         <div class="grid grid-cols-[1fr_auto] items-center">
