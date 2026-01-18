@@ -60,12 +60,48 @@ const salaryData = computed(
 const employeeHasSetSalary = computed(
   () => selectedEmployee.value?.employee_details?.current_salary
 );
-console.log(props.currentPeriod);
+
+// Handle re-compute single
+const recomputeSingle = () => {
+  Object.assign(confirmModalProps, {
+    title: "Re-Compute Salary",
+    message: `Are you sure you want to re-compute ${selectedEmployee.value.name}'s salary?`,
+    confirmText: "Re-Compute",
+    confirmButtonBg: "bg-blue-600 hover:bg-blue-700",
+    iconName: "pi pi-wallet",
+    iconColor: "text-blue-600",
+    iconBgColor: "bg-blue-100",
+  });
+
+  pendingAction.value = () => {
+    isConfirmLoading.value = true;
+    router.post(
+      route("salary.recompute.single"),
+      {
+        user_id: selectedEmployeeId.value,
+        salary_period_id: props.currentPeriod.id,
+      },
+      {
+        preserveScroll: true,
+        onFinish: () => {
+          closeConfirmModal();
+          setTimeout(() => {
+            isConfirmLoading.value = false;
+          }, 500);
+        },
+      }
+    );
+  };
+
+  isConfirmModalOpen.value = true;
+};
+
+// Handle re-compute all
 const HandleRecomputeAll = () => {
   Object.assign(confirmModalProps, {
     title: "Re-Compute All Salaries",
-    message: "Are you sure you want to re-compute all pending salaries?",
-    confirmText: "Re-Compute",
+    message: `Are you sure you want to re-compute all pending salaries in ${props.periodDates.label}?`,
+    confirmText: "Re-Compute All",
     confirmButtonBg: "bg-blue-600 hover:bg-blue-700",
     iconName: "pi pi-wallet",
     iconColor: "text-blue-600",
@@ -104,6 +140,15 @@ const computeAllChecker = computed(() => {
     // Check if they have an approved salary OR if they are missing their base current_salary
     return (salary && salary.status_name === "approved") || !hasCurrentSalary;
   });
+});
+
+// checker if selected employee salary is approved
+const computeSingleChecker = computed(() => {
+  const salary = selectedEmployee.value?.salaries?.[0];
+  const hasCurrentSalary =
+    selectedEmployee.value?.employee_details?.current_salary;
+  // Check if they have an approved salary OR if they are missing their base current_salary
+  return (salary && salary.status_name === "approved") || !hasCurrentSalary;
 });
 
 const formatCurrency = (value) => {
@@ -159,6 +204,8 @@ const formatCurrency = (value) => {
             Approve
           </button>
           <button
+            :disabled="computeSingleChecker"
+            @click="recomputeSingle"
             class="btn btn-sm @sm:btn-md rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
           >
             <i class="pi pi-undo mr-1" />
@@ -168,10 +215,13 @@ const formatCurrency = (value) => {
       </div>
 
       <div
-        v-if="!salaryData"
+        v-if="!salaryData || !employeeHasSetSalary"
         class="text-center py-20 border-2 border-dashed rounded-2xl"
       >
-        <div role="alert" class="alert alert-error alert-soft w-1/2 mx-auto">
+        <div
+          role="alert"
+          class="alert alert-error alert-soft w-1/2 mx-auto mb-5"
+        >
           <i class="pi pi-exclamation-circle text-xl"></i>
           <span v-if="!employeeHasSetSalary"
             >No current salary is set for this employee. Please set a salary in
@@ -185,15 +235,22 @@ const formatCurrency = (value) => {
         <button
           v-if="employeeHasSetSalary"
           @click="recomputeSingle"
-          class="mt-5 text-blue-500 font-semibold underline cursor-pointer"
+          class="text-blue-500 font-semibold underline cursor-pointer"
         >
           Generate Initial Computation
         </button>
+        <Link
+          v-else
+          :href="route('team.employees')"
+          class="text-blue-500 font-semibold underline cursor-pointer"
+        >
+          Set Current Salary
+        </Link>
       </div>
 
       <!-- Payslip -->
       <div
-        v-if="salaryData"
+        v-if="salaryData && employeeHasSetSalary"
         class="border-4 border-green-primary-1 rounded-2xl shadow-xl/20 overflow-hidden"
       >
         <div class="grid grid-cols-[1fr_auto] items-center">

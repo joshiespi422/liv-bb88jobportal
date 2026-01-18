@@ -58,6 +58,25 @@ class SalaryController extends Controller
         return ['start' => $today->copy()->subMonth()->day(16), 'end' => $today->copy()->subMonth()->endOfMonth()];
     }
 
+    public function recompute(Request $request)
+    {
+        $request->validate(['user_id' => 'required|exists:users,id', 'salary_period_id' => 'required']);
+        
+        $period = SalaryPeriod::findOrFail($request->salary_period_id);
+        $user = User::where('id', $request->user_id)
+            ->with('employeeDetails')
+            ->withCount(['timeLogs as attended_days_count' => function ($query) use ($period) {
+                $query->whereBetween('date', [$period->start_date, $period->end_date])
+                    ->whereRaw('DAYOFWEEK(date) != 1') // Exclude Sundays
+                    ->select(DB::raw('count(distinct date)'));
+            }])
+            ->firstOrFail();
+        
+        $this->computeLogic([$user], $period);
+
+        return back()->with('success', 'Salary re-computed successfully!');
+    }
+
     public function recomputeAll(Request $request)
     {
         $request->validate(['salary_period_id' => 'required']);

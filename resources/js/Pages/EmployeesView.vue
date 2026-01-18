@@ -129,7 +129,9 @@ const submitUpdateForm = () => {
         },
         onFinish: () => {
           closeConfirmModal();
-          isConfirmLoading.value = false;
+          setTimeout(() => {
+            isConfirmLoading.value = false;
+          }, 500);
         },
       }
     );
