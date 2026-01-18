@@ -109,6 +109,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/leave/{leave}/validate', [LeaveController::class, 'validateLeave'])->name('leave.validate');
         
         Route::get('/salary', [SalaryController::class, 'index'])->name('salary');
+        Route::post('/salary/recompute', [SalaryController::class, 'recomputeAll'])->name('salary.recompute.all');
     });
 
     Route::middleware('user.type:super_admin,employee')->group(function () {

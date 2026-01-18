@@ -9,6 +9,7 @@ use App\Models\Salary;
 use App\Models\TimeLog;
 use App\Models\Status;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class SalaryController extends Controller
@@ -23,6 +24,10 @@ class SalaryController extends Controller
         $period = SalaryPeriod::where('start_date', $periodInfo['start'])
             ->where('end_date', $periodInfo['end'])
             ->first();
+
+        if (!$period) {
+            abort(404);
+        }
 
         $employees = User::query()
             ->whereHas('employeeDetails')
@@ -59,16 +64,29 @@ class SalaryController extends Controller
         $period = SalaryPeriod::findOrFail($request->salary_period_id);
 
         // Get all active users who have a PENDING salary in this period
-        $users = User::whereHas('salaries', function($q) use ($period) {
-            $q->where('salary_period_id', $period->id)->whereHas('status', fn($s) => $s->where('status_name', 'pending'));
-        })
-        ->whereHas('employeeDetails', function ($q) {
-            $q->whereNotNull('current_salary');
-        })
-        ->with('employeeDetails')->get();
+        $users = User::where(function ($query) use ($period) {
+                $query->whereHas('salaries', function ($q) use ($period) {
+                    $q->where('salary_period_id', $period->id)
+                    ->whereHas('status', fn($s) => $s->where('status_name', 'pending'));
+                })
+                ->orWhereDoesntHave('salaries', function ($q) use ($period) {
+                    $q->where('salary_period_id', $period->id);
+                });
+            })
+            ->whereHas('employeeDetails', function ($q) {
+                $q->whereNotNull('current_salary');
+            })
+            ->with('employeeDetails') 
+            // Efficiently count logs for the period excluding Sundays
+            ->withCount(['timeLogs as attended_days_count' => function ($query) use ($period) {
+                $query->whereBetween('date', [$period->start_date, $period->end_date])
+                    ->whereRaw('DAYOFWEEK(date) != 1') // Exclude Sundays
+                    ->select(DB::raw('count(distinct date)')); // Ensure unique dates
+            }])
+            ->get();
 
         if ($users->isEmpty()) {
-            abort(403, 'No user with salary set');
+            abort(403, 'No users found matching the criteria');
         }
 
         $this->computeLogic($users, $period);
@@ -78,40 +96,46 @@ class SalaryController extends Controller
 
     private function computeLogic($users, $period)
     {
-        $workdays = [];
-        $tempDate = Carbon::parse($period->start_date);
+        // 1. Pre-calculate period constants
+        $startDate = Carbon::parse($period->start_date);
         $endDate = Carbon::parse($period->end_date);
-        while ($tempDate->lte($endDate)) {
-            if (!$tempDate->isSunday()) $workdays[] = $tempDate->toDateString();
-            $tempDate->addDay();
-        }
-        $totalWorkdays = count($workdays);
-        $pendingId = Status::where('status_name', 'pending')->first()->id;
 
+        // Calculate total workdays (excluding Sundays) using Carbon's built-in diff
+        $totalWorkdays = $startDate->diffInDaysFiltered(function (Carbon $date) {
+            return !$date->isSunday();
+        }, $endDate->addDay(1));
+
+        // 2. Cache the Status ID once
+        $pendingStatusId = Status::where('status_name', 'pending')->value('id');
+
+        // 3. Process users
         foreach ($users as $user) {
-            $logs = TimeLog::where('user_id', $user->id)
-                ->whereBetween('date', [$period->start_date, $period->end_date])
-                ->whereRaw('DAYOFWEEK(date) != 1')
-                ->pluck('date')->unique()->count();
+            // Data is already available from withCount
+            $logsCount = $user->attended_days_count; 
+            $absentDays = max(0, $totalWorkdays - $logsCount);
 
-            $absentDays = max(0, $totalWorkdays - $logs);
-            $halfSalary = $user->employeeDetails->current_salary / 2;
+            $currentSalary = $user->employeeDetails->current_salary;
+            $halfSalary = $currentSalary / 2;
+
+            // Logic: Half salary divided by 13 (Standard practice for bi-monthly)
             $dailyRate = $halfSalary / 13;
             $deduction = $absentDays * $dailyRate;
             
-            $gross = $halfSalary; // Earnings
-            $net = max(0, $gross - $deduction); // Final pay
+            $netPay = max(0, $halfSalary - $deduction);
 
             Salary::updateOrCreate(
-                ['user_id' => $user->id, 'salary_period_id' => $period->id],
                 [
-                    'status_id' => $pendingId,
+                    'user_id' => $user->id, 
+                    'salary_period_id' => $period->id
+                ],
+                [
+                    'status_id' => $pendingStatusId,
                     'rate_day' => $dailyRate,
-                    'rate_month' => $user->employeeDetails->current_salary,
+                    'rate_month' => $currentSalary,
                     'absent_day' => $absentDays,
                     'absent_deduction' => $deduction,
-                    'gross_pay' => $gross,
-                    'net_pay' => $net,
+                    'gross_pay' => $halfSalary,
+                    'net_pay' => $netPay,
                 ]
             );
         }

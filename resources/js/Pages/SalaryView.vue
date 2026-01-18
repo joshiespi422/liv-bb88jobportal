@@ -23,18 +23,76 @@ const props = defineProps({
 const page = usePage();
 const authUser = computed(() => page.props.auth.user);
 
+// Holds the action to be executed on confirmation
+const pendingAction = ref(null);
+// confirmation before request
+const isConfirmModalOpen = ref(false);
+const isConfirmLoading = ref(false);
+
+// Holds the properties for the confirmation modal
+const confirmModalProps = reactive({
+  title: "",
+  message: "",
+  confirmText: "",
+  confirmButtonBg: "",
+  iconName: "",
+});
+// Closes the confirmation modal
+const closeConfirmModal = () => {
+  isConfirmModalOpen.value = false;
+};
+// Executes the action on confirmation
+const executeConfirm = () => {
+  if (pendingAction.value) {
+    pendingAction.value();
+  }
+};
+
 // for listbox
 const selectedEmployeeId = ref(props.employees[0]?.id);
 // Find the selected employee object and their salary for this period
 const selectedEmployee = computed(() =>
-  props.employees.find((e) => e.id === selectedEmployeeId.value),
+  props.employees.find((e) => e.id === selectedEmployeeId.value)
 );
 const salaryData = computed(
-  () => selectedEmployee.value?.salaries?.[0] || null,
+  () => selectedEmployee.value?.salaries?.[0] || null
 );
 const employeeHasSetSalary = computed(
-  () => selectedEmployee.value?.employee_details?.current_salary,
+  () => selectedEmployee.value?.employee_details?.current_salary
 );
+console.log(props.currentPeriod);
+const HandleRecomputeAll = () => {
+  Object.assign(confirmModalProps, {
+    title: "Re-Compute All Salaries",
+    message: "Are you sure you want to re-compute all pending salaries?",
+    confirmText: "Re-Compute",
+    confirmButtonBg: "bg-blue-600 hover:bg-blue-700",
+    iconName: "pi pi-wallet",
+    iconColor: "text-blue-600",
+    iconBgColor: "bg-blue-100",
+  });
+
+  pendingAction.value = () => {
+    isConfirmLoading.value = true;
+    router.post(
+      route("salary.recompute.all"),
+      {
+        salary_period_id: props.currentPeriod.id,
+      },
+      {
+        preserveScroll: true,
+        onFinish: () => {
+          closeConfirmModal();
+          setTimeout(() => {
+            isConfirmLoading.value = false;
+          }, 500);
+        },
+      }
+    );
+  };
+
+  isConfirmModalOpen.value = true;
+};
 
 // checker if all employee salaries are approved
 const computeAllChecker = computed(() => {
@@ -47,6 +105,17 @@ const computeAllChecker = computed(() => {
     return (salary && salary.status_name === "approved") || !hasCurrentSalary;
   });
 });
+
+const formatCurrency = (value) => {
+  const num = parseFloat(value);
+  if (isNaN(num) || num === 0) {
+    return "-";
+  }
+  return new Intl.NumberFormat("en-PH", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(num);
+};
 </script>
 
 <template>
@@ -75,6 +144,7 @@ const computeAllChecker = computed(() => {
       <div class="flex justify-between gap-2 mx-4 mb-5">
         <button
           :disabled="computeAllChecker"
+          @click="HandleRecomputeAll"
           class="btn btn-sm @sm:btn-md rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
         >
           <i class="pi pi-undo mr-1" />
@@ -176,14 +246,14 @@ const computeAllChecker = computed(() => {
               <span class="ms-10">Rate/Month</span>
               <div class="flex justify-between w-2/3 px-2 border-b-2">
                 <span class="font-semibold flex w-full"> ₱ </span>
-                <span>{{ salaryData?.rate_month }}</span>
+                <span>{{ formatCurrency(salaryData?.rate_month) }}</span>
               </div>
             </div>
             <div class="grid grid-cols-[1fr_2fr]">
               <span class="ms-10">Rate/Day</span>
               <div class="flex justify-between w-2/3 px-2 border-b-2">
                 <span class="font-semibold flex w-full"> ₱ </span>
-                <span>{{ salaryData?.rate_day }}</span>
+                <span>{{ formatCurrency(salaryData?.rate_day) }}</span>
               </div>
             </div>
           </div>
@@ -201,7 +271,7 @@ const computeAllChecker = computed(() => {
                 <span
                   class="font-semibold flex w-full justify-center border-b-2"
                 >
-                  {{ salaryData.absent_day }}
+                  {{ salaryData.absent_day || "-" }}
                 </span>
                 <span>(days)</span>
               </div>
@@ -212,7 +282,7 @@ const computeAllChecker = computed(() => {
                 <span
                   class="font-semibold flex w-full justify-center border-b-2"
                 >
-                  {{ salaryData.overtime_hour }}
+                  {{ salaryData.overtime_hour || "-" }}
                 </span>
                 <span>(hrs)</span>
               </div>
@@ -224,7 +294,7 @@ const computeAllChecker = computed(() => {
               <span class="ms-5">Total Pay</span>
               <div class="flex justify-between w-2/3 px-2 border-b-2">
                 <span class="font-semibold flex w-full"> ₱ </span>
-                <span>{{ salaryData.rate_month / 2 }}</span>
+                <span>{{ formatCurrency(salaryData.rate_month / 2) }}</span>
               </div>
             </div>
             <div class="grid grid-cols-[1fr_2fr]">
@@ -247,7 +317,7 @@ const computeAllChecker = computed(() => {
               <span class="ps-5">Overtime</span>
               <div class="flex justify-between w-2/3 px-2 border-b-2">
                 <span class="font-semibold flex w-full"> ₱ </span>
-                <span>{{ salaryData.overtime_amount }}</span>
+                <span>{{ formatCurrency(salaryData.overtime_amount) }}</span>
               </div>
             </div>
             <div class="grid grid-cols-[1fr_2fr]">
@@ -260,7 +330,9 @@ const computeAllChecker = computed(() => {
                 <span class="font-semibold flex w-full border-b-2 px-2">
                   ₱
                 </span>
-                <span class="border-b-2 px-2">{{ salaryData.gross_pay }}</span>
+                <span class="border-b-2 px-2">{{
+                  formatCurrency(salaryData.gross_pay)
+                }}</span>
               </div>
             </div>
           </div>
@@ -276,7 +348,7 @@ const computeAllChecker = computed(() => {
               <span class="ms-10">Absent</span>
               <div class="flex justify-between w-2/5 px-2 border-b-2">
                 <span class="font-semibold flex w-full"> ₱ </span>
-                <span>{{ salaryData.absent_deduction }}</span>
+                <span>{{ formatCurrency(salaryData.absent_deduction) }}</span>
               </div>
             </div>
             <div class="grid grid-cols-[1fr_2.5fr]">
@@ -314,7 +386,9 @@ const computeAllChecker = computed(() => {
                 <span class="font-semibold flex w-full border-b-2 px-2">
                   ₱
                 </span>
-                <span class="border-b-2 px-2">692.31</span>
+                <span class="border-b-2 px-2">{{
+                  formatCurrency(salaryData.absent_deduction)
+                }}</span>
               </div>
             </div>
           </div>
@@ -327,7 +401,7 @@ const computeAllChecker = computed(() => {
           NET PAY
           <div class="flex justify-between w-2/3 px-2 border-b-2 py-1">
             <span class="font-semibold flex w-full"> ₱ </span>
-            <span>9,000.00</span>
+            <span>{{ formatCurrency(salaryData.net_pay) }}</span>
           </div>
         </div>
 
@@ -350,4 +424,13 @@ const computeAllChecker = computed(() => {
       </div>
     </div>
   </div>
+
+  <!-- Confirmation Modal -->
+  <ConfirmModal
+    :show="isConfirmModalOpen"
+    v-bind="confirmModalProps"
+    :loading="isConfirmLoading"
+    @cancel="closeConfirmModal"
+    @confirm="executeConfirm"
+  />
 </template>
