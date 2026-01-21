@@ -7,6 +7,7 @@ import {
   shortDate,
   formatTime,
   formatDate,
+  shortMonthDay,
 } from "../Composables/useDateFormatter";
 import { capitalizeFirst } from "./detailFields";
 
@@ -43,9 +44,9 @@ export function useAccomplishmentColumns(props, { handleViewDetails }) {
                 {
                   class: "truncate",
                 },
-                cell.getValue()
+                cell.getValue(),
               ),
-            ]
+            ],
           );
         },
       });
@@ -78,10 +79,10 @@ export function useAccomplishmentColumns(props, { handleViewDetails }) {
               class:
                 "btn btn-sm @sm:btn-md rounded-full bg-green-primary-1 text-white hover:bg-green-primary-3",
             },
-            "View Details"
+            "View Details",
           ),
         enableSorting: false,
-      }
+      },
     );
 
     return columns;
@@ -138,7 +139,7 @@ export function useTaskColumns({ handleViewDetails }) {
           {
             class: `badge badge-soft ${badgeClass} text-sm px-3.5 py-3.5`,
           },
-          status
+          status,
         );
       },
     },
@@ -153,7 +154,7 @@ export function useTaskColumns({ handleViewDetails }) {
             class:
               "btn btn-sm @sm:btn-md rounded-full bg-green-primary-1 text-white hover:bg-green-primary-3",
           },
-          "View Details"
+          "View Details",
         ),
       enableSorting: false,
     },
@@ -217,9 +218,9 @@ export function useLeaveColumns({ handleViewDetails }) {
               {
                 class: "truncate",
               },
-              cell.getValue()
+              cell.getValue(),
             ),
-          ]
+          ],
         );
       },
     },
@@ -242,7 +243,7 @@ export function useLeaveColumns({ handleViewDetails }) {
           {
             class: `badge badge-soft ${badgeClass} text-sm px-3.5 py-3.5`,
           },
-          status
+          status,
         );
       },
     },
@@ -257,7 +258,7 @@ export function useLeaveColumns({ handleViewDetails }) {
             class:
               "btn btn-sm @sm:btn-md rounded-full bg-green-primary-1 text-white hover:bg-green-primary-3",
           },
-          "View Details"
+          "View Details",
         ),
       enableSorting: false,
     },
@@ -292,9 +293,9 @@ export function useInternColumns({ handleViewDetails }) {
               {
                 class: "truncate",
               },
-              cell.getValue()
+              cell.getValue(),
             ),
-          ]
+          ],
         );
       },
     },
@@ -317,7 +318,7 @@ export function useInternColumns({ handleViewDetails }) {
           {
             class: `badge badge-soft ${badgeClass} text-sm px-3.5 py-3.5`,
           },
-          status
+          status,
         );
       },
     },
@@ -332,7 +333,7 @@ export function useInternColumns({ handleViewDetails }) {
             class:
               "btn btn-sm @sm:btn-md rounded-full bg-green-primary-1 text-white hover:bg-green-primary-3",
           },
-          "View Details"
+          "View Details",
         ),
       enableSorting: false,
     },
@@ -367,9 +368,9 @@ export function useEmployeeColumns({ handleViewDetails }) {
               {
                 class: "truncate",
               },
-              cell.getValue()
+              cell.getValue(),
             ),
-          ]
+          ],
         );
       },
     },
@@ -392,7 +393,7 @@ export function useEmployeeColumns({ handleViewDetails }) {
           {
             class: `badge badge-soft ${badgeClass} text-sm px-3.5 py-3.5`,
           },
-          status
+          status,
         );
       },
     },
@@ -407,7 +408,7 @@ export function useEmployeeColumns({ handleViewDetails }) {
             class:
               "btn btn-sm @sm:btn-md rounded-full bg-green-primary-1 text-white hover:bg-green-primary-3",
           },
-          "View Details"
+          "View Details",
         ),
       enableSorting: false,
     },
@@ -510,7 +511,7 @@ export function useTodayListColumns({ openLogModal }) {
             class:
               "btn btn-sm @sm:btn-md rounded-full bg-green-primary-1 text-white hover:bg-green-primary-3",
           },
-          "View Details"
+          "View Details",
         ),
       enableSorting: false,
     },
@@ -543,7 +544,7 @@ export function useDeptAttendanceColumns({ openDeptLogModal }) {
             class:
               "btn btn-sm @sm:btn-md rounded-full bg-green-primary-1 text-white hover:bg-green-primary-3",
           },
-          "View Details"
+          "View Details",
         ),
       enableSorting: false,
     },
@@ -578,9 +579,9 @@ export function useMaterialReqColumns({ handleViewDetails }) {
               {
                 class: "truncate",
               },
-              cell.getValue()
+              cell.getValue(),
             ),
-          ]
+          ],
         );
       },
     },
@@ -607,7 +608,7 @@ export function useMaterialReqColumns({ handleViewDetails }) {
           {
             class: `badge badge-soft ${badgeClass} text-sm px-3.5 py-3.5`,
           },
-          status
+          status,
         );
       },
     },
@@ -622,7 +623,7 @@ export function useMaterialReqColumns({ handleViewDetails }) {
             class:
               "btn btn-sm @sm:btn-md rounded-full bg-green-primary-1 text-white hover:bg-green-primary-3",
           },
-          "View Details"
+          "View Details",
         ),
       enableSorting: false,
     },
@@ -633,10 +634,10 @@ export function useMaterialReqColumns({ handleViewDetails }) {
  * @param {Object} authUser - The authenticated user.
  * @param {Object} handlers - An object containing handler functions from the parent.
  * @param {Function} handlers.openPayslip - The function to call when 'View Details' is clicked.
- * @param {Function} handlers.openEmployeeList - The function to call when 'View Details' is clicked.
+ * @param {Function} handlers.openPayrollList - The function to call when 'View Details' is clicked.
  * @returns {Array} The static column definition array.
  */
-export function useSalaryColumns(authUser, { openEmployeeList, openPayslip }) {
+export function useSalaryColumns(authUser, { openPayrollList, openPayslip }) {
   return computed(() => {
     const columns = [
       {
@@ -645,8 +646,17 @@ export function useSalaryColumns(authUser, { openEmployeeList, openPayslip }) {
       },
       {
         accessorFn: (row) =>
+          `${shortMonthDay(row.start_date)} - ${shortMonthDay(row.end_date)}`,
+        header: "RANGE",
+      },
+      {
+        accessorFn: (row) =>
           `${row.cycle} half of ${capitalizeFirst(row.month)}`,
         header: "PERIOD",
+      },
+      {
+        header: "YEAR",
+        accessorKey: "year",
       },
     ];
 
@@ -657,11 +667,11 @@ export function useSalaryColumns(authUser, { openEmployeeList, openPayslip }) {
           h(
             "button",
             {
-              onClick: () => openEmployeeList(row.original.id),
+              onClick: () => openPayrollList(row.original.id),
               class:
                 "btn btn-sm @sm:btn-md rounded-full bg-green-primary-1 text-white hover:bg-green-primary-3",
             },
-            "View Details"
+            "View Details",
           ),
         enableSorting: false,
       });
@@ -676,7 +686,7 @@ export function useSalaryColumns(authUser, { openEmployeeList, openPayslip }) {
               class:
                 "btn btn-sm @sm:btn-md rounded-full bg-green-primary-1 text-white hover:bg-green-primary-3",
             },
-            "View Details"
+            "View Details",
           ),
         enableSorting: false,
       });

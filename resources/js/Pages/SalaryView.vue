@@ -8,10 +8,15 @@ import DetailsModal from "../Components/modals/DetailsModal.vue";
 import FormModal from "../Components/modals/FormModal.vue";
 import ConfirmModal from "../Components/modals/ConfirmModal.vue";
 import ListBox from "../Components/ListBox.vue";
+import { useDetailsModal } from "../Composables/useDetailsModal";
 import { useSalaryColumns } from "../Data/tableColumns";
 
 const props = defineProps({
   employees: {
+    type: Array,
+    default: () => [],
+  },
+  historyPeriods: {
     type: Array,
     default: () => [],
   },
@@ -52,16 +57,16 @@ const executeConfirm = () => {
 const selectedEmployeeId = ref(props.employees[0]?.id);
 // Find the selected employee object and their salary for this period
 const selectedEmployee = computed(() =>
-  props.employees.find((e) => e.id === selectedEmployeeId.value)
+  props.employees.find((e) => e.id === selectedEmployeeId.value),
 );
 const salaryData = computed(
-  () => selectedEmployee.value?.salaries?.[0] || null
+  () => selectedEmployee.value?.salaries?.[0] || null,
 );
 const employeeHasSetSalary = computed(
-  () => selectedEmployee.value?.employee_details?.current_salary
+  () => selectedEmployee.value?.employee_details?.current_salary,
 );
 const isPendingSalary = computed(
-  () => salaryData.value?.status.status_name === "pending"
+  () => salaryData.value?.status.status_name === "pending",
 );
 
 // Handle re-compute single
@@ -92,7 +97,7 @@ const recomputeSingle = () => {
             isConfirmLoading.value = false;
           }, 500);
         },
-      }
+      },
     );
   };
 
@@ -124,7 +129,7 @@ const approveSingle = () => {
             isConfirmLoading.value = false;
           }, 500);
         },
-      }
+      },
     );
   };
 
@@ -158,7 +163,7 @@ const recomputeAll = () => {
             isConfirmLoading.value = false;
           }, 500);
         },
-      }
+      },
     );
   };
 
@@ -205,12 +210,32 @@ const formatCurrency = (value) => {
     maximumFractionDigits: 2,
   }).format(num);
 };
+
+// --- Payroll List Details ---
+const {
+  isOpen: isPayrollListModalOpen,
+  isLoading: isPayrollListLoading,
+  isError: isPayrollListError,
+  data: selectedPayrollList,
+  open: openPayrollList,
+  close: closePayrollList,
+} = useDetailsModal({ baseUrl: "/salary/payroll" });
+
+// Tanstack Table columns definition
+const historyPeriodTableColumns = useSalaryColumns(authUser, {
+  openPayrollList,
+  openPayslip,
+});
+
+function openPayslip(row) {
+  //
+}
 </script>
 
 <template>
   <Head title="Salary Payroll" />
-  <div class="p-2 @lg:p-4 @3xl:p-8 @5xl:p-10 @7xl:p-12">
-    <div class="max-w-7xl mx-auto">
+  <div class="p-2 @lg:p-4 @3xl:p-8 @5xl:p-10 @7xl:p-12 space-y-14">
+    <div v-if="authUser.userType === 'super_admin'" class="max-w-7xl mx-auto">
       <!-- Header -->
       <div
         class="flex flex-col items-center gap-2 sm:flex-row sm:justify-between sm:gap-0 mx-4 mb-5"
@@ -536,11 +561,24 @@ const formatCurrency = (value) => {
             <span class="text-center">Received by:</span>
             <div class="flex justify-between w-2/3">
               <span class="font-semibold flex w-full justify-center border-b-2">
+                {{ selectedEmployee.name }}
               </span>
             </div>
           </div>
         </div>
       </div>
+    </div>
+
+    <div>
+      <h1 class="text-lg @sm:text-2xl @4xl:text-3xl font-bold mb-3.5 ms-5">
+        Payroll History
+      </h1>
+      <!-- History Period Table -->
+      <DataTable
+        :data="props.historyPeriods"
+        :columns="historyPeriodTableColumns"
+        :enable-view-toggle="true"
+      />
     </div>
   </div>
 

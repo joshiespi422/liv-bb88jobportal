@@ -32,6 +32,7 @@ export const formatTime = (timeString, pattern = "h:mm a") => {
 export const shortDate = (dateString) => formatDate(dateString, "MMM d, yyyy");
 export const longDate = (dateString) =>
   formatDate(dateString, "EEE, MMMM d, yyyy");
+export const shortMonthDay = (dateString) => formatDate(dateString, "MMM d");
 
 export const longDateTime = (dateString) =>
   formatDate(dateString, "EEE, MMMM d, yyyy - h:mm a");

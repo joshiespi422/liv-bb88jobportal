@@ -18,36 +18,53 @@ class SalaryController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $periodInfo = $this->getPeriodInfo();
-        
-        $period = SalaryPeriod::where('start_date', $periodInfo['start'])
-            ->where('end_date', $periodInfo['end'])
-            ->first();
+        $user = $request->user()->loadMissing('userType');
+        $typeName = $user->userType->type_name;
 
-        if (!$period) {
-            abort(404);
+        // Fetch Salary History
+        $historyPeriods = SalaryPeriod::orderBy('start_date', 'desc')
+            ->get()
+            ->toArray();
+
+        // Initialize the base props
+        $props = [
+            'historyPeriods' => $historyPeriods,
+        ];
+
+        if ($typeName === 'super_admin') {
+            $periodInfo = $this->getPeriodInfo();
+            $period = SalaryPeriod::where('start_date', $periodInfo['start'])
+                ->where('end_date', $periodInfo['end'])
+                ->first();
+
+            if (!$period) {
+                abort(404);
+            }
+
+            $employees = User::query()
+                ->whereHas('employeeDetails')
+                ->whereHas('status', fn($q) => $q->where('status_name', 'active'))
+                ->with(['employeeDetails:user_id,current_salary', 'salaries.status', 'salaries' => function($q) use ($period) {
+                    $q->where('salary_period_id', $period?->id);
+                }])
+                ->select(['id', 'name', 'qr_code', 'position'])
+                ->get();
+
+            // Merge s-admin data into props
+            $props = array_merge($props, [
+                'employees' => $employees,
+                'currentPeriod' => $period,
+                'periodDates' => [
+                    'label' => "{$periodInfo['start']->format('M d')} - {$periodInfo['end']->format('M d, Y')}",
+                    'start' => $periodInfo['start']->toDateString(),
+                    'end' => $periodInfo['end']->toDateString(),
+                ]
+            ]);
         }
 
-        $employees = User::query()
-            ->whereHas('employeeDetails')
-            ->whereHas('status', fn($q) => $q->where('status_name', 'active'))
-            ->with(['employeeDetails:user_id,current_salary', 'salaries.status', 'salaries' => function($q) use ($period) {
-                $q->where('salary_period_id', $period?->id);
-            }])
-            ->select(['id', 'name', 'qr_code', 'position'])
-            ->get();
-
-        return Inertia::render('SalaryView', [
-            'employees' => $employees,
-            'currentPeriod' => $period,
-            'periodDates' => [
-                'label' => "{$periodInfo['start']->format('M d')} - {$periodInfo['end']->format('M d, Y')}",
-                'start' => $periodInfo['start']->toDateString(),
-                'end' => $periodInfo['end']->toDateString(),
-            ]
-        ]);
+        return Inertia::render('SalaryView', $props);
     }
 
     private function getPeriodInfo()
@@ -106,7 +123,7 @@ class SalaryController extends Controller
             ->get();
 
         if ($users->isEmpty()) {
-            abort(403, 'No users found matching the criteria');
+            abort(403, 'no users found matching the criteria');
         }
 
         $this->computeLogic($users, $period);
@@ -181,6 +198,11 @@ class SalaryController extends Controller
         $salary->save();
 
         return back()->with('success', 'Salary approved successfully!');
+    }
+
+    public function payrollList(SalaryPeriod $period)
+    {
+        
     }
 
     /**
