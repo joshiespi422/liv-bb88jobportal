@@ -682,7 +682,7 @@ export function useSalaryColumns(authUser, { openPayrollList, openPayslip }) {
           h(
             "button",
             {
-              onClick: () => openPayslip(row.original.id),
+              onClick: () => openPayslip(authUser.value.id, row.original.id),
               class:
                 "btn btn-sm @sm:btn-md rounded-full bg-green-primary-1 text-white hover:bg-green-primary-3",
             },

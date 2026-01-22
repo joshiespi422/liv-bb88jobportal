@@ -187,7 +187,7 @@ class SalaryController extends Controller
             abort(403, 'not authorized'); 
         }
 
-        // Status guard
+        // Status guard 
         $pendingStatusId = Status::where('status_name', 'pending')->value('id');
         if ($salary->status_id !== $pendingStatusId) {
             abort(403, 'salary is not pending');
@@ -202,7 +202,25 @@ class SalaryController extends Controller
 
     public function payrollList(SalaryPeriod $period)
     {
-        
+        $employeeList = User::whereHas('salaries', function ($query) use ($period) {
+            $query->where('salary_period_id', $period->id)
+                ->whereHas('status', function ($statusQuery) {
+                    $statusQuery->where('status_name', 'approved');
+                });
+        })
+        ->get()
+        ->map(fn($user) => [
+            'id' => $user->id,
+            'name' => $user->name,
+        ])
+        ->values(); 
+
+        return response()->json([
+            'periodId' => $period->id,
+            'startDate' => $period->start_date,
+            'endDate' => $period->end_date,
+            'employeeList' => $employeeList
+        ]);
     }
 
     /**
@@ -224,9 +242,32 @@ class SalaryController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(string $id, SalaryPeriod $period)
     {
-        //
+        $employee = User::select('id', 'name', 'qr_code', 'position')
+            ->with(['salaries.approver:id,name', 'salaries' => function($query) use ($period) {
+                $query->where('salary_period_id', $period->id)
+                    ->whereHas('status', function($statusQuery) {
+                            $statusQuery->where('status_name', 'approved');
+                        });
+            }])
+            ->whereHas('employeeDetails')
+            ->findOrFail($id);
+
+        // Authorization
+        $user = Auth::user();
+        $isSuperAdmin = $user->userType->type_name === 'super_admin';
+        $isOwner = $user->id === $employee->id;
+
+        if (!$isSuperAdmin && !$isOwner) {
+            abort(403, 'not authorized'); 
+        }
+
+        return response()->json([
+            'employee' => $employee,
+            'startDate' => $period->start_date,
+            'endDate' => $period->end_date
+        ]);
     }
 
     /**

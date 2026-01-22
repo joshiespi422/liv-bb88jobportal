@@ -110,6 +110,7 @@ Route::middleware('auth')->group(function () {
         
         Route::get('/salary', [SalaryController::class, 'index'])->name('salary');
         Route::get('/salary/payroll/{period}', [SalaryController::class, 'payrollList'])->name('salary.payroll');
+        Route::get('/salary/{id}/{period}', [SalaryController::class, 'show'])->name('salary.show');
         Route::patch('/salary/{salary}/approve', [SalaryController::class, 'approve'])->name('salary.approve');
         Route::post('/salary/recompute/single', [SalaryController::class, 'recompute'])->name('salary.recompute.single');
         Route::post('/salary/recompute/all', [SalaryController::class, 'recomputeAll'])->name('salary.recompute.all');
