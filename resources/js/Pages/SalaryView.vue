@@ -362,7 +362,7 @@ const handleBackFromPayslip = () => {
         class="border-4 border-green-primary-1 rounded-2xl shadow-xl/20 overflow-hidden"
       >
         <div class="overflow-x-auto">
-          <div class="w-7xl">
+          <div class="w-[1272px]">
             <div class="grid grid-cols-[1fr_auto] items-center">
               <h2 class="text-xl font-semibold text-center">
                 BB 88 Advertising and Digital Solutions Inc.
@@ -720,240 +720,255 @@ const handleBackFromPayslip = () => {
         v-if="item.employee.salaries.length > 0"
         class="border-4 border-green-primary-1 rounded-2xl shadow-xl/20 overflow-hidden mt-5 mb-10"
       >
-        <div class="grid grid-cols-[1fr_auto] items-center">
-          <h2 class="text-xl font-semibold text-center">
-            BB 88 Advertising and Digital Solutions Inc.
-          </h2>
-          <div class="p-2 pe-5 text-end">
-            <p>
-              Unit D, 2nd Floor Plaza Victoria Bldg. Sto. Rosario St. Sto.
-              Domingo Angeles
-            </p>
-            <p class="text-center">2009 Philippines</p>
-          </div>
-        </div>
+        <div class="overflow-x-auto">
+          <div class="w-[1224px]">
+            <div class="grid grid-cols-[1fr_auto] items-center">
+              <h2 class="text-xl font-semibold text-center">
+                BB 88 Advertising and Digital Solutions Inc.
+              </h2>
+              <div class="p-2 pe-5 text-end">
+                <p>
+                  Unit D, 2nd Floor Plaza Victoria Bldg. Sto. Rosario St. Sto.
+                  Domingo Angeles
+                </p>
+                <p class="text-center">2009 Philippines</p>
+              </div>
+            </div>
 
-        <div class="grid grid-cols-2 items-center border-b pb-3">
-          <div class="ms-10">
-            Payslip for the period of:
-            <span class="font-semibold inline-block border-b-2 w-2/3 ps-4">{{
-              shortMonthDay(item.startDate) + " - " + shortDate(item.endDate)
-            }}</span>
-          </div>
-          <div class="grid grid-cols-[2fr_1.5fr] items-center">
-            <p class="text-end me-7">EMP #</p>
-            <p
-              class="py-3 text-center bg-lime-200 text-black border-black border-3 border-r-0"
+            <div class="grid grid-cols-2 items-center border-b pb-3">
+              <div class="ms-10">
+                Payslip for the period of:
+                <span
+                  class="font-semibold inline-block border-b-2 w-2/3 ps-4"
+                  >{{
+                    shortMonthDay(item.startDate) +
+                    " - " +
+                    shortDate(item.endDate)
+                  }}</span
+                >
+              </div>
+              <div class="grid grid-cols-[2fr_1.5fr] items-center">
+                <p class="text-end me-7">EMP #</p>
+                <p
+                  class="py-3 text-center bg-lime-200 text-black border-black border-3 border-r-0"
+                >
+                  {{ item.employee.qr_code || "N/A" }}
+                </p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 items-center">
+              <div class="py-4 space-y-1.5">
+                <div class="grid grid-cols-[1fr_2fr]">
+                  <span class="font-semibold ms-10">EMPLOYEE</span>
+                  <span class="font-semibold inline-block border-b-2 w-2/3 ps-2"
+                    >{{ item.employee.name }}
+                  </span>
+                </div>
+                <div class="grid grid-cols-[1fr_2fr]">
+                  <span class="ms-10">Position</span>
+                  <span class="font-semibold inline-block border-b-2 w-2/3 ps-2"
+                    >{{ item.employee.position || "N/A" }}
+                  </span>
+                </div>
+              </div>
+              <div class="py-4 space-y-1.5">
+                <div class="grid grid-cols-[1fr_2fr]">
+                  <span class="ms-10">Rate/Month</span>
+                  <div class="flex justify-between w-2/3 px-2 border-b-2">
+                    <span class="font-semibold flex w-full"> ₱ </span>
+                    <span>{{
+                      formatCurrency(item.employee.salaries[0].rate_month)
+                    }}</span>
+                  </div>
+                </div>
+                <div class="grid grid-cols-[1fr_2fr]">
+                  <span class="ms-10">Rate/Day</span>
+                  <div class="flex justify-between w-2/3 px-2 border-b-2">
+                    <span class="font-semibold flex w-full"> ₱ </span>
+                    <span>{{
+                      formatCurrency(item.employee.salaries[0].rate_day)
+                    }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Salary -->
+            <p class="block bg-slate-500 ps-5 font-semibold text-white-primary">
+              Salary
+            </p>
+            <div class="grid grid-cols-2">
+              <div class="py-4 space-y-1.5">
+                <div class="grid grid-cols-[1fr_2fr]">
+                  <span class="ms-10">Absent</span>
+                  <div class="flex justify-between w-1/2 ps-2">
+                    <span
+                      class="font-semibold flex w-full justify-center border-b-2"
+                    >
+                      {{ item.employee.salaries[0].absent_day || "-" }}
+                    </span>
+                    <span>(days)</span>
+                  </div>
+                </div>
+                <div class="grid grid-cols-[1fr_2fr]">
+                  <span class="ms-10">Total OT Hours</span>
+                  <div class="flex justify-between w-1/3 ps-2">
+                    <span
+                      class="font-semibold flex w-full justify-center border-b-2"
+                    >
+                      {{ item.employee.salaries[0].overtime_hour || "-" }}
+                    </span>
+                    <span>(hrs)</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="py-4 space-y-1.5">
+                <div class="grid grid-cols-[1fr_2fr]">
+                  <span class="ms-5">Total Pay</span>
+                  <div class="flex justify-between w-2/3 px-2 border-b-2">
+                    <span class="font-semibold flex w-full"> ₱ </span>
+                    <span>{{
+                      formatCurrency(item.employee.salaries[0].rate_month / 2)
+                    }}</span>
+                  </div>
+                </div>
+                <div class="grid grid-cols-[1fr_2fr]">
+                  <span>Special Holiday <span class="ps-3">Dec. 8</span></span>
+
+                  <div class="flex justify-between w-2/3 px-2 border-b-2">
+                    <span class="font-semibold flex w-full"> ₱ </span>
+                    <span>207.69</span>
+                  </div>
+                </div>
+                <div class="grid grid-cols-[1fr_2fr]">
+                  <span>Special Holiday <span class="ps-3">Dec. 11</span></span>
+
+                  <div class="flex justify-between w-2/3 px-2 border-b-2">
+                    <span class="font-semibold flex w-full"> ₱ </span>
+                    <span>207.69</span>
+                  </div>
+                </div>
+                <div class="grid grid-cols-[1fr_2fr]">
+                  <span class="ps-5">Overtime</span>
+                  <div class="flex justify-between w-2/3 px-2 border-b-2">
+                    <span class="font-semibold flex w-full"> ₱ </span>
+                    <span>{{
+                      formatCurrency(item.employee.salaries[0].overtime_amount)
+                    }}</span>
+                  </div>
+                </div>
+                <div class="grid grid-cols-[1fr_2fr]">
+                  <span class="ps-5 bg-slate-200 font-semibold py-2 text-black"
+                    >Gross Salary</span
+                  >
+                  <div
+                    class="flex justify-between w-2/3 bg-slate-200 text-black py-2 px-2"
+                  >
+                    <span class="font-semibold flex w-full border-b-2 px-2">
+                      ₱
+                    </span>
+                    <span class="border-b-2 px-2">{{
+                      formatCurrency(item.employee.salaries[0].gross_pay)
+                    }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Deduction -->
+            <p class="block bg-slate-500 ps-5 font-semibold text-white-primary">
+              Deduction
+            </p>
+            <div class="grid grid-cols-2 items-center">
+              <div class="py-4 space-y-1.5">
+                <div class="grid grid-cols-[1fr_2.5fr]">
+                  <span class="ms-10">Absent</span>
+                  <div class="flex justify-between w-2/5 px-2 border-b-2">
+                    <span class="font-semibold flex w-full"> ₱ </span>
+                    <span>{{
+                      formatCurrency(item.employee.salaries[0].absent_deduction)
+                    }}</span>
+                  </div>
+                </div>
+                <div class="grid grid-cols-[1fr_2.5fr]">
+                  <span class="ms-10">Half Day</span>
+                  <div class="flex justify-between w-2/5 px-2 border-b-2">
+                    <span class="font-semibold flex w-full"> ₱ </span>
+                    <span>-</span>
+                  </div>
+                </div>
+                <div class="grid grid-cols-[1fr_2.5fr]">
+                  <span class="ms-10">Others</span>
+                  <div class="flex justify-between w-2/5 px-2 border-b-2">
+                    <span class="font-semibold flex w-full"> ₱ </span>
+                    <span>-</span>
+                  </div>
+                </div>
+                <div class="grid grid-cols-[1fr_2.5fr]">
+                  <span class="ms-10">Loan</span>
+                  <div class="flex justify-between w-2/5 px-2 border-b-2">
+                    <span class="font-semibold flex w-full"> ₱ </span>
+                    <span>-</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="py-4 space-y-1.5">
+                <div class="grid grid-cols-[1fr_2fr]">
+                  <span
+                    class="ms-10 bg-slate-200 text-black font-semibold py-2 px-4"
+                    >Total Deduction</span
+                  >
+                  <div
+                    class="flex justify-between w-2/3 px-2 bg-slate-200 text-black py-2"
+                  >
+                    <span class="font-semibold flex w-full border-b-2 px-2">
+                      ₱
+                    </span>
+                    <span class="border-b-2 px-2">{{
+                      formatCurrency(item.employee.salaries[0].absent_deduction)
+                    }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Net Pay -->
+            <div
+              class="bg-slate-500 ps-5 font-semibold text-white-primary py-2 grid grid-cols-[2fr_1fr] items-center"
             >
-              {{ item.employee.qr_code || "N/A" }}
-            </p>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 items-center">
-          <div class="py-4 space-y-1.5">
-            <div class="grid grid-cols-[1fr_2fr]">
-              <span class="font-semibold ms-10">EMPLOYEE</span>
-              <span class="font-semibold inline-block border-b-2 w-2/3 ps-2"
-                >{{ item.employee.name }}
-              </span>
-            </div>
-            <div class="grid grid-cols-[1fr_2fr]">
-              <span class="ms-10">Position</span>
-              <span class="font-semibold inline-block border-b-2 w-2/3 ps-2"
-                >{{ item.employee.position || "N/A" }}
-              </span>
-            </div>
-          </div>
-          <div class="py-4 space-y-1.5">
-            <div class="grid grid-cols-[1fr_2fr]">
-              <span class="ms-10">Rate/Month</span>
-              <div class="flex justify-between w-2/3 px-2 border-b-2">
+              NET PAY
+              <div class="flex justify-between w-2/3 px-2 border-b-2 py-1">
                 <span class="font-semibold flex w-full"> ₱ </span>
                 <span>{{
-                  formatCurrency(item.employee.salaries[0].rate_month)
+                  formatCurrency(item.employee.salaries[0].net_pay)
                 }}</span>
               </div>
             </div>
-            <div class="grid grid-cols-[1fr_2fr]">
-              <span class="ms-10">Rate/Day</span>
-              <div class="flex justify-between w-2/3 px-2 border-b-2">
-                <span class="font-semibold flex w-full"> ₱ </span>
-                <span>{{
-                  formatCurrency(item.employee.salaries[0].rate_day)
-                }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
 
-        <!-- Salary -->
-        <p class="block bg-slate-500 ps-5 font-semibold text-white-primary">
-          Salary
-        </p>
-        <div class="grid grid-cols-2">
-          <div class="py-4 space-y-1.5">
-            <div class="grid grid-cols-[1fr_2fr]">
-              <span class="ms-10">Absent</span>
-              <div class="flex justify-between w-1/2 ps-2">
-                <span
-                  class="font-semibold flex w-full justify-center border-b-2"
-                >
-                  {{ item.employee.salaries[0].absent_day || "-" }}
-                </span>
-                <span>(days)</span>
+            <div class="grid grid-cols-2 pt-3 my-7">
+              <div class="grid grid-cols-[1fr_2fr]">
+                <span class="text-center">Approved by:</span>
+                <div class="flex justify-between w-2/3">
+                  <span
+                    class="font-semibold flex w-full justify-center border-b-2"
+                  >
+                    {{ item.employee.salaries[0].approver.name }}
+                  </span>
+                </div>
               </div>
-            </div>
-            <div class="grid grid-cols-[1fr_2fr]">
-              <span class="ms-10">Total OT Hours</span>
-              <div class="flex justify-between w-1/3 ps-2">
-                <span
-                  class="font-semibold flex w-full justify-center border-b-2"
-                >
-                  {{ item.employee.salaries[0].overtime_hour || "-" }}
-                </span>
-                <span>(hrs)</span>
+              <div class="grid grid-cols-[1fr_2fr]">
+                <span class="text-center">Received by:</span>
+                <div class="flex justify-between w-2/3">
+                  <span
+                    class="font-semibold flex w-full justify-center border-b-2"
+                  >
+                    {{ item.employee.name }}
+                  </span>
+                </div>
               </div>
-            </div>
-          </div>
-
-          <div class="py-4 space-y-1.5">
-            <div class="grid grid-cols-[1fr_2fr]">
-              <span class="ms-5">Total Pay</span>
-              <div class="flex justify-between w-2/3 px-2 border-b-2">
-                <span class="font-semibold flex w-full"> ₱ </span>
-                <span>{{
-                  formatCurrency(item.employee.salaries[0].rate_month / 2)
-                }}</span>
-              </div>
-            </div>
-            <div class="grid grid-cols-[1fr_2fr]">
-              <span>Special Holiday <span class="ps-3">Dec. 8</span></span>
-
-              <div class="flex justify-between w-2/3 px-2 border-b-2">
-                <span class="font-semibold flex w-full"> ₱ </span>
-                <span>207.69</span>
-              </div>
-            </div>
-            <div class="grid grid-cols-[1fr_2fr]">
-              <span>Special Holiday <span class="ps-3">Dec. 11</span></span>
-
-              <div class="flex justify-between w-2/3 px-2 border-b-2">
-                <span class="font-semibold flex w-full"> ₱ </span>
-                <span>207.69</span>
-              </div>
-            </div>
-            <div class="grid grid-cols-[1fr_2fr]">
-              <span class="ps-5">Overtime</span>
-              <div class="flex justify-between w-2/3 px-2 border-b-2">
-                <span class="font-semibold flex w-full"> ₱ </span>
-                <span>{{
-                  formatCurrency(item.employee.salaries[0].overtime_amount)
-                }}</span>
-              </div>
-            </div>
-            <div class="grid grid-cols-[1fr_2fr]">
-              <span class="ps-5 bg-slate-200 font-semibold py-2 text-black"
-                >Gross Salary</span
-              >
-              <div
-                class="flex justify-between w-2/3 bg-slate-200 text-black py-2 px-2"
-              >
-                <span class="font-semibold flex w-full border-b-2 px-2">
-                  ₱
-                </span>
-                <span class="border-b-2 px-2">{{
-                  formatCurrency(item.employee.salaries[0].gross_pay)
-                }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Deduction -->
-        <p class="block bg-slate-500 ps-5 font-semibold text-white-primary">
-          Deduction
-        </p>
-        <div class="grid grid-cols-2 items-center">
-          <div class="py-4 space-y-1.5">
-            <div class="grid grid-cols-[1fr_2.5fr]">
-              <span class="ms-10">Absent</span>
-              <div class="flex justify-between w-2/5 px-2 border-b-2">
-                <span class="font-semibold flex w-full"> ₱ </span>
-                <span>{{
-                  formatCurrency(item.employee.salaries[0].absent_deduction)
-                }}</span>
-              </div>
-            </div>
-            <div class="grid grid-cols-[1fr_2.5fr]">
-              <span class="ms-10">Half Day</span>
-              <div class="flex justify-between w-2/5 px-2 border-b-2">
-                <span class="font-semibold flex w-full"> ₱ </span>
-                <span>-</span>
-              </div>
-            </div>
-            <div class="grid grid-cols-[1fr_2.5fr]">
-              <span class="ms-10">Others</span>
-              <div class="flex justify-between w-2/5 px-2 border-b-2">
-                <span class="font-semibold flex w-full"> ₱ </span>
-                <span>-</span>
-              </div>
-            </div>
-            <div class="grid grid-cols-[1fr_2.5fr]">
-              <span class="ms-10">Loan</span>
-              <div class="flex justify-between w-2/5 px-2 border-b-2">
-                <span class="font-semibold flex w-full"> ₱ </span>
-                <span>-</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="py-4 space-y-1.5">
-            <div class="grid grid-cols-[1fr_2fr]">
-              <span
-                class="ms-10 bg-slate-200 text-black font-semibold py-2 px-4"
-                >Total Deduction</span
-              >
-              <div
-                class="flex justify-between w-2/3 px-2 bg-slate-200 text-black py-2"
-              >
-                <span class="font-semibold flex w-full border-b-2 px-2">
-                  ₱
-                </span>
-                <span class="border-b-2 px-2">{{
-                  formatCurrency(item.employee.salaries[0].absent_deduction)
-                }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Net Pay -->
-        <div
-          class="bg-slate-500 ps-5 font-semibold text-white-primary py-2 grid grid-cols-[2fr_1fr] items-center"
-        >
-          NET PAY
-          <div class="flex justify-between w-2/3 px-2 border-b-2 py-1">
-            <span class="font-semibold flex w-full"> ₱ </span>
-            <span>{{ formatCurrency(item.employee.salaries[0].net_pay) }}</span>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 pt-3 my-7">
-          <div class="grid grid-cols-[1fr_2fr]">
-            <span class="text-center">Approved by:</span>
-            <div class="flex justify-between w-2/3">
-              <span class="font-semibold flex w-full justify-center border-b-2">
-                {{ item.employee.salaries[0].approver.name }}
-              </span>
-            </div>
-          </div>
-          <div class="grid grid-cols-[1fr_2fr]">
-            <span class="text-center">Received by:</span>
-            <div class="flex justify-between w-2/3">
-              <span class="font-semibold flex w-full justify-center border-b-2">
-                {{ item.employee.name }}
-              </span>
             </div>
           </div>
         </div>
