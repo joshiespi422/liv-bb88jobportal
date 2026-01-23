@@ -16,6 +16,7 @@ use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\MaterialRequestController;
 use App\Http\Controllers\SalaryController;
+use App\Http\Controllers\OvertimeController;
 use Illuminate\Support\Facades\Route;
 
 // Profile info for the qr code
@@ -114,6 +115,9 @@ Route::middleware('auth')->group(function () {
         Route::patch('/salary/{salary}/approve', [SalaryController::class, 'approve'])->name('salary.approve');
         Route::post('/salary/recompute/single', [SalaryController::class, 'recompute'])->name('salary.recompute.single');
         Route::post('/salary/recompute/all', [SalaryController::class, 'recomputeAll'])->name('salary.recompute.all');
+
+        Route::get('/overtime', [OvertimeController::class, 'index'])->name('overtime');
+        Route::get('/overtime/{id}', [OvertimeController::class, 'show'])->name('overtime.show');
     });
 
     Route::middleware('user.type:super_admin,employee')->group(function () {

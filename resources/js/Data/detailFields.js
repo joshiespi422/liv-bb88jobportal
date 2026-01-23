@@ -2,6 +2,7 @@ import {
   longDate,
   longDateTime,
   formatDate,
+  formatTime,
   shortDate,
 } from "../Composables/useDateFormatter";
 
@@ -165,6 +166,17 @@ export const materialReqDetailFields = [
   { key: "remarks", label: "Remarks" },
   { key: "date_needed", label: "Date Needed", formatter: longDate },
   { key: "created_at", label: "Submitted", formatter: longDateTime },
+];
+
+export const overtimeDetailFields = [
+  { key: "requester", label: "Requested By" },
+  { key: "date", label: "Date", formatter: longDate },
+  { key: "start_time", label: "Start Time", formatter: formatTime },
+  { key: "end_time", label: "End Time", formatter: formatTime },
+  { key: "reason", label: "Reason" },
+  { key: "total_hours", label: "Total Hours" },
+  { key: "status", label: "Status", formatter: capitalizeFirst },
+  { key: "signer", label: "Signed By" },
 ];
 
 // fields that needs reactive data

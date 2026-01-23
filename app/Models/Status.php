@@ -38,9 +38,21 @@ class Status extends Model
         return $this->hasMany(User::class);
     }
 
+    // relationship to material_requests, one status can have many material_requests
+    public function materialRequests() : HasMany
+    {
+        return $this->hasMany(MaterialRequest::class);
+    }
+
     // relationship to salaries, one status can have many salaries
     public function salaries() : HasMany
     {
         return $this->hasMany(Salary::class);
+    }
+
+    // relationship to overtimes, one status can have many overtimes
+    public function overtimes() : HasMany
+    {
+        return $this->hasMany(Overtime::class);
     }
 }

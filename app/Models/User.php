@@ -152,7 +152,7 @@ class User extends Authenticatable
      */
     public function materialRequestsSubmitted(): HasMany
     {
-        return $this->hasMany(MaterialRequest::class, 'requested_by');
+        return $this->hasMany(MaterialRequest::class, 'requester_id');
     }
 
     /**
@@ -160,7 +160,7 @@ class User extends Authenticatable
      */ 
     public function materialRequestsSigned(): HasMany
     {
-        return $this->hasMany(MaterialRequest::class, 'signed_by');
+        return $this->hasMany(MaterialRequest::class, 'signer_id');
     }
 
     /**
@@ -177,6 +177,22 @@ class User extends Authenticatable
     public function salariesApproved(): HasMany
     {
         return $this->hasMany(Salary::class);
+    }
+
+    /**
+     * Define a one-to-many relationship between users and overtimes (requester)
+     */
+    public function overtimesRequested(): HasMany
+    {
+        return $this->hasMany(Overtime::class, 'requester_id');
+    }
+
+    /**
+     * Define a one-to-many relationship between users and overtimes (signer)
+     */
+    public function overtimesSigned(): HasMany
+    {
+        return $this->hasMany(Overtime::class, 'signer_id');
     }
 
     /**

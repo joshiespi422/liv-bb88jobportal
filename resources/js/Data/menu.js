@@ -123,6 +123,12 @@ export const menuItems = [
         routeName: "salary",
       },
       {
+        name: "OVERTIME FORM",
+        userType: ["super_admin", "employee"], // Different from parent
+        icon: "pi pi-calendar-clock",
+        routeName: "overtime",
+      },
+      {
         name: "LEAVE FORM",
         icon: "pi pi-folder-open",
         userType: ["super_admin", "employee"], // Different from parent
