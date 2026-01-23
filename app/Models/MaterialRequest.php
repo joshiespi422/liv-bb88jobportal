@@ -11,8 +11,8 @@ class MaterialRequest extends Model
     protected $fillable = [
         'name',
         'quantity',
-        'requested_by',
-        'signed_by',
+        'requester_id',
+        'signer_id',
         'department_id',
         'status_id',
         'purpose',
@@ -26,13 +26,13 @@ class MaterialRequest extends Model
     // Define a one-to-many relationship between material_requests and users (requester)
     public function requester(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'requested_by');
+        return $this->belongsTo(User::class, 'requester_id');
     }
 
     // Define a one-to-many relationship between material_requests and users
     public function signer(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'signed_by');
+        return $this->belongsTo(User::class, 'signer_id');
     }
 
     // Define a one-to-many relationship between material_requests and departments

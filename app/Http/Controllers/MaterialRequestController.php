@@ -71,7 +71,7 @@ class MaterialRequestController extends Controller
     private function getMaterialRequestsQuery($user, $canViewByDepartment, $departmentId): Builder
     {
         $query = MaterialRequest::with(['requester:id,name,picture', 'status:id,status_name'])
-        ->select('id', 'name', 'created_at', 'requested_by', 'status_id');
+        ->select('id', 'name', 'created_at', 'requester_id', 'status_id');
     
         // Apply filters based on user role
         if ($canViewByDepartment) {
@@ -149,7 +149,7 @@ class MaterialRequestController extends Controller
             $forApprovalStatusId = Status::where('status_name', 'for approval')->value('id');
             $materialRequest->update([
                 'status_id' => $forApprovalStatusId,
-                'signed_by' => $user->id
+                'signer_id' => $user->id
             ]);
 
             // Dispatch event
@@ -243,7 +243,7 @@ class MaterialRequestController extends Controller
         DB::transaction(function () use ($request, $user, $isHead, $statusId) {
             // Create Material Request
             $materialRequest = MaterialRequest::create([
-                'requested_by' => $user->id,
+                'requester_id' => $user->id,
                 'name' => $request->name,
                 'quantity' => $request->quantity,
                 'purpose' => $request->purpose,
@@ -253,7 +253,7 @@ class MaterialRequestController extends Controller
                 'remarks' => $request->remarks,
                 'status_id' => $statusId,
                 'department_id' => $user->employeeDetails?->department_id,
-                'signed_by' => $isHead ? $user->id : null,
+                'signer_id' => $isHead ? $user->id : null,
             ]);
 
             // dispatch event
