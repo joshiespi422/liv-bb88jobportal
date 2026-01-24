@@ -6,8 +6,11 @@ use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 use Inertia\Inertia;
 use App\Models\Overtime;
+use App\Models\Status;
 
 class OvertimeController extends Controller
 {
@@ -91,7 +94,60 @@ class OvertimeController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        // Authorization
+        $user = $request->user()->loadMissing('userType', 'employeeDetails');
+        if ($user->userType->type_name !== 'employee') {
+            abort(403, 'Not authorized');
+        }
+        
+        // 1. Validation
+        $request->validate([
+            'date' => [
+                'required', 
+                'date', 
+                'before_or_equal:today', 
+                'after_or_equal:' . now()->subMonth()->startOfMonth()->toDateString()
+            ],
+            'start_time' => 'required|date_format:H:i',
+            'end_time'   => 'required|date_format:H:i|after:start_time',
+            'reason'     => 'required|string|max:1000',
+        ]);
+
+        // 2. Compute Total Hours logic
+        $startTime = Carbon::parse($request->start_time);
+        $endTime = Carbon::parse($request->end_time);
+
+        $totalMinutes = $endTime->diffInMinutes($startTime);
+        $hours = floor($totalMinutes / 60);
+        $remainingMinutes = $totalMinutes % 60;
+
+        // Apply 50-minute rule
+        if ($remainingMinutes > 50) {
+            $hours += 1;
+        }
+        $hours = max($hours, 0);
+
+        // 3. Determine Status
+        $isHead = $user->employeeDetails?->is_head;
+        $statusName = $isHead ? 'for approval' : 'pending';
+        $statusId = Status::where('status_name', $statusName)->value('id');
+
+        //Logic
+        DB::transaction(function () use ($request, $user, $isHead, $statusId, $hours) {
+            $overtime = Overtime::create([
+                'requester_id' => $user->id,
+                'signer_id' => $isHead ? $user->id : null,
+                'status_id'    => $statusId,
+                'date'         => $request->date,
+                'start_time'   => $request->start_time,
+                'end_time'     => $request->end_time,
+                'reason'       => $request->reason,
+                'total_hours'  => $hours,
+            ]);
+
+        });
+
+        return back()->with('success', 'Overtime request submitted successfully');
     }
 
     /**
@@ -112,6 +168,7 @@ class OvertimeController extends Controller
             'date' => $overtime->date,
             'start_time' => $overtime->start_time,
             'end_time' => $overtime->end_time,
+            'total_hours' => $overtime->total_hours,
             'reason' => $overtime->reason,
             'requester' => $overtime->requester->name,
             'signer' => optional($overtime->signer)->name ?? 'N/A',

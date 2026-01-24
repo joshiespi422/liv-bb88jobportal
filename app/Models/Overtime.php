@@ -9,7 +9,15 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 class Overtime extends Model
 {
     protected $fillable = [
-        //
+        'requester_id',
+        'signer_id',
+        'status_id',
+        'date',
+        'start_time',
+        'end_time',
+        'reason',
+        'total_hours',
+        'reject_reason',
     ];
 
     // Define a one-to-many relationship between overtimes and users (requester)

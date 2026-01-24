@@ -11,10 +11,7 @@ import { useDetailsModal } from "../Composables/useDetailsModal";
 import { overtimeDetailFields } from "../Data/detailFields";
 import { useOvertimeColumns } from "../Data/tableColumns";
 import { statusText } from "../Composables/useClassMap";
-import {
-  useRequestMaterialFormFields,
-  useValidateMaterialFormFields,
-} from "../Data/forms/materialFormFields";
+import { useRequestOverTimeFormFields } from "../Data/forms/overtimeFormFields";
 
 const props = defineProps({
   overtimes: {
@@ -28,6 +25,41 @@ const page = usePage();
 const authUser = computed(() => page.props.auth.user);
 // for notification click
 const { onMountedHandleParameter } = useUrlParameter();
+
+// State for modals for forms
+const isRequestModalOpen = ref(false);
+// Holds the action to be executed on confirmation
+const pendingAction = ref(null);
+// confirmation before request
+const isConfirmModalOpen = ref(false);
+const isConfirmLoading = ref(false);
+
+// Holds the properties for the confirmation modal
+const confirmModalProps = reactive({
+  title: "",
+  message: "",
+  confirmText: "",
+  confirmButtonBg: "",
+  iconName: "",
+});
+// Closes the confirmation modal
+const closeConfirmModal = () => {
+  isConfirmModalOpen.value = false;
+};
+// Executes the action on confirmation
+const executeConfirm = () => {
+  if (pendingAction.value) {
+    pendingAction.value();
+  }
+};
+
+// request form state
+const requestForm = useForm({
+  date: "",
+  start_time: "",
+  end_time: "",
+  reason: "",
+});
 
 // -- OverTime Request Details Logic --
 const {
@@ -47,14 +79,69 @@ const showRejectReason = ref(false);
 const toggleRejectReason = () => {
   showRejectReason.value = !showRejectReason.value;
 };
-// Handler for viewing material request and details modal function
+// Handler for viewing overtime request and details modal function
 const handleViewDetails = (overtimeId) => {
   showRejectReason.value = false;
   fetchOverTimeDetails(overtimeId);
 };
 
+// handle request overtime
+const handleRequestOvertime = () => {
+  isRequestModalOpen.value = true;
+};
+const closeAllModal = () => {
+  isRequestModalOpen.value = false;
+  isConfirmModalOpen.value = false;
+};
+
+// Form field configuration for requesting overtime
+const requestFormFields = useRequestOverTimeFormFields();
+
+// -- Request Overtime Flow --
+const handleRequestSubmit = () => {
+  Object.assign(confirmModalProps, {
+    title: "Request Overtime",
+    message: "Are you sure you want to request this overtime?",
+    confirmText: "Request",
+    confirmButtonBg: "bg-blue-600 hover:bg-blue-700",
+    iconName: "pi pi-calendar-clock",
+    iconColor: "text-blue-600",
+    iconBgColor: "bg-blue-100",
+  });
+
+  pendingAction.value = () => {
+    isConfirmLoading.value = true;
+    requestForm.post(route("overtime.store"), {
+      preserveScroll: true,
+      onSuccess: () => {
+        closeAllModal();
+        requestForm.reset();
+      },
+      onError: () => closeConfirmModal(),
+      onFinish: () => {
+        setTimeout(() => {
+          isConfirmLoading.value = false;
+        }, 500);
+      },
+    });
+  };
+
+  isConfirmModalOpen.value = true;
+};
+
 // Tanstack Table columns definition
 const overtimeTableColumns = useOvertimeColumns({ handleViewDetails });
+
+const showRequestButton = computed(() => {
+  const isSuperAdmin = authUser.value?.userType === "super_admin";
+
+  // 1. Must not be super admin
+  if (isSuperAdmin) {
+    return false;
+  }
+
+  return true;
+});
 </script>
 
 <template>
@@ -73,8 +160,38 @@ const overtimeTableColumns = useOvertimeColumns({ handleViewDetails });
       :data="props.overtimes"
       :columns="overtimeTableColumns"
       :enable-view-toggle="true"
-    />
+    >
+      <template #custom-actions>
+        <button
+          @click="handleRequestOvertime"
+          v-if="showRequestButton"
+          class="btn btn-sm @sm:btn-md rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
+        >
+          Request Overtime
+        </button>
+      </template>
+    </DataTable>
   </div>
+
+  <!-- Request Overtime Modal -->
+  <FormModal
+    :isOpen="isRequestModalOpen"
+    title="OVERTIME REQUEST"
+    :form="requestForm"
+    :fields="requestFormFields"
+    submitText="Request"
+    @close="closeAllModal"
+    @submit="handleRequestSubmit"
+  >
+    <!-- Confirmation Modal -->
+    <ConfirmModal
+      :show="isConfirmModalOpen"
+      v-bind="confirmModalProps"
+      :loading="isConfirmLoading"
+      @cancel="closeConfirmModal"
+      @confirm="executeConfirm"
+    />
+  </FormModal>
 
   <!-- Overtime Request Details Modal -->
   <DetailsModal

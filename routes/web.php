@@ -118,6 +118,7 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/overtime', [OvertimeController::class, 'index'])->name('overtime');
         Route::get('/overtime/{id}', [OvertimeController::class, 'show'])->name('overtime.show');
+        Route::post('/overtime', [OvertimeController::class, 'store'])->name('overtime.store');
     });
 
     Route::middleware('user.type:super_admin,employee')->group(function () {
