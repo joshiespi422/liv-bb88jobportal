@@ -11,7 +11,10 @@ import { useDetailsModal } from "../Composables/useDetailsModal";
 import { overtimeDetailFields } from "../Data/detailFields";
 import { useOvertimeColumns } from "../Data/tableColumns";
 import { statusText } from "../Composables/useClassMap";
-import { useRequestOverTimeFormFields } from "../Data/forms/overtimeFormFields";
+import {
+  useRequestOverTimeFormFields,
+  useValidateOverTimeFormFields,
+} from "../Data/forms/overtimeFormFields";
 
 const props = defineProps({
   overtimes: {
@@ -28,6 +31,7 @@ const { onMountedHandleParameter } = useUrlParameter();
 
 // State for modals for forms
 const isRequestModalOpen = ref(false);
+const isValidateModalOpen = ref(false);
 // Holds the action to be executed on confirmation
 const pendingAction = ref(null);
 // confirmation before request
@@ -60,6 +64,11 @@ const requestForm = useForm({
   end_time: "",
   reason: "",
 });
+// validate form state
+const validateForm = useForm({
+  status: "",
+  reject_reason: "",
+});
 
 // -- OverTime Request Details Logic --
 const {
@@ -89,13 +98,36 @@ const handleViewDetails = (overtimeId) => {
 const handleRequestOvertime = () => {
   isRequestModalOpen.value = true;
 };
+// handle validate overtime
+const handleValidateOvertime = () => {
+  if (!selectedOverTime.value) return;
+  isValidateModalOpen.value = true;
+  isOverTimeModalOpen.value = false;
+};
 const closeAllModal = () => {
   isRequestModalOpen.value = false;
   isConfirmModalOpen.value = false;
+  isValidateModalOpen.value = false;
+};
+
+// control validate back button visibility
+const showBackButtonInValidate = computed(() => {
+  return isValidateModalOpen.value && selectedOverTime.value !== null;
+});
+// handle validate back navigation
+const handleBackFromValidate = () => {
+  isValidateModalOpen.value = false;
+  isOverTimeModalOpen.value = true;
 };
 
 // Form field configuration for requesting overtime
 const requestFormFields = useRequestOverTimeFormFields();
+
+// form field configuration for validating overtime
+const validateFormFields = useValidateOverTimeFormFields(
+  validateForm,
+  selectedOverTime,
+);
 
 // -- Request Overtime Flow --
 const handleRequestSubmit = () => {
@@ -162,6 +194,38 @@ const handleSignSubmit = () => {
   isConfirmModalOpen.value = true;
 };
 
+// -- Validate Overtime Flow --
+const handleValidateSubmit = () => {
+  Object.assign(confirmModalProps, {
+    title: "Validate Overtime Request",
+    message: "Are you sure you want to validate this request?",
+    confirmText: "Validate",
+    confirmButtonBg: "bg-blue-600 hover:bg-blue-700",
+    iconName: "pi pi-calendar-clock",
+    iconColor: "text-blue-600",
+    iconBgColor: "bg-blue-100",
+  });
+
+  pendingAction.value = () => {
+    isConfirmLoading.value = true;
+    validateForm.patch(route("overtime.validate", selectedOverTime.value.id), {
+      preserveScroll: true,
+      onSuccess: () => {
+        closeAllModal();
+        validateForm.reset();
+      },
+      onError: () => closeConfirmModal(),
+      onFinish: () => {
+        setTimeout(() => {
+          isConfirmLoading.value = false;
+        }, 500);
+      },
+    });
+  };
+
+  isConfirmModalOpen.value = true;
+};
+
 // Tanstack Table columns definition
 const overtimeTableColumns = useOvertimeColumns({ handleViewDetails });
 
@@ -193,6 +257,24 @@ const showSignButton = computed(() => {
   }
   // 4. Must be in "pending" status
   if (selectedOverTime.value.status !== "pending") {
+    return false;
+  }
+
+  return true;
+});
+const showValidateButton = computed(() => {
+  const isSuperAdmin = authUser.value?.userType === "super_admin";
+
+  // 1. Must be super admin
+  if (!isSuperAdmin) {
+    return false;
+  }
+  // 2. Must have selected overtime request details
+  if (!selectedOverTime.value) {
+    return false;
+  }
+  // 3. Must be in "for approval" status
+  if (selectedOverTime.value.status !== "for approval") {
     return false;
   }
 
@@ -238,6 +320,29 @@ const showSignButton = computed(() => {
     submitText="Request"
     @close="closeAllModal"
     @submit="handleRequestSubmit"
+  >
+    <!-- Confirmation Modal -->
+    <ConfirmModal
+      :show="isConfirmModalOpen"
+      v-bind="confirmModalProps"
+      :loading="isConfirmLoading"
+      @cancel="closeConfirmModal"
+      @confirm="executeConfirm"
+    />
+  </FormModal>
+
+  <!-- Validate Overtime Modal -->
+  <FormModal
+    :isOpen="isValidateModalOpen"
+    :showBackButton="showBackButtonInValidate"
+    title="VALIDATE OVERTIME REQUEST"
+    :form="validateForm"
+    :fields="validateFormFields"
+    submitText="Submit"
+    disabledButton
+    @close="closeAllModal"
+    @back="handleBackFromValidate"
+    @submit="handleValidateSubmit"
   >
     <!-- Confirmation Modal -->
     <ConfirmModal
@@ -339,6 +444,13 @@ const showSignButton = computed(() => {
         class="btn btn-sm @sm:btn-md rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3 me-2"
       >
         Sign
+      </button>
+      <button
+        v-if="showValidateButton"
+        @click="handleValidateOvertime"
+        class="btn btn-sm @sm:btn-md rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3 me-2"
+      >
+        Validate
       </button>
     </template>
 

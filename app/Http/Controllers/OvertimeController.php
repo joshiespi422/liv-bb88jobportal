@@ -55,13 +55,15 @@ class OvertimeController extends Controller
             return $query->whereHas('requester.employeeDetails', function ($q) use ($departmentId) {
                 $q->where('department_id', $departmentId);
             });
+        } elseif ($user->userType->type_name === 'super_admin') {
+            return $query;
         }
 
         return $query->whereRaw('1 = 0'); // User has no overtime access
     }
 
     /**
-     * Format the collection of material requests for the view.
+     * Format the collection of overtime requests for the view.
      */
     private function formatOvertimes(Collection $overtimes): Collection
     {
@@ -97,7 +99,7 @@ class OvertimeController extends Controller
         ]);
 
         if ($overtime->status->status_name !== 'pending') {
-            abort(403, 'material request is not pending');
+            abort(403, 'overtime request is not pending');
         }
 
         // Logic
@@ -110,6 +112,47 @@ class OvertimeController extends Controller
         });
         
         return back()->with('success', 'Overtime signed successfully!');
+    }
+    
+    public function validateOvertime(Request $request, Overtime $overtime)
+    {
+        // Authorization
+        $user = Auth::user();
+        $isSuperAdmin = $user->userType->type_name === 'super_admin';
+        if (!$isSuperAdmin) { 
+            abort(403, 'not authorized'); 
+        }
+
+        $overtime->loadMissing([
+            'status:id,status_name',
+        ]);
+        
+        if ($overtime->status->status_name !== 'for approval') {
+            abort(403, 'overtime request is not for approval');
+        }
+
+        // Validation
+        $request->validate([
+            'status' => 'required|in:approved,rejected',
+            'reject_reason' => 'nullable|required_if:status,rejected|string|max:1000',
+        ]);
+
+        // Logic
+        DB::transaction(function () use ($request, $overtime) {
+            $newStatus = Status::where('status_name', $request->status)->firstOrFail();
+            $overtime->status_id = $newStatus->id;
+
+            // If status is 'rejected', save the reason. Otherwise, clear it.
+            if ($request->status === 'rejected') {
+                $overtime->reject_reason = $request->reject_reason;
+            } else {
+                $overtime->reject_reason = null;
+            }
+
+            $overtime->save();
+        });
+        
+        return back()->with('success', 'Overtime request validated successfully!');
     }
 
     /**
@@ -228,7 +271,6 @@ class OvertimeController extends Controller
 
         return response()->json([
             'id' => $overtime->id,
-            'material' => $overtime->name,
             'date' => $overtime->date,
             'start_time' => $overtime->start_time,
             'end_time' => $overtime->end_time,

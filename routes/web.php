@@ -120,6 +120,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/overtime/{id}', [OvertimeController::class, 'show'])->name('overtime.show');
         Route::post('/overtime', [OvertimeController::class, 'store'])->name('overtime.store');
         Route::patch('/overtime/{overtime}/sign', [OvertimeController::class, 'signOvertime'])->name('overtime.sign');
+        Route::patch('/overtime/{overtime}/validate', [OvertimeController::class, 'validateOvertime'])->name('overtime.validate');
     });
 
     Route::middleware('user.type:super_admin,employee')->group(function () {
