@@ -731,7 +731,7 @@ export function useOvertimeColumns({ handleViewDetails }) {
     },
     {
       header: "DATE",
-      accessorFn: (row) => longDateTime(row.date),
+      accessorFn: (row) => longDate(row.date),
       id: "submitted-date",
       cell: ({ cell }) => {
         return h("span", {}, cell.getValue());
@@ -739,11 +739,11 @@ export function useOvertimeColumns({ handleViewDetails }) {
     },
     {
       header: "START TIME",
-      accessorKey: "start_time",
+      accessorFn: (row) => formatTime(row.start_time),
     },
     {
       header: "END TIME",
-      accessorKey: "end_time",
+      accessorFn: (row) => formatTime(row.end_time),
     },
     {
       header: "STATUS",

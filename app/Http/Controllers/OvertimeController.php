@@ -109,23 +109,46 @@ class OvertimeController extends Controller
                 'after_or_equal:' . now()->subMonth()->startOfMonth()->toDateString()
             ],
             'start_time' => 'required|date_format:H:i',
-            'end_time'   => 'required|date_format:H:i|after:start_time',
+            'end_time' => [
+                'required',
+                'date_format:H:i',
+                function ($attribute, $value, $fail) use ($request) {
+                    // Convert "18:00" to minutes: (18 * 60) + 0 = 1080
+                    $startParts = explode(':', $request->start_time);
+                    $endParts = explode(':', $value);
+
+                    $startMinutes = ($startParts[0] * 60) + $startParts[1];
+                    $endMinutes = ($endParts[0] * 60) + $endParts[1];
+                    $diff = $endMinutes - $startMinutes;
+
+                    if ($diff <= 0) {
+                        $fail('The end time must be after the start time.');
+                        return;
+                    }
+
+                    if ($diff < 50) {
+                        $fail('The overtime duration must be at least 50 minutes.');
+                    }
+                },
+            ],
             'reason'     => 'required|string|max:1000',
         ]);
 
-        // 2. Compute Total Hours logic
-        $startTime = Carbon::parse($request->start_time);
-        $endTime = Carbon::parse($request->end_time);
+        // 2. Compute Total Hours logic (Raw Math)
+        $startParts = explode(':', $request->start_time);
+        $endParts = explode(':', $request->end_time);
 
-        $totalMinutes = $endTime->diffInMinutes($startTime);
-        $hours = floor($totalMinutes / 60);
+        $startMinutes = ($startParts[0] * 60) + $startParts[1];
+        $endMinutes = ($endParts[0] * 60) + $endParts[1];
+        $totalMinutes = $endMinutes - $startMinutes;
+
+        $baseHours = floor($totalMinutes / 60);
         $remainingMinutes = $totalMinutes % 60;
 
-        // Apply 50-minute rule
-        if ($remainingMinutes > 50) {
-            $hours += 1;
-        }
-        $hours = max($hours, 0);
+        // Apply "50 minutes and above consider it 1hr"
+        $computedHours = ($remainingMinutes >= 50) ? ($baseHours + 1) : $baseHours;
+        // Safety check: ensure we record at least 1 hour if it passed validation
+        $finalHours = max(1, (int) $computedHours);
 
         // 3. Determine Status
         $isHead = $user->employeeDetails?->is_head;
@@ -133,7 +156,7 @@ class OvertimeController extends Controller
         $statusId = Status::where('status_name', $statusName)->value('id');
 
         //Logic
-        DB::transaction(function () use ($request, $user, $isHead, $statusId, $hours) {
+        DB::transaction(function () use ($request, $user, $isHead, $statusId, $finalHours) {
             $overtime = Overtime::create([
                 'requester_id' => $user->id,
                 'signer_id' => $isHead ? $user->id : null,
@@ -142,7 +165,7 @@ class OvertimeController extends Controller
                 'start_time'   => $request->start_time,
                 'end_time'     => $request->end_time,
                 'reason'       => $request->reason,
-                'total_hours'  => $hours,
+                'total_hours'  => $finalHours,
             ]);
 
         });
