@@ -129,6 +129,39 @@ const handleRequestSubmit = () => {
   isConfirmModalOpen.value = true;
 };
 
+// -- Sign Overtime Req Flow --
+const handleSignSubmit = () => {
+  Object.assign(confirmModalProps, {
+    title: "Sign Overtime Request",
+    message: "Are you sure you want to sign this request?",
+    confirmText: "Sign",
+    confirmButtonBg: "bg-blue-600 hover:bg-blue-700",
+    iconName: "pi pi-calendar-clock",
+    iconColor: "text-blue-600",
+    iconBgColor: "bg-blue-100",
+  });
+
+  pendingAction.value = () => {
+    isConfirmLoading.value = true;
+    router.patch(
+      route("overtime.sign", selectedOverTime.value.id),
+      {},
+      {
+        preserveScroll: true,
+        onFinish: () => {
+          closeConfirmModal();
+          isOverTimeModalOpen.value = false;
+          setTimeout(() => {
+            isConfirmLoading.value = false;
+          }, 500);
+        },
+      },
+    );
+  };
+
+  isConfirmModalOpen.value = true;
+};
+
 // Tanstack Table columns definition
 const overtimeTableColumns = useOvertimeColumns({ handleViewDetails });
 
@@ -137,6 +170,29 @@ const showRequestButton = computed(() => {
 
   // 1. Must not be super admin
   if (isSuperAdmin) {
+    return false;
+  }
+
+  return true;
+});
+const showSignButton = computed(() => {
+  const isSuperAdmin = authUser.value?.userType === "super_admin";
+  const isHead = authUser.value?.isHead;
+
+  // 1. Must not be super admin
+  if (isSuperAdmin) {
+    return false;
+  }
+  // 2. Must be head
+  if (!isHead) {
+    return false;
+  }
+  // 3. Must have selected overtime request details
+  if (!selectedOverTime.value) {
+    return false;
+  }
+  // 4. Must be in "pending" status
+  if (selectedOverTime.value.status !== "pending") {
     return false;
   }
 
@@ -275,5 +331,24 @@ const showRequestButton = computed(() => {
         </div>
       </div>
     </template>
+
+    <template #custom-buttons>
+      <button
+        v-if="showSignButton"
+        @click="handleSignSubmit"
+        class="btn btn-sm @sm:btn-md rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3 me-2"
+      >
+        Sign
+      </button>
+    </template>
+
+    <!-- Confirmation Modal -->
+    <ConfirmModal
+      :show="isConfirmModalOpen"
+      v-bind="confirmModalProps"
+      :loading="isConfirmLoading"
+      @cancel="closeConfirmModal"
+      @confirm="executeConfirm"
+    />
   </DetailsModal>
 </template>

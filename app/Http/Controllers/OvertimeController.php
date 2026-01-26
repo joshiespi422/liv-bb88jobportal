@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Inertia\Inertia;
 use App\Models\Overtime;
@@ -19,7 +20,7 @@ class OvertimeController extends Controller
      */
     public function index(Request $request)
     {
-        $user = $request->user()->loadMissing('userType');
+        $user = $request->user()->loadMissing('userType', 'employeeDetails.department');
 
         // Build the query based on user permissions and filters
         $query = $this->getOvertimeQuery($user);
@@ -43,7 +44,17 @@ class OvertimeController extends Controller
             ->select('id', 'date', 'start_time', 'end_time', 'status_id', 'requester_id');
 
         if ($user->userType->type_name === 'employee') {
-            return $query->where('requester_id', $user->id);
+            $departmentId = $user->employeeDetails?->department_id;
+
+            // If the user doesn't have a department, they shouldn't see anything
+            if (!$departmentId) {
+                return $query->whereRaw('1 = 0');
+            }
+
+            // Filter overtimes where the requester belongs to the same department
+            return $query->whereHas('requester.employeeDetails', function ($q) use ($departmentId) {
+                $q->where('department_id', $departmentId);
+            });
         }
 
         return $query->whereRaw('1 = 0'); // User has no overtime access
@@ -69,6 +80,36 @@ class OvertimeController extends Controller
                 ],
             ];
         });
+    }
+
+    public function signOvertime(Overtime $overtime)
+    {
+        // Authorization
+        $user = Auth::user();
+        $isHead = $user->employeeDetails?->is_head;
+        $isSuperAdmin = $user->userType->type_name === 'super_admin';
+        if (!$isHead || $isSuperAdmin) { 
+            abort(403, 'not authorized'); 
+        }
+
+        $overtime->loadMissing([
+            'status:id,status_name',
+        ]);
+
+        if ($overtime->status->status_name !== 'pending') {
+            abort(403, 'material request is not pending');
+        }
+
+        // Logic
+        DB::transaction(function () use ($overtime, $user) {
+            $forApprovalStatusId = Status::where('status_name', 'for approval')->value('id');
+            $overtime->update([
+                'status_id' => $forApprovalStatusId,
+                'signer_id' => $user->id
+            ]);
+        });
+        
+        return back()->with('success', 'Overtime signed successfully!');
     }
 
     /**

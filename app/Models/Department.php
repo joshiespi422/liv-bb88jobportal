@@ -40,4 +40,10 @@ class Department extends Model
     {
         return $this->belongsToMany(Project::class);
     }
+
+    // Define a one-to-many relationship between departments and material_requests
+    public function materialRequests() : HasMany
+    {
+        return $this->hasMany(MaterialRequest::class);
+    }
 }
