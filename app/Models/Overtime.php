@@ -37,4 +37,10 @@ class Overtime extends Model
     {
         return $this->belongsTo(Status::class);
     }
+
+    // Define a one-to-many polymorphic relationship between overtimes and notifications
+    public function notifications(): MorphMany
+    {
+        return $this->morphMany(Notification::class, 'notifiable');
+    }
 }

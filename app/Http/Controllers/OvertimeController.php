@@ -12,6 +12,9 @@ use Carbon\Carbon;
 use Inertia\Inertia;
 use App\Models\Overtime;
 use App\Models\Status;
+use App\Events\OvertimeCreated;
+use App\Events\OvertimeSigned;
+use App\Events\OvertimeValidated;
 
 class OvertimeController extends Controller
 {
@@ -109,6 +112,9 @@ class OvertimeController extends Controller
                 'status_id' => $forApprovalStatusId,
                 'signer_id' => $user->id
             ]);
+
+            // Dispatch event
+            OvertimeSigned::dispatch($overtime);
         });
         
         return back()->with('success', 'Overtime signed successfully!');
@@ -150,6 +156,9 @@ class OvertimeController extends Controller
             }
 
             $overtime->save();
+
+            // Dispatch event
+            OvertimeValidated::dispatch($overtime);
         });
         
         return back()->with('success', 'Overtime request validated successfully!');
@@ -252,6 +261,8 @@ class OvertimeController extends Controller
                 'total_hours'  => $finalHours,
             ]);
 
+            // Dispatch notification
+            OvertimeCreated::dispatch($overtime);
         });
 
         return back()->with('success', 'Overtime request submitted successfully');
