@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Salary extends Model
 {
@@ -46,5 +47,11 @@ class Salary extends Model
     public function status(): BelongsTo
     {
         return $this->belongsTo(Status::class);
+    }
+
+    // Define a many-to-many relationship between salaries and holidays
+    public function holidays(): BelongsToMany
+    {
+        return $this->belongsToMany(Holiday::class);
     }
 }

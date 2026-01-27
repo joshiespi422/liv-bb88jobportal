@@ -124,6 +124,8 @@ Route::middleware('auth')->group(function () {
         Route::patch('/overtime/{overtime}/validate', [OvertimeController::class, 'validateOvertime'])->name('overtime.validate');
 
         Route::get('/holiday', [HolidayController::class, 'index'])->name('holiday');
+        Route::post('/holiday', [HolidayController::class, 'store'])->name('holiday.store');
+        Route::delete('/holiday/{holiday}', [HolidayController::class, 'destroy'])->name('holiday.destroy');
     });
 
     Route::middleware('user.type:super_admin,employee')->group(function () {

@@ -16,7 +16,6 @@ return new class extends Migration
             $table->string('name');
             $table->date('date')->unique();
             $table->enum('type', ['regular', 'special']);
-            $table->softDeletes();
             $table->timestamps();
         });
     }

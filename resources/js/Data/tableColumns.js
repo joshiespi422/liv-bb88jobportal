@@ -779,25 +779,50 @@ export function useOvertimeColumns({ handleViewDetails }) {
 }
 
 /**
+ * @param {Object} authUser - The authenticated user object.
+ * @param {Object} handlers - An object containing handler functions from the parent.
+ * @param {Function} handlers.handleDelete - The function to call when 'Delete' is clicked.
  * @returns {Array} The static column definition array.
  */
-export function useHolidayColumns() {
-  return [
-    {
-      header: "HOLIDAY",
-      accessorKey: "name",
-    },
-    {
-      header: "DATE",
-      accessorFn: (row) => longDate(row.date),
-      id: "date",
-      cell: ({ cell }) => {
-        return h("span", {}, cell.getValue());
+export function useHolidayColumns(authUser, { handleDelete }) {
+  return computed(() => {
+    const columns = [
+      {
+        header: "HOLIDAY",
+        accessorKey: "name",
       },
-    },
-    {
-      header: "TYPE",
-      accessorFn: (row) => capitalizeFirst(row.type),
-    },
-  ];
+      {
+        header: "DATE",
+        accessorFn: (row) => longDate(row.date),
+        id: "date",
+        cell: ({ cell }) => {
+          return h("span", {}, cell.getValue());
+        },
+      },
+      {
+        header: "TYPE",
+        accessorFn: (row) => capitalizeFirst(row.type),
+      },
+    ];
+
+    if (authUser.value.userType === "super_admin") {
+      columns.push({
+        id: "actions",
+        header: "ACTIONS",
+        cell: ({ row }) =>
+          h(
+            "button",
+            {
+              onClick: () => handleDelete(row.original.id),
+              class: "btn btn-error btn-sm @sm:btn-md rounded-full text-white",
+            },
+            h("i", { class: "pi pi-trash" }),
+            "Delete",
+          ),
+        enableSorting: false,
+      });
+    }
+
+    return columns;
+  });
 }

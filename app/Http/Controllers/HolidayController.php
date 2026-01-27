@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 use App\Models\Holiday;
 
 class HolidayController extends Controller
@@ -85,7 +86,25 @@ class HolidayController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        // Authorization
+        $user = $request->user()->loadMissing('userType');
+        if ($user->userType->type_name !== 'super_admin') {
+            abort(403, 'not authorized');
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'type' => 'required|in:regular,special',
+            'date' => 'required|date|unique:holidays,date',
+        ]);
+
+        Holiday::create([
+            'name' => $validated['name'],
+            'type' => $validated['type'],
+            'date' => $validated['date'],
+        ]);
+        
+        return back()->with('success', 'Holiday created successfully!');
     }
 
     /**
@@ -115,8 +134,29 @@ class HolidayController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Holiday $holiday)
     {
-        //
+        // Authorization
+        $user = Auth::user();
+        $isSuperAdmin = $user->userType->type_name === 'super_admin';
+        if (!$isSuperAdmin) { 
+            abort(403, 'not authorized'); 
+        }
+
+        // 2. Check for approved salaries using status_name
+        $hasApprovedSalaries = $holiday->salaries()
+            ->whereHas('status', function ($query) {
+                $query->where('status_name', 'approved');
+            })
+            ->exists();
+
+        if ($hasApprovedSalaries) {
+            throw ValidationException::withMessages([
+                'holiday' => 'This holiday cannot be deleted because it is already linked to an approved salary.'
+            ]);
+        }
+        $holiday->delete();
+
+        return back()->with('success', 'Holiday deleted successfully!');
     }
 }
