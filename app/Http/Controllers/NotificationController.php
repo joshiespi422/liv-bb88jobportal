@@ -11,6 +11,7 @@ use App\Models\Leave;
 use App\Models\Project;
 use App\Models\Comment;
 use App\Models\MaterialRequest;
+use App\Models\Overtime;
 
 class NotificationController extends Controller
 {
@@ -38,7 +39,8 @@ class NotificationController extends Controller
                                 Project::class => [],
                             ]);
                         }],
-                        MaterialRequest::class => [],
+                        MaterialRequest::class => ['department'],
+                        Overtime::class => [],
                     ]);
                 }
             ])
@@ -71,6 +73,7 @@ class NotificationController extends Controller
                             ]);
                         }],
                         MaterialRequest::class => ['department'],
+                        Overtime::class => [],
                     ]);
                 }
             ])

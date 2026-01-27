@@ -69,7 +69,7 @@ export const useNotificationStore = defineStore("notification", {
     async markAsRead(id) {
       try {
         await axios.patch(
-          route("notification.markAsRead", { notification: id })
+          route("notification.markAsRead", { notification: id }),
         );
         // Optimistically update local state
         const index = this.notifications.findIndex((n) => n.id === id);
@@ -124,6 +124,8 @@ export const useNotificationStore = defineStore("notification", {
         case "App\\Models\\MaterialRequest":
           this.navigateToMaterialReq(notification);
           break;
+        case "App\\Models\\Overtime":
+          this.navigateToOvertime(notification);
         // Add more cases as needed
       }
     },
@@ -234,6 +236,20 @@ export const useNotificationStore = defineStore("notification", {
       }
 
       router.visit(route("material.request", routeParams), {
+        preserveState: false,
+        preserveScroll: true,
+        replace: false,
+      });
+    },
+
+    navigateToOvertime(notification) {
+      const overtime = notification.notifiable;
+
+      const routeParams = {
+        open: overtime.id,
+      };
+
+      router.visit(route("overtime", routeParams), {
         preserveState: false,
         preserveScroll: true,
         replace: false,
