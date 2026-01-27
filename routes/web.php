@@ -17,6 +17,7 @@ use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\MaterialRequestController;
 use App\Http\Controllers\SalaryController;
 use App\Http\Controllers\OvertimeController;
+use App\Http\Controllers\HolidayController;
 use Illuminate\Support\Facades\Route;
 
 // Profile info for the qr code
@@ -121,6 +122,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/overtime', [OvertimeController::class, 'store'])->name('overtime.store');
         Route::patch('/overtime/{overtime}/sign', [OvertimeController::class, 'signOvertime'])->name('overtime.sign');
         Route::patch('/overtime/{overtime}/validate', [OvertimeController::class, 'validateOvertime'])->name('overtime.validate');
+
+        Route::get('/holiday', [HolidayController::class, 'index'])->name('holiday');
     });
 
     Route::middleware('user.type:super_admin,employee')->group(function () {

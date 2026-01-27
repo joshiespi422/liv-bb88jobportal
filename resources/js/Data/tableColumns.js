@@ -777,3 +777,27 @@ export function useOvertimeColumns({ handleViewDetails }) {
     },
   ];
 }
+
+/**
+ * @returns {Array} The static column definition array.
+ */
+export function useHolidayColumns() {
+  return [
+    {
+      header: "HOLIDAY",
+      accessorKey: "name",
+    },
+    {
+      header: "DATE",
+      accessorFn: (row) => longDate(row.date),
+      id: "date",
+      cell: ({ cell }) => {
+        return h("span", {}, cell.getValue());
+      },
+    },
+    {
+      header: "TYPE",
+      accessorFn: (row) => capitalizeFirst(row.type),
+    },
+  ];
+}

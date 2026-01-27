@@ -129,6 +129,12 @@ export const menuItems = [
         routeName: "overtime",
       },
       {
+        name: "HOLIDAY",
+        userType: ["super_admin", "employee"], // Different from parent
+        icon: "pi pi-calendar-minus",
+        routeName: "holiday",
+      },
+      {
         name: "LEAVE FORM",
         icon: "pi pi-folder-open",
         userType: ["super_admin", "employee"], // Different from parent
