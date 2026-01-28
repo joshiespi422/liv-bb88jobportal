@@ -23,6 +23,7 @@ return new class extends Migration
             $table->decimal('absent_deduction', 10, 2)->nullable();
             $table->unsignedTinyInteger('overtime_hour')->nullable();
             $table->decimal('overtime_amount', 10, 2)->nullable();
+            $table->decimal('overtime_amount', 10, 2)->nullable();
             $table->decimal('gross_pay', 10, 2);
             $table->decimal('net_pay', 10, 2);
             $table->timestamps();

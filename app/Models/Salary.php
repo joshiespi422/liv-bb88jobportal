@@ -21,6 +21,7 @@ class Salary extends Model
         'absent_deduction',
         'overtime_hour',
         'overtime_amount',
+        'holiday_amount',
         'gross_pay',
         'net_pay',
     ];
