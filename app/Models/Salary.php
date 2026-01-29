@@ -53,6 +53,7 @@ class Salary extends Model
     // Define a many-to-many relationship between salaries and holidays
     public function holidays(): BelongsToMany
     {
-        return $this->belongsToMany(Holiday::class);
+        return $this->belongsToMany(Holiday::class)
+            ->withPivot('amount');
     }
 }

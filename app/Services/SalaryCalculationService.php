@@ -36,8 +36,8 @@ class SalaryCalculationService
             $dailyRate = $totalDaysInPeriod > 0 ? $halfSalary / $totalDaysInPeriod : 0;
             $hourlyRate = $dailyRate / 8;
 
-            $holidayAmount = 0;
-            $appliedHolidayIds = [];
+            $holidayPivotData = [];
+            $holidayAmountTotal = 0;
             
             // Get unique dates user actually logged in
             $userLogs = $user->timeLogs()
@@ -49,18 +49,25 @@ class SalaryCalculationService
             // --- HOLIDAY CALCULATION ---
             foreach ($holidaysInRange as $holiday) {
                 $hasWorked = in_array($holiday->date, $userLogs);
-                $appliedHolidayIds[] = $holiday->id;
+                $currentHolidayPay = 0;               
 
                 if ($holiday->type === 'regular') {
                     // IF WORKED: 200% (Base 100% + Extra 100%)
                     // IF NOT WORKED: 100% (Base 100% + Extra 0%)
-                    // Since the day is already part of the "halfSalary", 
-                    // we only add the EXTRA 100% if they worked.
                     $multiplier = $hasWorked ? 2.0 : 1.0;
-                    $holidayAmount += ($dailyRate * $multiplier);
+                    $currentHolidayPay = $dailyRate * $multiplier;
                 } elseif ($holiday->type === 'special' && $hasWorked) {
-                    // Special holidays only pay if worked (+30%)
-                    $holidayAmount += ($dailyRate * 0.30);
+                    // IF WORKED: 30% (Base 100% + Extra 70%)
+                    // IF NOT WORKED: 0%
+                    $currentHolidayPay = $dailyRate * 0.30;
+                }
+
+                if ($currentHolidayPay > 0 || $holiday->type === 'regular') {
+                    $holidayAmountTotal += $currentHolidayPay;                
+                    // Prepare data for the pivot table
+                    $holidayPivotData[$holiday->id] = [
+                        'amount' => round($currentHolidayPay, 2)
+                    ];
                 }
             }
 
@@ -84,7 +91,7 @@ class SalaryCalculationService
             // Gross = (Base - Absences) + Holiday Pay + OT
             // We subtract all holidays from base because we added the 100% or 200% back in $holidayAmount
             $baseWorkPay = (count($requiredWorkDates) * $dailyRate); 
-            $grossPay = $baseWorkPay + $holidayAmount + $overtimeAmount;
+            $grossPay = $baseWorkPay + $holidayAmountTotal + $overtimeAmount;
             $netPay = $grossPay - $absentDeduction;
 
             $salary = Salary::updateOrCreate(
@@ -97,13 +104,13 @@ class SalaryCalculationService
                     'absent_deduction' => round($absentDeduction, 2),
                     'overtime_hour' => $totalOTHours,
                     'overtime_amount' => round($overtimeAmount, 2),
-                    'holiday_amount' => round($holidayAmount, 2),
+                    'holiday_amount' => round($holidayAmountTotal, 2),
                     'gross_pay' => round($grossPay, 2),
                     'net_pay' => round($netPay, 2), // Add tax/SSS deductions here if needed
                 ]
             );
 
-            $salary->holidays()->sync($appliedHolidayIds);
+            $salary->holidays()->sync($holidayPivotData);
         }
     }
 }

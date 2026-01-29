@@ -15,6 +15,7 @@ return new class extends Migration
             // composite primary key instead of auto-increment
             $table->foreignId('holiday_id')->constrained('holidays')->onDelete('cascade');
             $table->foreignId('salary_id')->constrained('salaries')->onDelete('cascade');
+            $table->decimal('amount', 10, 2)->nullable();
 
             // Set composite primary key
             $table->primary(['holiday_id', 'salary_id']);

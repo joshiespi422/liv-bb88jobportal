@@ -7,6 +7,7 @@ import {
   shortDate,
   shortMonthDay,
 } from "../Composables/useDateFormatter";
+import { capitalizeFirst } from "../Data/detailFields";
 import DataTable from "../Components/DataTable.vue";
 import Department from "../Components/Department.vue";
 import DetailsModal from "../Components/modals/DetailsModal.vue";
@@ -189,11 +190,11 @@ const computeAllChecker = computed(() => {
 
 // checker for compute single
 const computeSingleChecker = computed(() => {
-  const salary = selectedEmployee.value?.salaries?.[0];
-  const hasCurrentSalary =
-    selectedEmployee.value?.employee_details?.current_salary;
-  // Check if they have an approved salary OR if they are missing their base current_salary
-  return (salary && salary.status_name === "approved") || !hasCurrentSalary;
+  const hasSalaryRecord = !!salaryData.value;
+  const hasBaseSalarySet = !!employeeHasSetSalary.value;
+  const isPending = isPendingSalary.value;
+  // If DON'T have a record, OR DON'T have base salary, OR it's NOT pending
+  return !hasSalaryRecord && !hasBaseSalarySet && isPending;
 });
 
 // checker for approve single
@@ -465,22 +466,22 @@ const handleBackFromPayslip = () => {
                     <span>{{ formatCurrency(salaryData.rate_month / 2) }}</span>
                   </div>
                 </div>
-                <div class="grid grid-cols-[1fr_2fr]">
-                  <span>Special Holiday <span class="ps-3">Dec. 8</span></span>
+                <div v-for="holiday in salaryData.holidays">
+                  <div class="grid grid-cols-[1fr_2fr]">
+                    <span
+                      >{{ capitalizeFirst(holiday.type) }} Holiday
+                      <span class="ps-3">{{
+                        shortMonthDay(holiday.date)
+                      }}</span></span
+                    >
 
-                  <div class="flex justify-between w-2/3 px-2 border-b-2">
-                    <span class="font-semibold flex w-full"> ₱ </span>
-                    <span>207.69</span>
+                    <div class="flex justify-between w-2/3 px-2 border-b-2">
+                      <span class="font-semibold flex w-full"> ₱ </span>
+                      <span>{{ formatCurrency(holiday.pivot.amount) }}</span>
+                    </div>
                   </div>
                 </div>
-                <div class="grid grid-cols-[1fr_2fr]">
-                  <span>Special Holiday <span class="ps-3">Dec. 11</span></span>
 
-                  <div class="flex justify-between w-2/3 px-2 border-b-2">
-                    <span class="font-semibold flex w-full"> ₱ </span>
-                    <span>207.69</span>
-                  </div>
-                </div>
                 <div class="grid grid-cols-[1fr_2fr]">
                   <span class="ps-5">Overtime</span>
                   <div class="flex justify-between w-2/3 px-2 border-b-2">
@@ -834,20 +835,19 @@ const handleBackFromPayslip = () => {
                     }}</span>
                   </div>
                 </div>
-                <div class="grid grid-cols-[1fr_2fr]">
-                  <span>Special Holiday <span class="ps-3">Dec. 8</span></span>
+                <div v-for="holiday in item.employee.salaries[0].holidays">
+                  <div class="grid grid-cols-[1fr_2fr]">
+                    <span
+                      >{{ capitalizeFirst(holiday.type) }}
+                      <span class="ps-3">{{
+                        shortMonthDay(holiday.date)
+                      }}</span></span
+                    >
 
-                  <div class="flex justify-between w-2/3 px-2 border-b-2">
-                    <span class="font-semibold flex w-full"> ₱ </span>
-                    <span>207.69</span>
-                  </div>
-                </div>
-                <div class="grid grid-cols-[1fr_2fr]">
-                  <span>Special Holiday <span class="ps-3">Dec. 11</span></span>
-
-                  <div class="flex justify-between w-2/3 px-2 border-b-2">
-                    <span class="font-semibold flex w-full"> ₱ </span>
-                    <span>207.69</span>
+                    <div class="flex justify-between w-2/3 px-2 border-b-2">
+                      <span class="font-semibold flex w-full"> ₱ </span>
+                      <span>{{ formatCurrency(holiday.pivot.amount) }}</span>
+                    </div>
                   </div>
                 </div>
                 <div class="grid grid-cols-[1fr_2fr]">

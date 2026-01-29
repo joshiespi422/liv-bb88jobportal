@@ -45,7 +45,7 @@ class SalaryController extends Controller
             $employees = User::query()
                 ->whereHas('employeeDetails')
                 ->whereHas('status', fn($q) => $q->where('status_name', 'active'))
-                ->with(['employeeDetails:user_id,current_salary', 'salaries.status', 'salaries' => function($q) use ($period) {
+                ->with(['employeeDetails:user_id,current_salary', 'salaries.status', 'salaries.holidays', 'salaries' => function($q) use ($period) {
                     $q->where('salary_period_id', $period?->id);
                 }])
                 ->select(['id', 'name', 'qr_code', 'position'])
@@ -81,6 +81,18 @@ class SalaryController extends Controller
         
         $period = SalaryPeriod::findOrFail($request->salary_period_id);
         $user = User::where('id', $request->user_id)
+            ->where(function ($query) use ($period) {
+                $query->whereHas('salaries', function ($q) use ($period) {
+                    $q->where('salary_period_id', $period->id)
+                    ->whereHas('status', fn($s) => $s->where('status_name', 'pending'));
+                })
+                ->orWhereDoesntHave('salaries', function ($q) use ($period) {
+                    $q->where('salary_period_id', $period->id);
+                });
+            })
+            ->whereHas('employeeDetails', function ($q) {
+                $q->whereNotNull('current_salary');
+            })
             ->with('employeeDetails')
             ->firstOrFail();
         
@@ -186,7 +198,7 @@ class SalaryController extends Controller
     public function show(string $id, SalaryPeriod $period)
     {
         $employee = User::select('id', 'name', 'qr_code', 'position')
-            ->with(['salaries.approver:id,name', 'salaries' => function($query) use ($period) {
+            ->with(['salaries.approver:id,name','salaries.holidays', 'salaries' => function($query) use ($period) {
                 $query->where('salary_period_id', $period->id)
                     ->whereHas('status', function($statusQuery) {
                             $statusQuery->where('status_name', 'approved');
