@@ -96,7 +96,7 @@ class SalaryController extends Controller
             ->with('employeeDetails')
             ->firstOrFail();
         
-        $service->compute($user, $period);
+        $service->compute(collect([$user]), $period);
 
         return back()->with('success', 'Salary re-computed successfully!');
     }

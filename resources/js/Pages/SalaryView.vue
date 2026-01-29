@@ -193,8 +193,8 @@ const computeSingleChecker = computed(() => {
   const hasSalaryRecord = !!salaryData.value;
   const hasBaseSalarySet = !!employeeHasSetSalary.value;
   const isPending = isPendingSalary.value;
-  // If DON'T have a record, OR DON'T have base salary, OR it's NOT pending
-  return !hasSalaryRecord && !hasBaseSalarySet && isPending;
+  // If have a record, AND have base salary, AND it's pending
+  return (hasSalaryRecord && !isPending) || !hasBaseSalarySet;
 });
 
 // checker for approve single
