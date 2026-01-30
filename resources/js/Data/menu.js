@@ -106,6 +106,29 @@ export const menuItems = [
     routeName: "project",
   },
   {
+    name: "PAYROLLS",
+    icon: "pi pi-credit-card",
+    userType: ["super_admin", "employee"],
+    hasSubmenu: true,
+    submenu: [
+      {
+        name: "SALARY PAYSLIP", // Inherits parent permission
+        icon: "pi pi-wallet",
+        routeName: "salary",
+      },
+      {
+        name: "OVERTIME FORM", // Inherits parent permission
+        icon: "pi pi-calendar-clock",
+        routeName: "overtime",
+      },
+      {
+        name: "HOLIDAY", // Inherits parent permission
+        icon: "pi pi-calendar-minus",
+        routeName: "holiday",
+      },
+    ],
+  },
+  {
     name: "OTHERS",
     icon: "pi pi-cog",
     userType: ["super_admin", "employee", "intern"],
@@ -115,24 +138,6 @@ export const menuItems = [
         name: "PROFILE", // Inherits parent permission
         icon: "pi pi-credit-card",
         routeName: "profile",
-      },
-      {
-        name: "SALARY PAYSLIP",
-        userType: ["super_admin", "employee"], // Different from parent
-        icon: "pi pi-wallet",
-        routeName: "salary",
-      },
-      {
-        name: "OVERTIME FORM",
-        userType: ["super_admin", "employee"], // Different from parent
-        icon: "pi pi-calendar-clock",
-        routeName: "overtime",
-      },
-      {
-        name: "HOLIDAY",
-        userType: ["super_admin", "employee"], // Different from parent
-        icon: "pi pi-calendar-minus",
-        routeName: "holiday",
       },
       {
         name: "LEAVE FORM",

@@ -40,7 +40,7 @@ class TimeLogSeeder extends Seeder
 
             foreach ($dates as $date) {
                 // 70% chance the user has logs for this specific day
-                $hasLogsForDay = rand(1, 100) <= 70;
+                $hasLogsForDay = rand(1, 100) <= 90;
 
                 if (!$hasLogsForDay) {
                     continue; // Skip this day for this user
@@ -63,13 +63,13 @@ class TimeLogSeeder extends Seeder
     }
 
     /**
-     * Generate dates from today back to 3 weeks, excluding Sundays
+     * Generate dates from today back to 5 weeks, excluding Sundays
      */
     private function generateDates(): array
     {
         $dates = [];
         $endDate = Carbon::today();
-        $startDate = Carbon::today()->subWeeks(3);
+        $startDate = Carbon::today()->subWeeks(5);
 
         $currentDate = $startDate->copy();
 
