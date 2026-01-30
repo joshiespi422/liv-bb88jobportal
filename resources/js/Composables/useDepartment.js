@@ -21,8 +21,15 @@ export function useDepartments(props) {
       return props.currentDepartmentId;
     },
     set(newDeptId) {
-      if (props.authUser.userType === "super_admin" && newDeptId) {
-        // spread all additional params from the parent
+      if (!newDeptId) return;
+
+      const isSuperAdmin = props.authUser.userType === "super_admin";
+      const isLeaveRouteAdmin =
+        props.routeName === "leave" &&
+        props.authUser.userType === "employee" &&
+        props.authUser.department?.name === "Admin";
+
+      if (isSuperAdmin || isLeaveRouteAdmin) {
         const queryParams = {
           dept: newDeptId,
           ...props.additionalParams,
