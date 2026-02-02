@@ -118,9 +118,11 @@ class TaskController extends Controller
                 return $query->whereHas('users', fn($q) => $q->where('user_id', $user->id))
                              ->whereIn('status_id', $activeStatuses);
             case 'active':
-                return $query->whereIn('status_id', $activeStatuses);
+                return $query->whereIn('status_id', $activeStatuses)
+                                ->orderByRaw("status_id = ? DESC", [$statuses['for approval']]);
             case 'archived':
-                return $query->whereIn('status_id', $archivedStatuses);
+                return $query->whereIn('status_id', $archivedStatuses)
+                                ->orderBy('created_at', 'desc');
             default:
                 return $query;
         }
