@@ -32,7 +32,7 @@ export function useDepartments(props) {
       if (isSuperAdmin || isLeaveRouteAdmin) {
         const queryParams = {
           dept: newDeptId,
-          ...props.additionalParams,
+          ...props.otherParams,
         };
         router.get(route(props.routeName), queryParams, {
           preserveState: true,

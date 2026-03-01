@@ -6,6 +6,12 @@ export const menuItems = [
     routeName: "dashboard",
   },
   {
+    name: "CHAT ROOM",
+    icon: "pi pi-comments",
+    userType: ["super_admin", "employee", "intern"],
+    routeName: "chat",
+  },
+  {
     name: "ATTENDANCE",
     icon: "pi pi-address-book",
     userType: ["super_admin"],

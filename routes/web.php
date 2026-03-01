@@ -18,6 +18,7 @@ use App\Http\Controllers\MaterialRequestController;
 use App\Http\Controllers\SalaryController;
 use App\Http\Controllers\OvertimeController;
 use App\Http\Controllers\HolidayController;
+use App\Http\Controllers\ChatController;
 use Illuminate\Support\Facades\Route;
 
 // Profile info for the qr code
@@ -102,6 +103,8 @@ Route::middleware('auth')->group(function () {
     Route::delete('/notification/destroy-all', [NotificationController::class, 'destroyAll'])->name('notification.destroyAll');
     Route::delete('/notification/{notification}', [NotificationController::class, 'destroy'])->name('notification.destroy');
     Route::patch('/notification/{notification}/mark-as-read', [NotificationController::class, 'markAsRead'])->name('notification.markAsRead');
+
+    Route::get('/chat', [ChatController::class, 'index'])->name('chat');
     
     Route::middleware('user.type:super_admin,employee')->group(function () {
         Route::get('/leave', [LeaveController::class, 'index'])->name('leave');
