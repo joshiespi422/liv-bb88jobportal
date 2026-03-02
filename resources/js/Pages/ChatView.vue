@@ -11,7 +11,7 @@
             type="radio"
             name="my_tabs_3"
             class="tab"
-            aria-label="Tab 1"
+            aria-label="Core Group"
             checked="checked"
           />
           <div class="tab-content bg-base-100 border-green-primary-1 p-6 pe-3">
@@ -57,14 +57,24 @@
             </div>
           </div>
 
-          <input type="radio" name="my_tabs_3" class="tab" aria-label="Tab 2" />
+          <input
+            type="radio"
+            name="my_tabs_3"
+            class="tab"
+            aria-label="Employees"
+          />
           <div class="tab-content bg-base-100 border-green-primary-1 p-6">
-            Tab content 2
+            Employees Chat Group Here
           </div>
 
-          <input type="radio" name="my_tabs_3" class="tab" aria-label="Tab 3" />
+          <input
+            type="radio"
+            name="my_tabs_3"
+            class="tab"
+            aria-label="Interns"
+          />
           <div class="tab-content bg-base-100 border-green-primary-1 p-6">
-            Tab content 3
+            Interns Chat Group Heres
           </div>
         </div>
 

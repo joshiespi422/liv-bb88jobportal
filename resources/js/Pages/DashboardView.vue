@@ -85,7 +85,7 @@ const handleTimeIn = () => {
             isTimeLoading.value = false;
           }, 1000);
         }
-      }
+      },
     );
   } else {
     error("Geolocation is not supported by your browser");
@@ -161,7 +161,7 @@ const confirmTimeOut = (timeLogId) => {
           isConfirmLoading.value = false;
         }, 500);
       },
-    }
+    },
   );
 };
 
@@ -174,9 +174,12 @@ const userIsActive = ref(true);
 const handleUserActivity = () => {
   userIsActive.value = true;
   clearTimeout(activityTimeout);
-  activityTimeout = setTimeout(() => {
-    userIsActive.value = false; // set false after 3 minutes of inactivity
-  }, 3 * 60 * 1000);
+  activityTimeout = setTimeout(
+    () => {
+      userIsActive.value = false; // set false after 3 minutes of inactivity
+    },
+    3 * 60 * 1000,
+  );
 };
 
 // Fetches fresh data using an efficient partial reload
@@ -223,7 +226,7 @@ const getInitialSelectedUser = () => {
       ? parseInt(userIdFromUrl)
       : userIdFromUrl;
     const userInList = props.usersForMapFilter.find(
-      (user) => user.id === targetUserId
+      (user) => user.id === targetUserId,
     );
 
     // To be valid, the user must exist in our filter list AND have location data
@@ -255,7 +258,7 @@ watch(selectedUser, (newUser) => {
         preserveState: true,
         preserveScroll: true,
         only: ["timeLogLocations"],
-      }
+      },
     );
   }
 });
@@ -390,7 +393,7 @@ watch(selectedUser, (newUser) => {
                   v-for="n in Math.max(
                     props.userDetails.time_in.length -
                       props.userDetails.time_out.length,
-                    0
+                    0,
                   )"
                   :key="`na-${n}`"
                 >
@@ -496,6 +499,15 @@ watch(selectedUser, (newUser) => {
               </div>
               <div><strong>Position:</strong> {{ location.position }}</div>
               <div><strong>Department:</strong> {{ location.department }}</div>
+              <div>
+                <a
+                  :href="`https://www.google.com/maps/dir/?api=1&destination=${location.latitude},${location.longitude}`"
+                  target="_blank"
+                  class="inline-flex mt-1 items-center px-4 py-1.5 border-2 border-blue-600 font-semibold rounded-xl hover:bg-blue-50"
+                >
+                  View Directions
+                </a>
+              </div>
             </div>
           </template>
         </LocationMap>

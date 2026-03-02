@@ -168,7 +168,7 @@ const attendanceTitle = computed(() => {
       :error="isLogError"
       :hide-close-btn="hideCloseBtn"
       title="ATTENDANCE DETAILS"
-      @close="closeLogModal(), (showMap = false), (visibleIps = {})"
+      @close="(closeLogModal(), (showMap = false), (visibleIps = {}))"
       panelClass="w-full max-w-2xl"
     >
       <!-- Custom Skeleton Loader -->
@@ -237,6 +237,15 @@ const attendanceTitle = computed(() => {
                   <div><strong>Position:</strong> {{ location.position }}</div>
                   <div>
                     <strong>Department:</strong> {{ location.department }}
+                  </div>
+                  <div>
+                    <a
+                      :href="`https://www.google.com/maps/dir/?api=1&destination=${location.latitude},${location.longitude}`"
+                      target="_blank"
+                      class="inline-flex mt-1 items-center px-4 py-1.5 border-2 border-blue-600 font-semibold rounded-xl hover:bg-blue-50"
+                    >
+                      View Directions
+                    </a>
                   </div>
                 </div>
               </template>
