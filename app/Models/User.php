@@ -195,6 +195,31 @@ class User extends Authenticatable
         return $this->hasMany(Overtime::class, 'signer_id');
     }
 
+    public function chatMessages(): HasMany
+    {
+        return $this->hasMany(ChatMessage::class);
+    }
+
+    /**
+     * Check if the user can access a specific group.
+     *
+     * @param string $group
+     * @return bool
+     */
+    public function canAccessGroup(string $group): bool
+    {
+        $isActiveEmployee = $this->user_type_id == 2 && $this->status_id == 10;
+        $isOngoingIntern = $this->user_type_id == 3 && $this->status_id == 13;
+        $isSuperAdmin = $this->user_type_id == 1;
+
+        return match ($group) {
+            'core' => $isSuperAdmin || ($isActiveEmployee && optional($this->employeeDetails)->hierarchy === 'Leader'),
+            'employees' => $isSuperAdmin || $isActiveEmployee,
+            'interns' => $isSuperAdmin || $isActiveEmployee || $isOngoingIntern,
+            default => false,
+        };
+    }
+
     /**
      * Check if the user has a specific role.
      *

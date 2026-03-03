@@ -53,4 +53,23 @@ class ChatController extends Controller
             'group_members' => $members
         ]);
     }
+
+    public function store(Request $request)
+    {
+        $request->validate(['group' => 'required', 'message' => 'required']);
+        
+        if (!$request->user()->canAccessGroup($request->group)) {
+            abort(403);
+        }
+
+        $message = ChatMessage::create([
+            'user_id' => $request->user()->id,
+            'group_name' => $request->group,
+            'message' => $request->message,
+        ]);
+
+        broadcast(new MessageSent($message->load('user')))->toOthers();
+
+        return back();
+    }
 }
