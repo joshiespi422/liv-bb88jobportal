@@ -12,43 +12,31 @@ class ChatController extends Controller
 {
     public function index(Request $request)
     {
-        $user = $request->user()->loadMissing(['userType', 'status', 'employeeDetails']);
-        
-        // Define Status and Type Constants for readability
-        $isActiveEmployee = ($user->userType->type_name === 'employee' && $user->status->status_name === 'active');
-        $isOngoingIntern = ($user->userType->type_name === 'intern' && $user->status->status_name === 'ongoing');
-        $isSuperAdmin = ($user->userType->type_name === 'super_admin');
-        $isLeader = ($user->employeeDetails && $user->employeeDetails->hierarchy === 'Leader');
-
-        // 1. Permissions Logic
-        $canAccessCore = $isSuperAdmin || ($isActiveEmployee && $isLeader);
-        $canAccessEmployees = $isSuperAdmin || $isActiveEmployee;
-        // Everyone (Super Admin, Active Employees, Ongoing Interns) can access Intern Group
-        $canAccessInterns = $isSuperAdmin || $isActiveEmployee || $isOngoingIntern;
+        $permissions = $this->getUserPermissions($request->user());
 
         // 2. Fetch Members (Reusable query parts)
         $members = [
-            'core' => $canAccessCore ? User::whereHas('userType', fn($q) => $q->where('type_name', 'super_admin'))
+            'core' => $permissions['core'] ? User::whereHas('userType', fn($q) => $q->where('type_name', 'super_admin'))
                 ->orWhere(function($query) {
                     $query->whereHas('userType', fn($q) => $q->where('type_name', 'employee'))
                           ->whereHas('status', fn($q) => $q->where('status_name', 'active'))
                           ->whereHas('employeeDetails', fn($q) => $q->where('hierarchy', 'Leader'));
                 })->get() : [],
 
-            'employees' => $canAccessEmployees ? User::whereHas('userType', fn($q) => $q->whereIn('type_name', ['super_admin', 'employee']))
+            'employees' => $permissions['employees'] ? User::whereHas('userType', fn($q) => $q->whereIn('type_name', ['super_admin', 'employee']))
                 ->whereHas('status', fn($q) => $q->where('status_name', 'active'))
                 ->get() : [],
 
-            'interns' => $canAccessInterns ? User::where(function($query) {
+            'interns' => $permissions['interns'] ? User::where(function($query) {
                 $query->whereHas('status', fn($q) => $q->whereIn('status_name', ['active', 'ongoing']));
             })->get() : [],
         ];
 
         return Inertia::render('ChatView', [
             'auth_permissions' => [
-                'can_core' => $canAccessCore,
-                'can_employees' => $canAccessEmployees,
-                'can_interns' => $canAccessInterns,
+                'can_core'      => $permissions['core'],
+                'can_employees' => $permissions['employees'],
+                'can_interns'   => $permissions['interns'],
             ],
             'group_members' => $members
         ]);
@@ -56,20 +44,51 @@ class ChatController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate(['group' => 'required', 'message' => 'required']);
-        
-        if (!$request->user()->canAccessGroup($request->group)) {
-            abort(403);
-        }
-
-        $message = ChatMessage::create([
-            'user_id' => $request->user()->id,
-            'group_name' => $request->group,
-            'message' => $request->message,
+        $validated = $request->validate([
+            'group' => 'required|in:core,employees,interns',
+            'message' => 'required|string|max:5000',
         ]);
 
-        broadcast(new MessageSent($message->load('user')))->toOthers();
+        $permissions = $this->getUserPermissions($request->user());
+        $group = $validated['group'];
 
-        return back();
+        if (!$permissions[$group]) {
+            abort(403, 'Unauthorized group access.');
+        }
+
+        // 💾 Save message
+        $message = ChatMessage::create([
+            'user_id' => $request->user()->id,
+            'group' => $group,
+            'message' => $validated['message'],
+        ]);
+
+        // Broadcast to VPS Reverb
+        broadcast(new MessageSent(
+            $message->loadMissing('user'),
+            $group
+        ))->toOthers();
+
+        return back()->with('success', 'Message sent successfully!');
+    }
+
+    private function getUserPermissions($user)
+    {
+        $user->loadMissing(['userType', 'status', 'employeeDetails']);
+
+        $typeName = $user->userType->type_name ?? '';
+        $statusName = $user->status->status_name ?? '';
+        $hierarchy = $user->employeeDetails->hierarchy ?? '';
+
+        $isActiveEmployee = ($typeName === 'employee' && $statusName === 'active');
+        $isOngoingIntern = ($typeName === 'intern' && $statusName === 'ongoing');
+        $isSuperAdmin = ($typeName === 'super_admin');
+        $isLeader = ($hierarchy === 'Leader');
+
+        return [
+            'core'      => $isSuperAdmin || ($isActiveEmployee && $isLeader),
+            'employees' => $isSuperAdmin || $isActiveEmployee,
+            'interns'   => $isSuperAdmin || $isActiveEmployee || $isOngoingIntern,
+        ];
     }
 }

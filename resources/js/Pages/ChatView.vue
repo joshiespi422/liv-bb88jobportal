@@ -1,6 +1,6 @@
 <script setup>
-import { ref, computed } from "vue";
-import { Head } from "@inertiajs/vue3";
+import { ref, computed, nextTick } from "vue";
+import { Head, router } from "@inertiajs/vue3";
 
 const props = defineProps({
   auth_permissions: Object,
@@ -19,6 +19,58 @@ const activeTab = ref(
 const currentMembers = computed(() => {
   return props.group_members[activeTab.value] || [];
 });
+
+const message = ref("");
+const textareaRef = ref(null);
+
+// Function to handle auto-resize
+const adjustHeight = () => {
+  const el = textareaRef.value;
+  if (!el) return;
+
+  el.style.height = "auto";
+  const maxHeight = 120;
+
+  if (el.scrollHeight > maxHeight) {
+    el.style.height = `${maxHeight}px`;
+    el.style.overflowY = "auto";
+  } else {
+    el.style.height = `${el.scrollHeight}px`;
+    el.style.overflowY = "hidden";
+  }
+};
+
+const handleKeydown = (e) => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+};
+
+const sendMessage = () => {
+  if (!message.value.trim()) return;
+
+  console.log("Sending:", message.value);
+  router.post(
+    route("chat.store"),
+    {
+      group: activeTab.value,
+      message: message.value,
+    },
+    {
+      preserveScroll: true,
+      onSuccess: () => {
+        message.value = "";
+        nextTick(() => {
+          if (textareaRef.value) {
+            textareaRef.value.style.height = "auto";
+            textareaRef.value.style.overflowY = "hidden";
+          }
+        });
+      },
+    },
+  );
+};
 </script>
 
 <template>
@@ -77,6 +129,30 @@ const currentMembers = computed(() => {
                       <div class="chat-bubble">I hate you!</div>
                     </div>
                   </div>
+                </div>
+              </div>
+              <div class="mt-3">
+                <div
+                  class="relative flex items-end gap-2 bg-base-100 rounded-2xl border border-base-300 p-2 focus-within:ring-2 focus-within:ring-primary/20 transition-all"
+                >
+                  <textarea
+                    ref="textareaRef"
+                    v-model="message"
+                    @input="adjustHeight"
+                    @keydown="handleKeydown"
+                    placeholder="Type a message..."
+                    class="textarea textarea-ghost focus:bg-transparent focus:outline-none w-full py-2 px-0 resize-none leading-relaxed overflow-hidden list-scroll"
+                    rows="1"
+                    style="min-height: 40px; box-sizing: border-box"
+                  ></textarea>
+
+                  <button
+                    @click="sendMessage"
+                    :disabled="!message.trim()"
+                    class="btn btn-primary btn-circle btn-sm my-auto"
+                  >
+                    <i class="pi pi-send text-lg"></i>
+                  </button>
                 </div>
               </div>
             </div>

@@ -6,19 +6,19 @@ use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 use App\Models\ChatMessage;
 
-class MessageSent
+class MessageSent implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     /**
      * Create a new event instance.
      */
-    public function __construct(public ChatMessage $message)
+    public function __construct(public $message, public $group) 
     {
         //
     }
@@ -30,6 +30,21 @@ class MessageSent
      */
     public function broadcastOn(): array
     {
-        return [new PrivateChannel('chat.' . $this->message->group_name)];
+        return [new PrivateChannel("chat.{$this->group}")];
+    }
+
+    public function broadcastWith(): array
+    {
+        return [
+            'id' => $this->message->id,
+            'message' => $this->message->message,
+            'group' => $this->group,
+            'created_at' => $this->message->created_at->toDateTimeString(),
+            'user' => [
+                'id' => $this->message->user->id,
+                'name' => $this->message->user->name,
+                'picture' => $this->message->user->picture,
+            ],
+        ];
     }
 }
