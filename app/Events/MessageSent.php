@@ -33,6 +33,11 @@ class MessageSent implements ShouldBroadcastNow
         return [new PrivateChannel("chat.{$this->group}")];
     }
 
+    public function broadcastAs(): string
+    {
+        return 'MessageSent';
+    }
+
     public function broadcastWith(): array
     {
         return [
