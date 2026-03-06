@@ -106,6 +106,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/chat', [ChatController::class, 'index'])->name('chat');
     Route::post('/chat', [ChatController::class, 'store'])->name('chat.store');
+    Route::get('/chat/more', [ChatController::class, 'loadMore'])->name('chat.loadMore');
     
     Route::middleware('user.type:super_admin,employee')->group(function () {
         Route::get('/leave', [LeaveController::class, 'index'])->name('leave');
