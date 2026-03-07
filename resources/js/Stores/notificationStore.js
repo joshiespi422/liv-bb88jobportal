@@ -126,6 +126,10 @@ export const useNotificationStore = defineStore("notification", {
           break;
         case "App\\Models\\Overtime":
           this.navigateToOvertime(notification);
+          break;
+        case "App\\Models\\ChatMessage":
+          this.navigateToChatMessage(notification);
+          break;
         // Add more cases as needed
       }
     },
@@ -250,6 +254,18 @@ export const useNotificationStore = defineStore("notification", {
       };
 
       router.visit(route("overtime", routeParams), {
+        preserveState: false,
+        preserveScroll: true,
+        replace: false,
+      });
+    },
+
+    navigateToChatMessage(notification) {
+      const chatMessage = notification.notifiable;
+      const routeParams = {
+        group: chatMessage.group,
+      };
+      router.visit(route("chat", routeParams), {
         preserveState: false,
         preserveScroll: true,
         replace: false,
