@@ -298,7 +298,7 @@ watch(
                       <div class="chat-header">
                         {{ msg.user.name }}
                         <time class="text-xs opacity-50 ms-1">{{
-                          msg.created_at
+                          shortDateTime(msg.created_at)
                         }}</time>
                       </div>
                       <div class="chat-bubble">{{ msg.message }}</div>
@@ -317,7 +317,7 @@ watch(
                       <div class="chat-header">
                         You
                         <time class="text-xs opacity-50 ms-1">{{
-                          msg.created_at
+                          shortDateTime(msg.created_at)
                         }}</time>
                       </div>
                       <div class="chat-bubble">
@@ -387,7 +387,7 @@ watch(
                       <div class="chat-header">
                         {{ msg.user.name }}
                         <time class="text-xs opacity-50 ms-1">{{
-                          msg.created_at
+                          shortDateTime(msg.created_at)
                         }}</time>
                       </div>
                       <div class="chat-bubble">{{ msg.message }}</div>
@@ -406,7 +406,7 @@ watch(
                       <div class="chat-header">
                         You
                         <time class="text-xs opacity-50 ms-1">{{
-                          msg.created_at
+                          shortDateTime(msg.created_at)
                         }}</time>
                       </div>
                       <div class="chat-bubble">

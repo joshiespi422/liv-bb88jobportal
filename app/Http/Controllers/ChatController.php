@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\ChatMessage;
 use App\Events\MessageSent;
+use App\Events\ChatMessageCreated;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use App\Models\User;
 use Inertia\Inertia;
@@ -107,21 +109,28 @@ class ChatController extends Controller
         $group = $validated['group'];
 
         if (!$permissions[$group]) {
-            abort(403, 'Unauthorized group access.');
+            abort(403, 'not authorized');
         }
 
-        // Save message
-        $message = ChatMessage::create([
-            'user_id' => $request->user()->id,
-            'group' => $group,
-            'message' => $validated['message'],
-        ]);
+        DB::transaction(function () use ($request, $group, $validated) {
+            // 1. Save message
+            $chatMessage = ChatMessage::create([
+                'user_id' => $request->user()->id,
+                'group' => $group,
+                'message' => $validated['message'],
+            ]);
 
-        // Broadcast to VPS Reverb
-        broadcast(new MessageSent(
-            $message->loadMissing('user'),
-            $group
-        ))->toOthers();
+            // 2. Dispatch internal event to handle notifications
+            ChatMessageCreated::dispatch($chatMessage, $group);
+
+            // 3. Trigger WebSocket Broadcast safely after DB commits
+            // DB::afterCommit(function () use ($chatMessage, $group) {
+            //     broadcast(new MessageSent(
+            //         $chatMessage->loadMissing('user'),
+            //         $group
+            //     ))->toOthers();
+            // });
+        });
 
         return back()->with('success', 'Message sent successfully!');
     }
