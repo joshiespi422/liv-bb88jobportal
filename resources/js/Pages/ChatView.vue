@@ -213,7 +213,9 @@ watch(
                           shortDateTime(msg.created_at)
                         }}</time>
                       </div>
-                      <div class="chat-bubble">{{ msg.message }}</div>
+                      <div class="chat-bubble break-words">
+                        {{ msg.message }}
+                      </div>
                     </div>
 
                     <!-- Current user -->
@@ -232,7 +234,7 @@ watch(
                           shortDateTime(msg.created_at)
                         }}</time>
                       </div>
-                      <div class="chat-bubble">
+                      <div class="chat-bubble break-words">
                         {{ msg.message }}
                       </div>
                     </div>
@@ -241,7 +243,7 @@ watch(
               </div>
               <div class="mt-3">
                 <div
-                  class="relative flex items-end gap-2 bg-base-100 rounded-2xl border border-base-300 p-2 focus-within:ring-2 focus-within:ring-primary/20 transition-all"
+                  class="relative flex items-end gap-2 bg-base-100 rounded-2xl border border-base-300 p-2 focus-within:ring-2 focus-within:ring-indigo-500/60 transition-all"
                 >
                   <textarea
                     ref="textareaRef"
@@ -257,7 +259,7 @@ watch(
                   <button
                     @click="sendMessage"
                     :disabled="!message.trim()"
-                    class="btn btn-primary btn-circle btn-sm my-auto"
+                    class="btn btn-circle my-auto bg-indigo-500 border-0 text-white hover:bg-indigo-600 disabled:text-gray-400"
                   >
                     <i class="pi pi-send text-lg"></i>
                   </button>
@@ -301,7 +303,9 @@ watch(
                           shortDateTime(msg.created_at)
                         }}</time>
                       </div>
-                      <div class="chat-bubble">{{ msg.message }}</div>
+                      <div class="chat-bubble break-words">
+                        {{ msg.message }}
+                      </div>
                     </div>
 
                     <!-- Current user -->
@@ -320,7 +324,7 @@ watch(
                           shortDateTime(msg.created_at)
                         }}</time>
                       </div>
-                      <div class="chat-bubble">
+                      <div class="chat-bubble break-words">
                         {{ msg.message }}
                       </div>
                     </div>
@@ -330,7 +334,7 @@ watch(
 
               <div class="mt-3">
                 <div
-                  class="relative flex items-end gap-2 bg-base-100 rounded-2xl border border-base-300 p-2 focus-within:ring-2 focus-within:ring-primary/20 transition-all"
+                  class="relative flex items-end gap-2 bg-base-100 rounded-2xl border border-base-300 p-2 focus-within:ring-2 focus-within:ring-indigo-500/60 transition-all"
                 >
                   <textarea
                     ref="textareaRef"
@@ -346,7 +350,7 @@ watch(
                   <button
                     @click="sendMessage"
                     :disabled="!message.trim()"
-                    class="btn btn-primary btn-circle btn-sm my-auto"
+                    class="btn btn-circle my-auto bg-indigo-500 border-0 text-white hover:bg-indigo-600 disabled:text-gray-400"
                   >
                     <i class="pi pi-send text-lg"></i>
                   </button>
@@ -390,7 +394,9 @@ watch(
                           shortDateTime(msg.created_at)
                         }}</time>
                       </div>
-                      <div class="chat-bubble">{{ msg.message }}</div>
+                      <div class="chat-bubble break-words">
+                        {{ msg.message }}
+                      </div>
                     </div>
 
                     <!-- Current user -->
@@ -409,7 +415,7 @@ watch(
                           shortDateTime(msg.created_at)
                         }}</time>
                       </div>
-                      <div class="chat-bubble">
+                      <div class="chat-bubble break-words">
                         {{ msg.message }}
                       </div>
                     </div>
@@ -418,7 +424,7 @@ watch(
               </div>
               <div class="mt-3">
                 <div
-                  class="relative flex items-end gap-2 bg-base-100 rounded-2xl border border-base-300 p-2 focus-within:ring-2 focus-within:ring-primary/20 transition-all"
+                  class="relative flex items-end gap-2 bg-base-100 rounded-2xl border border-base-300 p-2 focus-within:ring-2 focus-within:ring-indigo-500/60 transition-all"
                 >
                   <textarea
                     ref="textareaRef"
@@ -434,7 +440,7 @@ watch(
                   <button
                     @click="sendMessage"
                     :disabled="!message.trim()"
-                    class="btn btn-primary btn-circle btn-sm my-auto"
+                    class="btn btn-circle my-auto bg-indigo-500 border-0 text-white hover:bg-indigo-600 disabled:text-gray-400"
                   >
                     <i class="pi pi-send text-lg"></i>
                   </button>
@@ -468,7 +474,7 @@ watch(
                     {{ member.name }}
                     <span
                       v-if="member.id === current_user.id"
-                      class="badge badge-primary badge-xs"
+                      class="badge badge-xs bg-indigo-500 text-white"
                       >You</span
                     >
                   </div>
