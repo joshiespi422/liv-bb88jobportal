@@ -12,14 +12,31 @@ const props = defineProps({
   has_more: Boolean,
 });
 
+// to avoid ui flash
+const chatReady = ref(false);
+// for member part mobile responsive
+const isMembersOpen = ref(false);
+
 // -- messages & pagination part
 const messages = ref([...props.initial_messages]);
 const hasMore = ref(props.has_more);
 const loadingMore = ref(false);
 
+// -- per-tab scroll container refs
+const chatRefCore = ref(null);
+const chatRefEmployees = ref(null);
+const chatRefInterns = ref(null);
+
+const getContainer = () => {
+  if (props.active_group === "core") return chatRefCore.value;
+  if (props.active_group === "employees") return chatRefEmployees.value;
+  if (props.active_group === "interns") return chatRefInterns.value;
+  return null;
+};
+
 // -- scroll part
 const handleScroll = async () => {
-  const el = chatContainerRef.value;
+  const el = getContainer();
   if (!el || loadingMore.value || !hasMore.value) return;
   if (el.scrollTop <= 50) {
     await loadMoreMessages();
@@ -32,7 +49,7 @@ const loadMoreMessages = async () => {
   loadingMore.value = true;
 
   const firstId = messages.value[0].id;
-  const prevScrollHeight = chatContainerRef.value?.scrollHeight ?? 0;
+  const prevScrollHeight = getContainer()?.scrollHeight ?? 0;
 
   try {
     const res = await fetch(
@@ -47,7 +64,7 @@ const loadMoreMessages = async () => {
 
     // Keep user's scroll position — don't jump to top
     nextTick(() => {
-      const el = chatContainerRef.value;
+      const el = getContainer();
       if (el) el.scrollTop = el.scrollHeight - prevScrollHeight;
     });
   } finally {
@@ -63,11 +80,16 @@ const currentMembers = computed(() => {
 const message = ref("");
 const textareaRef = ref(null);
 
-const chatContainerRef = ref(null);
 const scrollToBottom = () => {
+  // nextTick alone is not enough — DaisyUI tab layout needs a paint tick too
   nextTick(() => {
-    const el = chatContainerRef.value;
-    if (el) el.scrollTop = el.scrollHeight;
+    setTimeout(() => {
+      const el = getContainer();
+      if (el) {
+        el.scrollTop = el.scrollHeight;
+        chatReady.value = true;
+      }
+    }, 0);
   });
 };
 
@@ -144,7 +166,9 @@ const switchTab = (group) => {
 onMounted(() => {
   scrollToBottom();
 
-  chatContainerRef.value?.addEventListener("scroll", handleScroll);
+  // Attach scroll listener only to the active container
+  const el = getContainer();
+  el?.addEventListener("scroll", handleScroll);
 
   window.Echo.private(`chat.${props.active_group}`).listen(
     ".MessageSent",
@@ -156,7 +180,8 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  chatContainerRef.value?.removeEventListener("scroll", handleScroll);
+  const el = getContainer();
+  el?.removeEventListener("scroll", handleScroll);
   window.Echo.leave(`chat.${props.active_group}`);
 });
 
@@ -173,10 +198,10 @@ watch(
 
 <template>
   <Head title="Chat" />
-  <div class="p-2 @lg:p-4 @3xl:p-8">
+  <div class="p-0 @2xl:p-4 @3xl:p-8">
     <div class="h-[80vh] flex flex-col">
-      <div class="flex flex-1 flex-col sm:flex-row gap-5 mx-4 mb-5">
-        <div class="tabs tabs-lift w-full h-full [--border:2px]">
+      <div class="flex flex-1 flex-col sm:flex-row gap-5 mx-2 @xl:mx-4 mb-5">
+        <div class="tabs tabs-lift w-full h-full [--border:2px] mt-4 @3xl:mt-0">
           <template v-if="auth_permissions.can_core">
             <input
               type="radio"
@@ -187,12 +212,26 @@ watch(
               @click.prevent="switchTab('core')"
             />
             <div
-              class="tab-content bg-base-100 border-green-primary-1 p-6 pe-3"
+              class="tab-content bg-base-100 border-green-primary-1 ps-2.5 @xl:ps-6 pb-6 xl:pt-6 pe-1.5 @xl:pe-3"
             >
+              <div
+                class="flex items-center justify-end me-3 mb-2 mt-4 xl:hidden"
+              >
+                <span
+                  @click="isMembersOpen = true"
+                  class="text-sm flex items-center font-semibold cursor-pointer text-blue-500 tracking-wide"
+                >
+                  MEMBERS
+                  <i class="pi pi-users text-xl ms-1.5"></i>
+                </span>
+              </div>
               <div class="h-[60vh] overflow-hidden">
                 <div
-                  ref="chatContainerRef"
-                  class="h-full overflow-y-auto pe-5 pt-3 flex flex-col list-scroll"
+                  ref="chatRefCore"
+                  :class="[
+                    'h-full overflow-y-auto pe-2.5 @xl:pe-5 pt-3 flex flex-col list-scroll transition-opacity duration-150',
+                    chatReady ? 'opacity-100' : 'opacity-0',
+                  ]"
                 >
                   <div class="flex-grow" />
 
@@ -278,11 +317,26 @@ watch(
               @click.prevent="switchTab('employees')"
             />
             <div
-              class="tab-content bg-base-100 border-green-primary-1 p-6 pe-3"
+              class="tab-content bg-base-100 border-green-primary-1 ps-2.5 @xl:ps-6 pb-6 xl:pt-6 pe-1.5 @xl:pe-3"
             >
-              <div class="h-[60vh] overflow-y-auto">
+              <div
+                class="flex items-center justify-end me-3 mb-2 mt-4 xl:hidden"
+              >
+                <span
+                  @click="isMembersOpen = true"
+                  class="text-sm flex items-center font-semibold cursor-pointer text-blue-500 tracking-wide"
+                >
+                  MEMBERS
+                  <i class="pi pi-users text-xl ms-1.5"></i>
+                </span>
+              </div>
+              <div class="h-[60vh] overflow-hidden">
                 <div
-                  class="h-full overflow-y-auto pe-5 pt-3 flex flex-col list-scroll"
+                  ref="chatRefEmployees"
+                  :class="[
+                    'h-full overflow-y-auto pe-2.5 @xl:pe-5 pt-3 flex flex-col list-scroll transition-opacity duration-150',
+                    chatReady ? 'opacity-100' : 'opacity-0',
+                  ]"
                 >
                   <div class="flex-grow" />
 
@@ -369,11 +423,26 @@ watch(
               @click.prevent="switchTab('interns')"
             />
             <div
-              class="tab-content bg-base-100 border-green-primary-1 p-6 pe-3"
+              class="tab-content bg-base-100 border-green-primary-1 ps-6 pb-6 xl:pt-6 pe-3"
             >
-              <div class="h-[60vh] overflow-y-auto">
+              <div class="h-[60vh] overflow-hidden">
                 <div
-                  class="h-full overflow-y-auto pe-5 pt-3 flex flex-col list-scroll"
+                  class="flex items-center justify-end me-3 mb-2 mt-4 xl:hidden"
+                >
+                  <span
+                    @click="isMembersOpen = true"
+                    class="text-sm flex items-center font-semibold cursor-pointer text-blue-500 tracking-wide"
+                  >
+                    MEMBERS
+                    <i class="pi pi-users text-xl ms-1.5"></i>
+                  </span>
+                </div>
+                <div
+                  ref="chatRefInterns"
+                  :class="[
+                    'h-full overflow-y-auto pe-2.5 @xl:pe-5 pt-3 flex flex-col list-scroll transition-opacity duration-150',
+                    chatReady ? 'opacity-100' : 'opacity-0',
+                  ]"
                 >
                   <div class="flex-grow" />
 
@@ -450,7 +519,7 @@ watch(
           </template>
         </div>
 
-        <div class="w-xl">
+        <div class="hidden xl:block xl:w-[500px] 2xl:w-xl">
           <ul
             class="list bg-base-100 rounded-box shadow-md border-2 border-green-primary-1"
           >
@@ -474,7 +543,7 @@ watch(
                     {{ member.name }}
                     <span
                       v-if="member.id === current_user.id"
-                      class="badge badge-xs bg-indigo-500 text-white"
+                      class="badge badge-xs bg-indigo-500 text-white whitespace-nowrap"
                       >You</span
                     >
                   </div>
@@ -489,6 +558,52 @@ watch(
       </div>
     </div>
   </div>
+
+  <dialog
+    :class="['modal', isMembersOpen ? 'modal-open' : '']"
+    @click.self="isMembersOpen = false"
+  >
+    <div class="modal-box border-2 border-green-primary-1 p-0 overflow-hidden">
+      <div class="flex justify-between items-center p-4 border-b">
+        <h3 class="font-bold">MEMBERS ({{ currentMembers.length }})</h3>
+        <button
+          @click="isMembersOpen = false"
+          class="btn btn-sm btn-circle btn-ghost"
+        >
+          ✕
+        </button>
+      </div>
+      <div class="max-h-[60vh] overflow-y-auto list-scroll me-1.5">
+        <ul class="list bg-base-100">
+          <li
+            v-for="member in currentMembers"
+            :key="member.id"
+            class="list-row p-3 @xl:p-4 gap-3 @xl:gap-4"
+          >
+            <div>
+              <img
+                class="size-10 rounded-box"
+                :src="member.picture || '/profile-images/default.png'"
+              />
+            </div>
+            <div>
+              <div class="flex items-center gap-1 text-sm @xl:text-base">
+                {{ member.name }}
+                <span
+                  v-if="member.id === current_user.id"
+                  class="badge badge-xs bg-indigo-500 text-white whitespace-nowrap"
+                  >You</span
+                >
+              </div>
+              <div class="text-xs uppercase font-semibold opacity-60">
+                {{ member.position || "N/A" }}
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </dialog>
 </template>
 
 <style scoped>
@@ -543,5 +658,10 @@ watch(
   margin: 6px;
   border-radius: 5px;
   background-color: var(--color-base-300);
+}
+@media (max-width: 575px) {
+  .list-scroll::-webkit-scrollbar {
+    width: 6px;
+  }
 }
 </style>
