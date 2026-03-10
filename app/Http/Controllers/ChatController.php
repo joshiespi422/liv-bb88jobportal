@@ -56,9 +56,7 @@ class ChatController extends Controller
             'user'        => [
                 'id'      => $m->user->id,
                 'name'    => $m->user->name,
-                'picture' => $m->user->picture
-                    ? Storage::url($m->user->picture)
-                    : Storage::url('profile-images/default.png'),
+                'picture' => $m->user->picture,
             ],
         ]);
 

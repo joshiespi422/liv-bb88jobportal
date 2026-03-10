@@ -12,7 +12,6 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Collection;
 use Illuminate\Http\JsonResponse;
 use App\Events\TaskCreated;
@@ -144,9 +143,7 @@ class TaskController extends Controller
                     return [
                         'id' => $assignee->id,
                         'name' => $assignee->name,
-                        'picture' => $assignee->picture
-                            ? Storage::url($assignee->picture)
-                            : Storage::url('profile-images/default.png'),
+                        'picture' => $assignee->picture,
                     ];
                 })->toArray(),
             ];
@@ -383,9 +380,7 @@ class TaskController extends Controller
                 'id' => $comment->id,
                 'message' => $comment->message,
                 'user_name' => $comment->user->name,
-                'user_picture' => $comment->user->picture
-                    ? Storage::url($comment->user->picture)
-                    : Storage::url('profile-images/default.png'),
+                'user_picture' => $comment->user->picture,
                 'created_at' => $comment->created_at,
                 
             ])->values()->toArray(),

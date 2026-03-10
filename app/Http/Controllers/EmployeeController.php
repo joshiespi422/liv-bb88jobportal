@@ -12,7 +12,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\Builder;
 
 class EmployeeController extends Controller
@@ -37,9 +36,7 @@ class EmployeeController extends Controller
                 return [
                     'id' => $user->id,
                     'name' => $user->name,
-                    'picture' => $user->picture
-                        ? Storage::url($user->picture)  // Generates full URL for stored image
-                        : Storage::url('profile-images/default.png'),  // Fallback to default image
+                    'picture' => $user->picture,
                     'deptName' => $user->employeeDetails->department->dept_name ?? null,
                     'hierarchy' => $user->employeeDetails->hierarchy ?? null,
                     'status' => $user->status->status_name
@@ -205,9 +202,7 @@ class EmployeeController extends Controller
             'position' => $employee->position,
             'status' => $employee->status->status_name,
             'qr_code' => $employee->qr_code,
-            'picture' => $employee->picture
-                ? Storage::url($employee->picture)  // Generates full URL for stored image
-                : Storage::url('profile-images/default.png'),  // Fallback to default image
+            'picture' => $employee->picture,
             'address' => $employee->address,
             'gender' => $employee->gender,
             'bday' => $employee->bday,

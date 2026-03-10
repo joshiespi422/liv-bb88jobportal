@@ -108,9 +108,7 @@ class LeaveController extends Controller
                 'status' => $leave->status->status_name,
                 'user' => [
                     'name' => $leave->user->name,
-                    'picture' => $leave->user->picture
-                        ? Storage::url($leave->user->picture)
-                        : Storage::url('profile-images/default.png'),
+                    'picture' => $leave->user->picture,
                 ],
             ];
         });

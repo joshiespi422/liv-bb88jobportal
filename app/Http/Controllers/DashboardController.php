@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Carbon;
 use App\Models\User;
@@ -159,9 +158,7 @@ class DashboardController extends Controller
                         'intern' => $user->internDetails->department->dept_name,
                         default => 'N/A'
                     },
-                'picture' => $user->picture
-                    ? Storage::url($user->picture)
-                    : Storage::url('profile-images/default.png'),
+                'picture' => $user->picture,
                 'time_in' => $todayLogs->pluck('time_in')->filter()->values(),
                 'time_out' => $todayLogs->pluck('time_out')->filter()->values(),
                 'date' => now()->format('Y-m-d'),

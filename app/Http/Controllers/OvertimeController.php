@@ -79,9 +79,7 @@ class OvertimeController extends Controller
                 'status' => $overtime->status->status_name,
                 'requester' => [
                     'name' => $overtime->requester->name,
-                    'picture' => $overtime->requester->picture
-                        ? Storage::url($overtime->requester->picture)
-                        : Storage::url('profile-images/default.png'),
+                    'picture' => $overtime->requester->picture,
                 ],
             ];
         });

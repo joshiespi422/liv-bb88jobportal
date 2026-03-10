@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class User extends Authenticatable
@@ -209,6 +211,15 @@ class User extends Authenticatable
     public function hasRole(string $typeName): bool
     {
         return $this->userType && $this->userType->type_name === $typeName;
+    }
+
+    protected function picture(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value) => $value 
+            ? Storage::url($value) 
+            : Storage::url('profile-images/default.png'),
+        );
     }
 
     /**

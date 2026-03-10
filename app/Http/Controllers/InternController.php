@@ -35,9 +35,7 @@ class InternController extends Controller
                 return [
                     'id' => $user->id,
                     'name' => $user->name,
-                    'picture' => $user->picture
-                        ? Storage::url($user->picture)  // Generates full URL for stored image
-                        : Storage::url('profile-images/default.png'),  // Fallback to default image
+                    'picture' => $user->picture,
                     'deptName' => $user->internDetails->department->dept_name ?? null,
                     'school' => $user->internDetails->school ?? null,
                     'status' => $user->status->status_name
@@ -193,9 +191,7 @@ class InternController extends Controller
             'name' => $intern->name,
             'email' => $intern->email,
             'position' => $intern->position,
-            'picture' => $intern->picture
-                ? Storage::url($intern->picture)  // Generates full URL for stored image
-                : Storage::url('profile-images/default.png'),  // Fallback to default image
+            'picture' => $intern->picture,
             'address' => $intern->address,
             'gender' => $intern->gender,
             'bday' => $intern->bday,
