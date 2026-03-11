@@ -6,7 +6,6 @@ use App\Models\Project;
 use App\Models\Department;
 use App\Models\ProjectIssue;
 use App\Models\Status;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Http\Request;
@@ -77,9 +76,7 @@ class ProjectController extends Controller
                 ->map(fn($assignee) => [
                     'id' => $assignee->id,
                     'name' => $assignee->name,
-                    'picture' => $assignee->picture
-                        ? Storage::url($assignee->picture)
-                        : Storage::url('profile-images/default.png'),
+                    'picture' => $assignee->picture,
                 ])
                 ->values(); // Reset array keys
 
@@ -234,9 +231,7 @@ class ProjectController extends Controller
                 'title' => $task->title,
                 'assignees' => $task->users->map(fn ($user) => [
                     'id' => $user->id,
-                    'picture' => $user->picture
-                        ? Storage::url($user->picture)
-                        : Storage::url('profile-images/default.png'),
+                    'picture' => $user->picture,
                 ])
             ])->values()->toArray(),
             'departments' => $project->departments->pluck('dept_name'),

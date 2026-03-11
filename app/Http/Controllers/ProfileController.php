@@ -42,9 +42,7 @@ class ProfileController extends Controller
             'address' => $user->address,
             'bday' => $user->bday,
             'gender' => $user->gender,
-            'picture' => $user->picture
-                ? Storage::url($user->picture)  // Generates full URL for stored image
-                : Storage::url('profile-images/default.png')  // Fallback to default image
+            'picture' => $user->picture,
         ];
 
         // Dynamically add role-specific data
@@ -182,9 +180,7 @@ class ProfileController extends Controller
                 'gender' => $user->gender,
                 'bday' => $user->bday,
                 'address' => $user->address,
-                'picture' => $user->picture
-                    ? Storage::url($user->picture)
-                    : Storage::url('profile-images/default.png'),
+                'picture' => $user->picture,
             ];
         }
 

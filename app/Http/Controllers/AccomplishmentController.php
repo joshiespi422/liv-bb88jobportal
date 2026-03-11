@@ -121,9 +121,7 @@ class AccomplishmentController extends Controller
                 'created_at' => $accomplishment->created_at,
                 'user' => [
                     'name' => $accomplishment->user->name,
-                    'picture' => $accomplishment->user->picture
-                        ? Storage::url($accomplishment->user->picture)
-                        : Storage::url('profile-images/default.png'),
+                    'picture' => $accomplishment->user->picture,
                 ],
             ];
         });

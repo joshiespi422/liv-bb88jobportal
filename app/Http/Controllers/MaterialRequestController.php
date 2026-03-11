@@ -8,7 +8,6 @@ use App\Models\Department;
 use App\Models\Status;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
@@ -101,9 +100,7 @@ class MaterialRequestController extends Controller
                 'status' => $materialRequest->status->status_name,
                 'requester' => [
                     'name' => $materialRequest->requester->name,
-                    'picture' => $materialRequest->requester->picture
-                        ? Storage::url($materialRequest->requester->picture)
-                        : Storage::url('profile-images/default.png'),
+                    'picture' => $materialRequest->requester->picture,
                 ],
             ];
         });
