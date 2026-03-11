@@ -124,12 +124,12 @@ class ChatController extends Controller
             ChatMessageCreated::dispatch($chatMessage, $group);
 
             // 3. Trigger WebSocket Broadcast safely after DB commits
-            // DB::afterCommit(function () use ($chatMessage, $group) {
-            //     broadcast(new MessageSent(
-            //         $chatMessage->loadMissing('user'),
-            //         $group
-            //     ))->toOthers();
-            // });
+            DB::afterCommit(function () use ($chatMessage, $group) {
+                broadcast(new MessageSent(
+                    $chatMessage->loadMissing('user'),
+                    $group
+                ))->toOthers();
+            });
         });
 
         return back()->with('success', 'Message sent successfully!');

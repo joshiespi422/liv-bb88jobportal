@@ -117,8 +117,10 @@ const handleKeydown = (e) => {
   }
 };
 
+const isSending = ref(false);
 const sendMessage = () => {
-  if (!message.value.trim()) return;
+  if (!message.value.trim() || isSending.value) return;
+  isSending.value = true;
 
   router.post(
     route("chat.store"),
@@ -137,6 +139,9 @@ const sendMessage = () => {
           }
         });
         scrollToBottom();
+      },
+      onFinish: () => {
+        isSending.value = false;
       },
     },
   );
@@ -289,6 +294,7 @@ watch(
                     v-model="message"
                     @input="adjustHeight"
                     @keydown="handleKeydown"
+                    :disabled="isSending"
                     placeholder="Type a message..."
                     class="textarea textarea-ghost focus:bg-transparent focus:outline-none w-full py-2 px-0 resize-none leading-relaxed overflow-hidden list-scroll"
                     rows="1"
@@ -297,7 +303,7 @@ watch(
 
                   <button
                     @click="sendMessage"
-                    :disabled="!message.trim()"
+                    :disabled="!message.trim() || isSending"
                     class="btn btn-circle my-auto bg-indigo-500 border-0 text-white hover:bg-indigo-600 disabled:text-gray-400"
                   >
                     <i class="pi pi-send text-lg"></i>
@@ -395,6 +401,7 @@ watch(
                     v-model="message"
                     @input="adjustHeight"
                     @keydown="handleKeydown"
+                    :disabled="isSending"
                     placeholder="Type a message..."
                     class="textarea textarea-ghost focus:bg-transparent focus:outline-none w-full py-2 px-0 resize-none leading-relaxed overflow-hidden list-scroll"
                     rows="1"
@@ -403,7 +410,7 @@ watch(
 
                   <button
                     @click="sendMessage"
-                    :disabled="!message.trim()"
+                    :disabled="!message.trim() || isSending"
                     class="btn btn-circle my-auto bg-indigo-500 border-0 text-white hover:bg-indigo-600 disabled:text-gray-400"
                   >
                     <i class="pi pi-send text-lg"></i>
@@ -500,6 +507,7 @@ watch(
                     v-model="message"
                     @input="adjustHeight"
                     @keydown="handleKeydown"
+                    :disabled="isSending"
                     placeholder="Type a message..."
                     class="textarea textarea-ghost focus:bg-transparent focus:outline-none w-full py-2 px-0 resize-none leading-relaxed overflow-hidden list-scroll"
                     rows="1"
@@ -508,7 +516,7 @@ watch(
 
                   <button
                     @click="sendMessage"
-                    :disabled="!message.trim()"
+                    :disabled="!message.trim() || isSending"
                     class="btn btn-circle my-auto bg-indigo-500 border-0 text-white hover:bg-indigo-600 disabled:text-gray-400"
                   >
                     <i class="pi pi-send text-lg"></i>
