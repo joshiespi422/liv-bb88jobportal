@@ -118,6 +118,11 @@ export const menuItems = [
     hasSubmenu: true,
     submenu: [
       {
+        name: "BI-MONTHLY RECORD", // Inherits parent permission
+        icon: "pi pi-calendar",
+        routeName: "bi.monthly",
+      },
+      {
         name: "SALARY PAYSLIP", // Inherits parent permission
         icon: "pi pi-wallet",
         routeName: "salary",

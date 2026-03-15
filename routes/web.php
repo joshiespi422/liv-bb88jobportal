@@ -19,6 +19,7 @@ use App\Http\Controllers\SalaryController;
 use App\Http\Controllers\OvertimeController;
 use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\ChatController;
+use App\Http\Controllers\BiMonthlyController;
 use Illuminate\Support\Facades\Route;
 
 // Profile info for the qr code
@@ -121,6 +122,9 @@ Route::middleware('auth')->group(function () {
         Route::patch('/salary/{salary}/approve', [SalaryController::class, 'approve'])->name('salary.approve');
         Route::post('/salary/recompute/single', [SalaryController::class, 'recompute'])->name('salary.recompute.single');
         Route::post('/salary/recompute/all', [SalaryController::class, 'recomputeAll'])->name('salary.recompute.all');
+
+        Route::get('/bi-monthly', [BiMonthlyController::class, 'index'])->name('bi.monthly');
+        Route::get('/bi-monthly/{period}', [BiMonthlyController::class, 'show'])->name('bi.monthly.show');
 
         Route::get('/overtime', [OvertimeController::class, 'index'])->name('overtime');
         Route::get('/overtime/{id}', [OvertimeController::class, 'show'])->name('overtime.show');

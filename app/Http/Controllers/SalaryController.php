@@ -34,8 +34,8 @@ class SalaryController extends Controller
 
         if ($typeName === 'super_admin') {
             $periodInfo = $this->getPeriodInfo();
-            $period = SalaryPeriod::where('start_date', $periodInfo['start'])
-                ->where('end_date', $periodInfo['end'])
+            $period = SalaryPeriod::where('start_date', $periodInfo['start']->toDateString())
+                ->where('end_date', $periodInfo['end']->toDateString())
                 ->first();
 
             if (!$period) {
