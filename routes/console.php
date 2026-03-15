@@ -11,3 +11,7 @@ Schedule::command('app:update-open-time-logs')
 Schedule::command('salary:compute')
     ->twiceMonthly(1, 16, '01:00')
     ->timezone('Asia/Manila');
+
+Schedule::command('attendance:compute')
+    ->twiceMonthly(1, 16, '01:30')
+    ->timezone('Asia/Manila');
