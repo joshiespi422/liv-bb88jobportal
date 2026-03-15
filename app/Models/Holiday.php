@@ -18,4 +18,9 @@ class Holiday extends Model
     {
         return $this->belongsToMany(Salary::class);
     }
+
+    public function attendanceReports(): BelongsToMany
+    {
+        return $this->belongsToMany(AttendanceReport::class);
+    }
 }

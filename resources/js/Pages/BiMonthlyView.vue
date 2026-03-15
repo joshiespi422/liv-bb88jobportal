@@ -15,7 +15,10 @@ import FormModal from "../Components/modals/FormModal.vue";
 import ConfirmModal from "../Components/modals/ConfirmModal.vue";
 import ListBox from "../Components/ListBox.vue";
 import { useDetailsModal } from "../Composables/useDetailsModal";
-import { useBiMonthlyReportColumns } from "../Data/tableColumns";
+import {
+  useBiMonthlyReportColumns,
+  useAttendanceReportColumns,
+} from "../Data/tableColumns";
 
 const props = defineProps({
   biMonthlyReports: {
@@ -36,11 +39,20 @@ const {
   data: selectedBiMonthlyReport,
   open: openBiMonthlyReport,
   close: closeBiMonthlyReport,
-} = useDetailsModal({ baseUrl: "/bi-monthly/show" });
+} = useDetailsModal({ baseUrl: "/bi-monthly" });
 
-// Tanstack Table columns definition
+// Outer table — list of salary periods
 const biMonthlyReportTableColumns = useBiMonthlyReportColumns({
   openBiMonthlyReport,
+});
+
+// Inner table — attendance rows inside the modal
+const attendanceReportColumns = useAttendanceReportColumns();
+
+const modalTitle = computed(() => {
+  if (!selectedBiMonthlyReport.value?.period) return "BI-MONTHLY DETAILS";
+  const { label, days } = selectedBiMonthlyReport.value.period;
+  return `${label} (${days} days)`;
 });
 </script>
 
@@ -59,4 +71,43 @@ const biMonthlyReportTableColumns = useBiMonthlyReportColumns({
       />
     </div>
   </div>
+
+  <DetailsModal
+    :isOpen="isBiMonthlyModalOpen"
+    :item="selectedBiMonthlyReport"
+    :loading="isBiMonthlyReportLoading"
+    :error="isBiMonthlyReportError"
+    :title="modalTitle"
+    @close="closeBiMonthlyReport"
+    panelClass="w-full max-w-7xl"
+  >
+    <!-- Custom Skeleton Loader -->
+    <template #skeleton>
+      <div class="my-2">
+        <div class="grid grid-cols-1 gap-3 rounded-lg p-3 mb-5">
+          <div v-for="n in 2" :key="n">
+            <div class="skeleton h-7 @md:h-8 w-full" />
+          </div>
+        </div>
+
+        <div v-for="n in 4" :key="n">
+          <div class="grid grid-cols-3 gap-3 mb-3 items-center">
+            <div class="skeleton h-7 @md:h-8 w-full" />
+            <div class="skeleton h-7 @md:h-8 w-full" />
+            <div class="skeleton h-7 @md:h-8 w-full" />
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- Custom Content Layout -->
+    <template #content="{ item }">
+      <DataTable
+        :data="item.employees ?? []"
+        :columns="attendanceReportColumns"
+        :enable-view-toggle="true"
+        class="mt-3"
+      />
+    </template>
+  </DetailsModal>
 </template>

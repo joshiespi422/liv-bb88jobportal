@@ -25,4 +25,9 @@ class SalaryPeriod extends Model
     {
         return $this->hasMany(Salary::class);
     }
+
+    public function attendanceReports() : HasMany
+    {
+        return $this->hasMany(AttendanceReport::class);
+    }
 }

@@ -872,3 +872,48 @@ export function useBiMonthlyReportColumns({ openBiMonthlyReport }) {
     return columns;
   });
 }
+
+/**
+ * Columns for the attendance report datatable inside the bi-monthly details modal.
+ * @returns {ComputedRef<Array>}
+ */
+export function useAttendanceReportColumns() {
+  return computed(() => [
+    {
+      accessorKey: "name",
+      header: "NAME",
+    },
+    {
+      accessorKey: "position",
+      header: "POSITION",
+      cell: ({ row }) => row.original.position ?? "N/A",
+    },
+    {
+      accessorKey: "absent",
+      header: "ABSENT",
+    },
+    {
+      accessorKey: "halfday",
+      header: "HALFDAY",
+      cell: ({ row }) => row.original.halfday ?? "-",
+    },
+    {
+      accessorKey: "holiday",
+      header: "HOLIDAY",
+    },
+    {
+      accessorKey: "lates",
+      header: "LATES (HR)",
+      cell: ({ row }) => row.original.lates ?? "-",
+    },
+    {
+      accessorKey: "overtime",
+      header: "OVERTIME (HR)",
+      cell: ({ row }) => row.original.overtime ?? "-",
+    },
+    {
+      accessorKey: "total",
+      header: "TOTAL",
+    },
+  ]);
+}

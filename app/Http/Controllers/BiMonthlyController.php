@@ -36,10 +36,57 @@ class BiMonthlyController extends Controller
 
     public function show(SalaryPeriod $period)
     {
-        
+        $start = Carbon::parse($period->start_date);
+        $end   = Carbon::parse($period->end_date);
+
+        $dayCount = 0;
+        $cursor = $start->copy();
+        while ($cursor->lte($end)) {
+            if (! $cursor->isSunday()) $dayCount++;
+            $cursor->addDay();
+        }
+
+        $periodLabel = $start->format('F') . ' '
+            . $start->format('j') . '–'
+            . $end->format('j') . ', '
+            . $period->year;
+
+        $employees = User::select('id', 'name', 'position')
+            ->with([
+                'attendanceReports' => fn ($q) => $q->where('salary_period_id', $period->id),
+                'attendanceReports.holidays',
+            ])
+            ->whereHas('attendanceReports', fn ($q) => $q->where('salary_period_id', $period->id))
+            ->get()
+            ->map(function ($user) {
+                $report = $user->attendanceReports->first();
+
+                $regularCount = $report->holidays->where('type', 'regular')->count();
+                $specialCount = $report->holidays->where('type', 'special')->count();
+
+                $holidayParts = array_filter([
+                    $regularCount ? "{$regularCount}R" : null,
+                    $specialCount ? "{$specialCount}S" : null,
+                ]);
+
+                return [
+                    'name'     => $user->name,
+                    'position' => $user->position,
+                    'absent'   => $report->absent,
+                    'halfday'  => $report->halfday,
+                    'holiday'  => implode(', ', $holidayParts) ?: '-',
+                    'lates'    => $report->lates,
+                    'overtime' => $report->overtime,
+                    'total'    => $report->total,
+                ];
+            });
 
         return response()->json([
-            
+            'period' => [
+                'label' => $periodLabel,
+                'days'  => $dayCount,
+            ],
+            'employees' => $employees,
         ]);
     }
 }

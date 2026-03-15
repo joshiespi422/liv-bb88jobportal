@@ -202,6 +202,11 @@ class User extends Authenticatable
         return $this->hasMany(ChatMessage::class);
     }
 
+    public function attendanceReports(): HasMany
+    {
+        return $this->hasMany(AttendanceReport::class);
+    }
+
     /**
      * Check if the user has a specific role.
      *
