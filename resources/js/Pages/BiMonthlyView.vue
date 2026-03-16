@@ -15,6 +15,7 @@ import FormModal from "../Components/modals/FormModal.vue";
 import ConfirmModal from "../Components/modals/ConfirmModal.vue";
 import ListBox from "../Components/ListBox.vue";
 import { useDetailsModal } from "../Composables/useDetailsModal";
+import { useExcelExporter } from "../Composables/useExcelExporter";
 import {
   useBiMonthlyReportColumns,
   useAttendanceReportColumns,
@@ -54,6 +55,45 @@ const modalTitle = computed(() => {
   const { label, days } = selectedBiMonthlyReport.value.period;
   return `${label} (${days} days)`;
 });
+
+const { exportToExcel } = useExcelExporter();
+const innerDataTableRef = ref(null);
+const handleExport = async () => {
+  const table = innerDataTableRef.value?.table;
+  if (!table) {
+    error("No table available to export");
+    return;
+  }
+
+  // Respect any active search/filter on the inner table
+  const filteredRows = table.getFilteredRowModel().rows;
+  if (filteredRows.length === 0) {
+    error("No data available to export");
+    return;
+  }
+
+  // Data is already fully loaded — no extra API call needed
+  const dataToExport = filteredRows.map((row) => row.original);
+
+  const exportColumns = [
+    { header: "Name", key: "name", width: 25 },
+    { header: "Position", key: "position", width: 20 },
+    { header: "Absent", key: "absent", width: 12 },
+    { header: "Halfday", key: "halfday", width: 12 },
+    { header: "Holiday", key: "holiday", width: 15 },
+    { header: "Lates (HR)", key: "lates", width: 14 },
+    { header: "Overtime (HR)", key: "overtime", width: 16 },
+    { header: "Total", key: "total", width: 12 },
+  ];
+
+  // Use the modal title as the Excel report heading
+  await exportToExcel(
+    dataToExport,
+    exportColumns,
+    "attendance_report",
+    modalTitle.value,
+  );
+};
 </script>
 
 <template>
@@ -103,11 +143,22 @@ const modalTitle = computed(() => {
     <!-- Custom Content Layout -->
     <template #content="{ item }">
       <DataTable
+        ref="innerDataTableRef"
         :data="item.employees ?? []"
         :columns="attendanceReportColumns"
         :enable-view-toggle="true"
         class="mt-3"
-      />
+      >
+        <template #custom-actions>
+          <button
+            class="btn btn-sm @sm:btn-md rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
+            @click="handleExport"
+          >
+            <i class="pi pi-download" />
+            Export
+          </button>
+        </template>
+      </DataTable>
     </template>
   </DetailsModal>
 </template>
