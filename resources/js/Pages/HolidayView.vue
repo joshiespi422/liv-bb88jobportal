@@ -30,6 +30,7 @@ const isErrorModalOpen = ref(false);
 const pendingAction = ref(null);
 // confirmation before request
 const isConfirmModalOpen = ref(false);
+const isDeleteModalOpen = ref(false);
 const isConfirmLoading = ref(false);
 
 // Holds the properties for the confirmation modal
@@ -43,6 +44,7 @@ const confirmModalProps = reactive({
 // Closes the confirmation modal
 const closeConfirmModal = () => {
   isConfirmModalOpen.value = false;
+  isDeleteModalOpen.value = false;
 };
 // Executes the action on confirmation
 const executeConfirm = () => {
@@ -68,6 +70,7 @@ const handleAddHoliday = () => {
 const closeAllModal = () => {
   isCreateModalOpen.value = false;
   isConfirmModalOpen.value = false;
+  isDeleteModalOpen.value = false;
 };
 
 // Form field configuration for creating holiday
@@ -135,7 +138,7 @@ const handleDelete = (holidayId) => {
     });
   };
 
-  isConfirmModalOpen.value = true;
+  isDeleteModalOpen.value = true;
 };
 
 // Tanstack Table columns definition
@@ -191,9 +194,9 @@ const holidayTableColumns = useHolidayColumns(authUser, { handleDelete });
     />
   </FormModal>
 
-  <!-- Confirmation Modal -->
+  <!-- Delete Confirmation Modal -->
   <ConfirmModal
-    :show="isConfirmModalOpen"
+    :show="isDeleteModalOpen"
     v-bind="confirmModalProps"
     :loading="isConfirmLoading"
     @cancel="closeConfirmModal"

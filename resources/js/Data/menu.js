@@ -133,6 +133,12 @@ export const menuItems = [
         routeName: "overtime",
       },
       {
+        name: "LEAVE FORM",
+        icon: "pi pi-folder-open",
+        userType: ["super_admin", "employee"], // Different from parent
+        routeName: "leave",
+      },
+      {
         name: "HOLIDAY", // Inherits parent permission
         icon: "pi pi-calendar-minus",
         routeName: "holiday",
@@ -149,12 +155,6 @@ export const menuItems = [
         name: "PROFILE", // Inherits parent permission
         icon: "pi pi-credit-card",
         routeName: "profile",
-      },
-      {
-        name: "LEAVE FORM",
-        icon: "pi pi-folder-open",
-        userType: ["super_admin", "employee"], // Different from parent
-        routeName: "leave",
       },
       {
         name: "MATERIAL FORM",
