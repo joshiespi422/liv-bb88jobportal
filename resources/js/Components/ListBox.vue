@@ -31,7 +31,7 @@ const emit = defineEmits(["update:modelValue"]);
 
 const selectedLabel = computed(() => {
   const selectedOption = props.options.find(
-    (option) => option.value === props.modelValue
+    (option) => option.value === props.modelValue,
   );
   return selectedOption ? selectedOption.label : props.placeholder;
 });
@@ -106,12 +106,7 @@ const selectedLabel = computed(() => {
           </ListboxOptions>
 
           <!-- Non-scrollable footer -->
-          <div
-            v-if="hasFooter"
-            class="border-t border-green-primary-1 bg-base-100 p-2"
-          >
-            <slot name="footer" />
-          </div>
+          <slot name="footer" v-if="hasFooter" />
         </div>
       </transition>
     </div>

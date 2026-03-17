@@ -51,12 +51,17 @@ const {
     has-footer
   >
     <template #footer>
-      <button
-        class="w-full text-sm font-semibold hover:underline text-center cursor-pointer"
-        @click="isAddDeptModalOpen = true"
+      <div
+        v-if="authUser.userType === 'super_admin'"
+        class="border-t border-green-primary-1 bg-base-100 p-2"
       >
-        <i class="pi pi-plus mr-1"> </i> Create new department
-      </button>
+        <button
+          class="w-full text-sm font-semibold hover:underline text-center cursor-pointer"
+          @click="isAddDeptModalOpen = true"
+        >
+          <i class="pi pi-plus mr-1"> </i> Create new department
+        </button>
+      </div>
     </template>
   </ListBox>
 

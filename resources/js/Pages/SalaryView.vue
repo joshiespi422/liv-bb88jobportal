@@ -245,7 +245,11 @@ const historyPeriodTableColumns = useSalaryColumns(authUser, {
 
 // control log back button visibility
 const showBackButtonInPayslip = computed(() => {
-  return isPayslipModalOpen.value && selectedPayslip.value !== null;
+  return (
+    isPayslipModalOpen.value &&
+    selectedPayslip.value !== null &&
+    authUser.value.userType === "super_admin"
+  );
 });
 // handle log back navigation
 const handleBackFromPayslip = () => {
