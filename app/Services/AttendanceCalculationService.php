@@ -86,7 +86,9 @@ class AttendanceCalculationService
                     $totalLateMinutes += (int) $shiftStart->diffInMinutes($timeIn);
                 }
             }
-            $lateHours = round($totalLateMinutes / 60, 2);
+            $hours     = intdiv($totalLateMinutes, 60);
+            $minutes   = $totalLateMinutes % 60;
+            $lateHours = round($hours + ($minutes / 100), 2);
 
             // ── HOLIDAYS ─────────────────────────────────────────────────────
             // Regular  → +1.0 day (credited regardless of attendance)
