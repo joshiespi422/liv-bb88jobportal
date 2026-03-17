@@ -146,7 +146,7 @@ const handleEditSubmit = () => {
             isConfirmLoading.value = false;
           }, 500);
         },
-      }
+      },
     );
   };
 
@@ -162,13 +162,13 @@ const handleViewDetails = (accomplishment) => {
 const isRegularTab = computed(
   () =>
     authUser.value.userType === "employee" &&
-    authUser.value.hierarchy !== "Leader"
+    authUser.value.hierarchy !== "Leader",
 );
 const isLeaderTab = computed(
   () =>
     authUser.value.userType === "employee" &&
     authUser.value.hierarchy === "Leader" &&
-    props.currentType === "employee"
+    props.currentType === "employee",
 );
 const tabs = computed(() => {
   const items = [{ id: "all", label: "All Accomplish" }];
@@ -233,7 +233,7 @@ const showEditButton = computed(() => {
   // 5. Must be in the same date as today
   const formattedDate = formatDate(
     selectedAccomplish.value.created_at,
-    "yyyy-MM-dd"
+    "yyyy-MM-dd",
   );
   if (formattedDate !== today.value) {
     return false;
@@ -250,7 +250,7 @@ onClickOutside(
   () => {
     showDateFilter.value = false;
   },
-  { ignore: [buttonFilterRef] }
+  { ignore: [buttonFilterRef] },
 );
 
 // excel export
@@ -296,7 +296,7 @@ const handleExport = async () => {
       fullDataToExport,
       exportColumns,
       "accomplishment_reports",
-      "Accomplishment Reports"
+      "Accomplishment Reports",
     );
   } catch (error) {
     console.error("Failed to export data:", error);
@@ -314,7 +314,10 @@ const handleExport = async () => {
         {{ capitalizedType }} Accomplishments
       </h1>
       <div
-        v-if="authUser?.userType === 'super_admin'"
+        v-if="
+          authUser?.userType === 'super_admin' ||
+          (authUser?.hierarchy === 'Leader' && props.currentType === 'intern')
+        "
         class="w-52 md:w-60 lg:w-72"
       >
         <Department

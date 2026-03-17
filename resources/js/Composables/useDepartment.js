@@ -29,7 +29,12 @@ export function useDepartments(props) {
         props.authUser.userType === "employee" &&
         props.authUser.department?.name === "Admin";
 
-      if (isSuperAdmin || isLeaveRouteAdmin) {
+      const isLeaderViewingInterns =
+        ["task", "accomplishment"].includes(props.routeName) &&
+        props.authUser.hierarchy === "Leader" &&
+        props.otherParams?.type === "intern";
+
+      if (isSuperAdmin || isLeaveRouteAdmin || isLeaderViewingInterns) {
         const queryParams = {
           dept: newDeptId,
           ...props.otherParams,

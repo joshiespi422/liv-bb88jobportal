@@ -167,7 +167,7 @@ const fetchAssigneesList = async (departmentId, type) => {
       route("task.assignees", {
         department: departmentId,
         type: type,
-      })
+      }),
     );
     assigneesList.value = response.data;
   } catch (error) {
@@ -186,7 +186,7 @@ const fetchProjectsList = async (departmentId) => {
     const response = await axios.get(
       route("task.projects", {
         department: departmentId,
-      })
+      }),
     );
     projectsList.value = response.data;
   } catch (error) {
@@ -204,7 +204,7 @@ watch(
       await fetchAssigneesList(newDeptId, props.currentType);
       await fetchProjectsList(newDeptId);
     }
-  }
+  },
 );
 // Add immediate watch for non-super_admin
 watch(
@@ -215,7 +215,7 @@ watch(
       await fetchProjectsList(departmentId);
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 // Form field configuration for adding new task
 const newTaskFormFields = useNewTaskFormFields(
@@ -223,7 +223,7 @@ const newTaskFormFields = useNewTaskFormFields(
   props,
   projectsList,
   assigneesList,
-  today
+  today,
 );
 
 // dynamic status options for update task
@@ -253,7 +253,7 @@ const updateFormFields = useUpdateTaskFormFields(selectedTask, statusOptions);
 // Form field configuration for validating task
 const validateFormFields = useValidateTaskFormFields(
   validateTaskForm,
-  selectedTask
+  selectedTask,
 );
 
 // update task modal state
@@ -357,7 +357,7 @@ const handleValidateSubmit = () => {
             isConfirmLoading.value = false;
           }, 300);
         },
-      }
+      },
     );
   };
 
@@ -483,13 +483,13 @@ const handleViewAccomplish = (accomplishmentId) => {
 const isRegularTab = computed(
   () =>
     authUser.value.userType === "employee" &&
-    authUser.value.hierarchy !== "Leader"
+    authUser.value.hierarchy !== "Leader",
 );
 const isLeaderTab = computed(
   () =>
     authUser.value.userType === "employee" &&
     authUser.value.hierarchy === "Leader" &&
-    props.currentType === "employee"
+    props.currentType === "employee",
 );
 const tabs = computed(() => {
   const items = [
@@ -527,7 +527,7 @@ const showUpdateButton = computed(() => {
   if (selectedTask.value.status === "done") return false;
   // 5. Current user must be in assignees
   const isAssignee = selectedTask.value.assignees.some(
-    (assignee) => assignee.id === authUser.value.id
+    (assignee) => assignee.id === authUser.value.id,
   );
 
   return isAssignee;
@@ -580,7 +580,10 @@ const showNewButton = computed(() => {
         {{ capitalizedType }} Task
       </h1>
       <div
-        v-if="authUser?.userType === 'super_admin'"
+        v-if="
+          authUser?.userType === 'super_admin' ||
+          (authUser?.hierarchy === 'Leader' && props.currentType === 'intern')
+        "
         class="w-52 md:w-60 lg:w-72"
       >
         <Department
@@ -736,7 +739,7 @@ const showNewButton = computed(() => {
       :fields="taskDetailFields"
       :panel-class="'w-full max-w-4xl'"
       layout-type="default2"
-      @close="closeTaskDetails(), (showReasonForStatus = false)"
+      @close="(closeTaskDetails(), (showReasonForStatus = false))"
     >
       <template #field-status="{ item }">
         <div>

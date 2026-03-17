@@ -35,7 +35,7 @@ class AccomplishmentController extends Controller
         // Render the Inertia view with all necessary props
         return Inertia::render('AccomplishmentView', [
             'accomplishments' => $accomplishments,
-            'departments' => $user->userType->type_name === 'super_admin' ? Department::all(['id', 'dept_name']) : [],
+            'departments' => Department::all(['id', 'dept_name']) ?? [],
             'currentDepartmentId' => $currentDepartmentId ? (int)$currentDepartmentId : null,
             'currentType' => $accomplishmentType,
             'activeTab' => $activeTab,
@@ -61,7 +61,13 @@ class AccomplishmentController extends Controller
             // EMPLOYEE LEADER: Can view their department's employees or interns
             case $userType === 'employee' && $user->employeeDetails?->hierarchy === 'Leader':
                 $accomplishmentType = in_array($request->type, ['employee', 'intern']) ? $request->type : 'employee';
-                return ['accomplishmentType' => $accomplishmentType, 'currentDepartmentId' => $user->employeeDetails->department_id];
+                // If intern, allow session/request; otherwise, force their own department
+                $departmentId = ($accomplishmentType === 'intern') 
+                    ? ($request->dept ?? session('current_department_id', $user->employeeDetails->department_id))
+                    : $user->employeeDetails->department_id;
+                // Only persist to session if they are allowed to toggle (intern mode)
+                if ($accomplishmentType === 'intern') session(['current_department_id' => $departmentId]);
+                return ['accomplishmentType' => $accomplishmentType, 'currentDepartmentId' => $departmentId];
 
             // REGULAR EMPLOYEE / INTERN: Can only view their own
             default:

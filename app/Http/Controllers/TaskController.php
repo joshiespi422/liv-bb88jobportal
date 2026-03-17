@@ -42,7 +42,7 @@ class TaskController extends Controller
         // Render the Inertia view with all necessary props
         return Inertia::render('TaskView', [
             'tasks' => $tasks,
-            'departments' => $user->userType->type_name === 'super_admin' ? Department::all(['id', 'dept_name']) : [],
+            'departments' => Department::all(['id', 'dept_name']) ?? [],
             'currentDepartmentId' => $currentDepartmentId ? (int)$currentDepartmentId : null,
             'currentType' => $taskType,
             'activeTab' => $activeTab,
@@ -68,7 +68,13 @@ class TaskController extends Controller
             // EMPLOYEE LEADER: Can view their department's employees or interns
             case $userType === 'employee' && $user->employeeDetails?->hierarchy === 'Leader':
                 $taskType = in_array($request->type, ['employee', 'intern']) ? $request->type : 'employee';
-                return ['taskType' => $taskType, 'currentDepartmentId' => $user->employeeDetails->department_id];
+                // If intern, allow session/request; otherwise, force their own department
+                $departmentId = ($taskType === 'intern') 
+                    ? ($request->dept ?? session('current_department_id', $user->employeeDetails->department_id))
+                    : $user->employeeDetails->department_id;
+                // Only persist to session if they are allowed to toggle (intern mode)
+                if ($taskType === 'intern') session(['current_department_id' => $departmentId]);
+                return ['taskType' => $taskType, 'currentDepartmentId' => $departmentId];
 
             // REGULAR EMPLOYEE / INTERN: Can only view their own
             default:
