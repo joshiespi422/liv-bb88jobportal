@@ -73,6 +73,14 @@ const executeConfirm = () => {
   }
 };
 
+// Helper to check if the user is allowed to switch departments
+const canSwitchDepartment = computed(() => {
+  return (
+    authUser.value.userType === "super_admin" ||
+    (authUser.value.hierarchy === "Leader" && props.currentType === "intern")
+  );
+});
+
 // update form state
 const updateTaskForm = useForm({
   title: "",
@@ -142,7 +150,7 @@ const {
 
 // Set the default department for the "New Task" form based on user role
 function getDefaultDepartment() {
-  if (authUser.value.userType === "super_admin") {
+  if (canSwitchDepartment.value) {
     return "";
   }
   return authUser.value.department?.id || null;
@@ -198,8 +206,12 @@ const fetchProjectsList = async (departmentId) => {
 watch(
   () => newTaskForm.department_id,
   async (newDeptId) => {
-    if (authUser.value.userType === "super_admin" && newDeptId) {
+    if (canSwitchDepartment.value && newDeptId) {
+      // Reset the actual form values
       newTaskForm.assignees = [];
+      newTaskForm.project = "";
+      // Clear the UI lists while loading
+      assigneesList.value = [];
       projectsList.value = [];
       await fetchAssigneesList(newDeptId, props.currentType);
       await fetchProjectsList(newDeptId);
@@ -209,10 +221,11 @@ watch(
 // Add immediate watch for non-super_admin
 watch(
   () => authUser.value.department?.id,
-  async (departmentId) => {
-    if (authUser.value.userType !== "super_admin" && departmentId) {
-      await fetchAssigneesList(departmentId, props.currentType);
-      await fetchProjectsList(departmentId);
+  async (deptId) => {
+    // ONLY run this if the user is NOT allowed to switch departments
+    if (!canSwitchDepartment.value && deptId) {
+      await fetchAssigneesList(deptId, props.currentType);
+      await fetchProjectsList(deptId);
     }
   },
   { immediate: true },

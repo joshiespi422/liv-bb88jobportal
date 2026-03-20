@@ -20,22 +20,25 @@ export function useNewTaskFormFields(
   props,
   projectsList,
   assigneesList,
-  today
+  today,
 ) {
-  return computed(() => [
-    {
-      key: "title",
-      label: "Task Name",
-      component: TextInput,
-      attrs: { required: true, placeholder: "Example Task" },
-    },
-    {
-      key: "department_id",
-      label: "Department",
-      component:
-        authUser.value.userType === "super_admin" ? SelectInput : TextInput,
-      attrs:
-        authUser.value.userType === "super_admin"
+  return computed(() => {
+    const isEditableDept =
+      authUser.value.userType === "super_admin" ||
+      (authUser.value.hierarchy === "Leader" && props.currentType === "intern");
+
+    return [
+      {
+        key: "title",
+        label: "Task Name",
+        component: TextInput,
+        attrs: { required: true, placeholder: "Example Task" },
+      },
+      {
+        key: "department_id",
+        label: "Department",
+        component: isEditableDept ? SelectInput : TextInput,
+        attrs: isEditableDept
           ? {
               options: props.departments.map((d) => ({
                 value: d.id,
@@ -48,60 +51,61 @@ export function useNewTaskFormFields(
               readonly: true,
               value: authUser.value.department?.name || "N/A",
             },
-    },
-    {
-      key: "collateral",
-      label: "Collateral",
-      component: TextInput,
-      attrs: { required: true, placeholder: "Example Collateral" },
-    },
-    {
-      key: "deadline",
-      label: "Deadline",
-      component: DateInput,
-      attrs: { required: true, min: today.value },
-    },
-    {
-      key: "project",
-      label: "Project (optional)",
-      component: ComboBox,
-      attrs: {
-        options: projectsList.value,
-        placeholder: "Select a project",
       },
-    },
-    {
-      key: "assignees",
-      label: "Assignees",
-      component: ComboBox,
-      attrs: {
-        multiple: true,
-        options: assigneesList.value,
-        placeholder: "Select Assignees",
+      {
+        key: "collateral",
+        label: "Collateral",
+        component: TextInput,
+        attrs: { required: true, placeholder: "Example Collateral" },
       },
-    },
-    {
-      key: "description",
-      label: "Description",
-      component: TextArea,
-      attrs: { required: true, placeholder: "Example Description" },
-    },
+      {
+        key: "deadline",
+        label: "Deadline",
+        component: DateInput,
+        attrs: { required: true, min: today.value },
+      },
+      {
+        key: "project",
+        label: "Project (optional)",
+        component: ComboBox,
+        attrs: {
+          options: projectsList.value,
+          placeholder: "Select a project",
+        },
+      },
+      {
+        key: "assignees",
+        label: "Assignees",
+        component: ComboBox,
+        attrs: {
+          multiple: true,
+          options: assigneesList.value,
+          placeholder: "Select Assignees",
+        },
+      },
+      {
+        key: "description",
+        label: "Description",
+        component: TextArea,
+        attrs: { required: true, placeholder: "Example Description" },
+      },
 
-    {
-      key: "priority",
-      label: "Priority",
-      component: SelectInput,
-      attrs: {
-        required: true,
-        placeholder: "Select Priority",
-        options: [
-          { value: "high", label: "High" },
-          { value: "medium", label: "Medium" },
-          { value: "low", label: "Low" },
-        ],
+      {
+        key: "priority",
+        label: "Priority",
+        component: SelectInput,
+        attrs: {
+          required: true,
+          placeholder: "Select Priority",
+          options: [
+            { value: "high", label: "High" },
+            { value: "medium", label: "Medium" },
+            { value: "low", label: "Low" },
+          ],
+        },
       },
-    },
-  ]);
+    ];
+  });
 }
 
 /**
@@ -175,7 +179,7 @@ export function useValidateTaskFormFields(form, selectedDetails) {
       { value: "dropped", label: "Drop" },
     ];
     const filteredStatusOptions = allStatusOptions.filter(
-      (opt) => opt.value !== selectedDetails.value?.status
+      (opt) => opt.value !== selectedDetails.value?.status,
     );
 
     const fields = [
