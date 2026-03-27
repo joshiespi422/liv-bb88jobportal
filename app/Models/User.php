@@ -197,6 +197,22 @@ class User extends Authenticatable
         return $this->hasMany(Overtime::class, 'signer_id');
     }
 
+    /**
+     * Define a one-to-many relationship between users and half_days (requester)
+     */
+    public function halfDaysRequested(): HasMany
+    {
+        return $this->hasMany(HalfDay::class, 'requester_id');
+    }
+
+    /**
+     * Define a one-to-many relationship between users and half_days (signer)
+     */
+    public function halfDaysSigned(): HasMany
+    {
+        return $this->hasMany(HalfDay::class, 'signer_id');
+    }
+
     public function chatMessages(): HasMany
     {
         return $this->hasMany(ChatMessage::class);

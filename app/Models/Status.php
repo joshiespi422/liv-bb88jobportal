@@ -55,4 +55,10 @@ class Status extends Model
     {
         return $this->hasMany(Overtime::class);
     }
+
+    // relationship to half_days, one status can have many half_days
+    public function halfDays() : HasMany
+    {
+        return $this->hasMany(HalfDay::class);
+    }
 }

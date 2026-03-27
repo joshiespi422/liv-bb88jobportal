@@ -67,7 +67,7 @@ class AttendanceController extends Controller
     }
 
     /**
-     * Fetches department attendance for the last 30 days.
+     * Fetches department attendance for the last 60 days.
      * Returns a distinct list of departments and dates where at least one user logged in.
      * @return \Illuminate\Support\Collection
      */
@@ -89,7 +89,7 @@ class AttendanceController extends Controller
             )
 
             // Filter date range
-            ->where('time_logs.date', '>=', today()->subDays(30))
+            ->where('time_logs.date', '>=', today()->subDays(60))
             
             // Select the required columns and rename 'dept_name' to 'department'
             ->select('departments.id', 'departments.dept_name as department', 'time_logs.date')
