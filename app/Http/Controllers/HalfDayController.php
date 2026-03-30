@@ -7,7 +7,9 @@ use Inertia\Inertia;
 use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Builder;
 use App\Models\HalfDay;
-use ParagonIE\Sodium\Core\Curve25519\H;
+use App\Models\Status;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class HalfDayController extends Controller
 {
@@ -85,6 +87,125 @@ class HalfDayController extends Controller
         return [
             'halfDays' => $halfDays,
         ];
+    }
+
+    public function signHalfDay(HalfDay $halfDay)
+    {
+        // Authorization
+        $user = Auth::user();
+        $isHead = $user->employeeDetails?->is_head;
+        $isSuperAdmin = $user->userType->type_name === 'super_admin';
+        if (!$isHead || $isSuperAdmin) { 
+            abort(403, 'not authorized'); 
+        }
+
+        $halfDay->loadMissing([
+            'status:id,status_name',
+        ]);
+
+        if ($halfDay->status->status_name !== 'pending') {
+            abort(403, 'half day request is not pending');
+        }
+
+        // Logic
+        DB::transaction(function () use ($halfDay, $user) {
+            $forApprovalStatusId = Status::where('status_name', 'for approval')->value('id');
+            $halfDay->update([
+                'status_id' => $forApprovalStatusId,
+                'signer_id' => $user->id
+            ]);
+
+            // Dispatch event
+            // OvertimeSigned::dispatch($halfDay);
+        });
+        
+        return back()->with('success', 'Half day signed successfully!');
+    }
+    
+    public function validateHalfDay(Request $request, HalfDay $halfDay)
+    {
+        // Authorization
+        $user = Auth::user();
+        $isSuperAdmin = $user->userType->type_name === 'super_admin';
+        if (!$isSuperAdmin) { 
+            abort(403, 'not authorized'); 
+        }
+
+        $halfDay->loadMissing([
+            'status:id,status_name',
+        ]);
+        
+        if ($halfDay->status->status_name !== 'for approval') {
+            abort(403, 'half day request is not for approval');
+        }
+
+        // Validation
+        $request->validate([
+            'status' => 'required|in:approved,rejected',
+            'reject_reason' => 'nullable|required_if:status,rejected|string|max:1000',
+        ]);
+
+        // Logic
+        DB::transaction(function () use ($request, $halfDay) {
+            $newStatus = Status::where('status_name', $request->status)->firstOrFail();
+            $halfDay->status_id = $newStatus->id;
+
+            // If status is 'rejected', save the reason. Otherwise, clear it.
+            if ($request->status === 'rejected') {
+                $halfDay->reject_reason = $request->reject_reason;
+            } else {
+                $halfDay->reject_reason = null;
+            }
+
+            $halfDay->save();
+
+            // Dispatch event
+            // OvertimeValidated::dispatch($halfDay);
+        });
+        
+        return back()->with('success', 'Half day request validated successfully!');
+    }
+
+    public function store(Request $request)
+    {
+        // Authorization
+        $user = $request->user()->loadMissing('userType', 'employeeDetails');
+        if ($user->userType->type_name !== 'employee') {
+            abort(403, 'Not authorized');
+        }
+        
+        // Validation
+        $request->validate([
+            'date' => [
+                'required', 
+                'date', 
+                'before_or_equal:today', 
+                'after_or_equal:' . now()->subMonth()->startOfMonth()->toDateString()
+            ],
+            'shift' => 'required|in:morning,afternoon',
+            'reason'     => 'required|string|max:1000',
+        ]);
+
+        $isHead = $user->employeeDetails?->is_head;
+        $statusName = $isHead ? 'for approval' : 'pending';
+        $statusId = Status::where('status_name', $statusName)->value('id');
+
+        //Logic
+        DB::transaction(function () use ($request, $user, $isHead, $statusId) {
+            $halfDay = HalfDay::create([
+                'requester_id' => $user->id,
+                'signer_id' => $isHead ? $user->id : null,
+                'status_id'    => $statusId,
+                'date'         => $request->date,
+                'shift'   => $request->shift,
+                'reason'       => $request->reason,
+            ]);
+
+            // Dispatch notification
+            // OvertimeCreated::dispatch($halfDay);
+        });
+
+        return back()->with('success', 'Half day request submitted successfully');
     }
 
     public function show(string $id)

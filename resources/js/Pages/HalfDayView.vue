@@ -11,10 +11,10 @@ import { useDetailsModal } from "../Composables/useDetailsModal";
 import { halfDayDetailFields } from "../Data/detailFields";
 import { useHalfDayColumns } from "../Data/tableColumns";
 import { statusText } from "../Composables/useClassMap";
-// import {
-//   useRequestOverTimeFormFields,
-//   useValidateOverTimeFormFields,
-// } from "../Data/forms/overtimeFormFields";
+import {
+  useRequestHalfDayFormFields,
+  useValidateHalfDayFormFields,
+} from "../Data/forms/halfDayFormFields";
 
 const props = defineProps({
   halfDays: {
@@ -28,6 +28,46 @@ const page = usePage();
 const authUser = computed(() => page.props.auth.user);
 // for notification click
 const { onMountedHandleParameter } = useUrlParameter();
+
+// State for modals for forms
+const isRequestModalOpen = ref(false);
+const isValidateModalOpen = ref(false);
+// Holds the action to be executed on confirmation
+const pendingAction = ref(null);
+// confirmation before request
+const isConfirmModalOpen = ref(false);
+const isConfirmLoading = ref(false);
+
+// Holds the properties for the confirmation modal
+const confirmModalProps = reactive({
+  title: "",
+  message: "",
+  confirmText: "",
+  confirmButtonBg: "",
+  iconName: "",
+});
+// Closes the confirmation modal
+const closeConfirmModal = () => {
+  isConfirmModalOpen.value = false;
+};
+// Executes the action on confirmation
+const executeConfirm = () => {
+  if (pendingAction.value) {
+    pendingAction.value();
+  }
+};
+
+// request form state
+const requestForm = useForm({
+  date: "",
+  shift: "",
+  reason: "",
+});
+// validate form state
+const validateForm = useForm({
+  status: "",
+  reject_reason: "",
+});
 
 // -- Half Day Request Details Logic --
 const {
@@ -53,8 +93,192 @@ const handleViewDetails = (halfDayId) => {
   fetchHalfDayDetails(halfDayId);
 };
 
+// handle request half day
+const handleRequestHalfDay = () => {
+  isRequestModalOpen.value = true;
+};
+// handle validate halfday
+const handleValidateHalfDay = () => {
+  if (!selectedHalfDay.value) return;
+  isValidateModalOpen.value = true;
+  isHalfDayModalOpen.value = false;
+};
+const closeAllModal = () => {
+  isRequestModalOpen.value = false;
+  isConfirmModalOpen.value = false;
+  isValidateModalOpen.value = false;
+};
+
+// control validate back button visibility
+const showBackButtonInValidate = computed(() => {
+  return isValidateModalOpen.value && selectedHalfDay.value !== null;
+});
+// handle validate back navigation
+const handleBackFromValidate = () => {
+  isValidateModalOpen.value = false;
+  isHalfDayModalOpen.value = true;
+};
+
+// Form field configuration for requesting halfday
+const requestFormFields = useRequestHalfDayFormFields();
+
+// form field configuration for validating halfday
+const validateFormFields = useValidateHalfDayFormFields(
+  validateForm,
+  selectedHalfDay,
+);
+
+// -- Request Half Day Flow --
+const handleRequestSubmit = () => {
+  Object.assign(confirmModalProps, {
+    title: "Request Half Day",
+    message: "Are you sure you want to request this half day?",
+    confirmText: "Request",
+    confirmButtonBg: "bg-blue-600 hover:bg-blue-700",
+    iconName: "pi pi-stopwatch",
+    iconColor: "text-blue-600",
+    iconBgColor: "bg-blue-100",
+  });
+
+  pendingAction.value = () => {
+    isConfirmLoading.value = true;
+    requestForm.post(route("halfday.store"), {
+      preserveScroll: true,
+      onSuccess: () => {
+        closeAllModal();
+        requestForm.reset();
+      },
+      onError: () => closeConfirmModal(),
+      onFinish: () => {
+        setTimeout(() => {
+          isConfirmLoading.value = false;
+        }, 500);
+      },
+    });
+  };
+
+  isConfirmModalOpen.value = true;
+};
+
+// -- Sign Half Day Req Flow --
+const handleSignSubmit = () => {
+  Object.assign(confirmModalProps, {
+    title: "Sign Half Day Request",
+    message: "Are you sure you want to sign this request?",
+    confirmText: "Sign",
+    confirmButtonBg: "bg-blue-600 hover:bg-blue-700",
+    iconName: "pi pi-stopwatch",
+    iconColor: "text-blue-600",
+    iconBgColor: "bg-blue-100",
+  });
+
+  pendingAction.value = () => {
+    isConfirmLoading.value = true;
+    router.patch(
+      route("halfday.sign", selectedHalfDay.value.id),
+      {},
+      {
+        preserveScroll: true,
+        onFinish: () => {
+          closeConfirmModal();
+          isHalfDayModalOpen.value = false;
+          setTimeout(() => {
+            isConfirmLoading.value = false;
+          }, 500);
+        },
+      },
+    );
+  };
+
+  isConfirmModalOpen.value = true;
+};
+
+// -- Validate Half Day Flow --
+const handleValidateSubmit = () => {
+  Object.assign(confirmModalProps, {
+    title: "Validate Half Day Request",
+    message: "Are you sure you want to validate this request?",
+    confirmText: "Validate",
+    confirmButtonBg: "bg-blue-600 hover:bg-blue-700",
+    iconName: "pi pi-stopwatch",
+    iconColor: "text-blue-600",
+    iconBgColor: "bg-blue-100",
+  });
+
+  pendingAction.value = () => {
+    isConfirmLoading.value = true;
+    validateForm.patch(route("halfday.validate", selectedHalfDay.value.id), {
+      preserveScroll: true,
+      onSuccess: () => {
+        closeAllModal();
+        validateForm.reset();
+      },
+      onError: () => closeConfirmModal(),
+      onFinish: () => {
+        setTimeout(() => {
+          isConfirmLoading.value = false;
+        }, 500);
+      },
+    });
+  };
+
+  isConfirmModalOpen.value = true;
+};
+
 // Tanstack Table columns definition
 const halfDayTableColumns = useHalfDayColumns({ handleViewDetails });
+
+const showRequestButton = computed(() => {
+  const isSuperAdmin = authUser.value?.userType === "super_admin";
+
+  // 1. Must not be super admin
+  if (isSuperAdmin) {
+    return false;
+  }
+
+  return true;
+});
+const showSignButton = computed(() => {
+  const isSuperAdmin = authUser.value?.userType === "super_admin";
+  const isHead = authUser.value?.isHead;
+
+  // 1. Must not be super admin
+  if (isSuperAdmin) {
+    return false;
+  }
+  // 2. Must be head
+  if (!isHead) {
+    return false;
+  }
+  // 3. Must have selected half day request details
+  if (!selectedHalfDay.value) {
+    return false;
+  }
+  // 4. Must be in "pending" status
+  if (selectedHalfDay.value.status !== "pending") {
+    return false;
+  }
+
+  return true;
+});
+const showValidateButton = computed(() => {
+  const isSuperAdmin = authUser.value?.userType === "super_admin";
+
+  // 1. Must be super admin
+  if (!isSuperAdmin) {
+    return false;
+  }
+  // 2. Must have selected half day request details
+  if (!selectedHalfDay.value) {
+    return false;
+  }
+  // 3. Must be in "for approval" status
+  if (selectedHalfDay.value.status !== "for approval") {
+    return false;
+  }
+
+  return true;
+});
 </script>
 
 <template>
@@ -74,7 +298,7 @@ const halfDayTableColumns = useHalfDayColumns({ handleViewDetails });
       :columns="halfDayTableColumns"
       :enable-view-toggle="true"
     >
-      <!-- <template #custom-actions>
+      <template #custom-actions>
         <button
           @click="handleRequestHalfDay"
           v-if="showRequestButton"
@@ -82,9 +306,52 @@ const halfDayTableColumns = useHalfDayColumns({ handleViewDetails });
         >
           Request Half Day
         </button>
-      </template> -->
+      </template>
     </DataTable>
   </div>
+
+  <!-- Request Half Day Modal -->
+  <FormModal
+    :isOpen="isRequestModalOpen"
+    title="HALF DAY REQUEST"
+    :form="requestForm"
+    :fields="requestFormFields"
+    submitText="Request"
+    @close="closeAllModal"
+    @submit="handleRequestSubmit"
+  >
+    <!-- Confirmation Modal -->
+    <ConfirmModal
+      :show="isConfirmModalOpen"
+      v-bind="confirmModalProps"
+      :loading="isConfirmLoading"
+      @cancel="closeConfirmModal"
+      @confirm="executeConfirm"
+    />
+  </FormModal>
+
+  <!-- Validate Half Day Modal -->
+  <FormModal
+    :isOpen="isValidateModalOpen"
+    :showBackButton="showBackButtonInValidate"
+    title="VALIDATE HALF DAY REQUEST"
+    :form="validateForm"
+    :fields="validateFormFields"
+    submitText="Submit"
+    disabledButton
+    @close="closeAllModal"
+    @back="handleBackFromValidate"
+    @submit="handleValidateSubmit"
+  >
+    <!-- Confirmation Modal -->
+    <ConfirmModal
+      :show="isConfirmModalOpen"
+      v-bind="confirmModalProps"
+      :loading="isConfirmLoading"
+      @cancel="closeConfirmModal"
+      @confirm="executeConfirm"
+    />
+  </FormModal>
 
   <!-- Half Day Request Details Modal -->
   <DetailsModal
@@ -170,7 +437,7 @@ const halfDayTableColumns = useHalfDayColumns({ handleViewDetails });
     </template>
 
     <template #custom-buttons>
-      <!-- <button
+      <button
         v-if="showSignButton"
         @click="handleSignSubmit"
         class="btn btn-sm @sm:btn-md rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3 me-2"
@@ -179,20 +446,20 @@ const halfDayTableColumns = useHalfDayColumns({ handleViewDetails });
       </button>
       <button
         v-if="showValidateButton"
-        @click="handleValidateOvertime"
+        @click="handleValidateHalfDay"
         class="btn btn-sm @sm:btn-md rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3 me-2"
       >
         Validate
-      </button> -->
+      </button>
     </template>
 
     <!-- Confirmation Modal -->
-    <!-- <ConfirmModal
+    <ConfirmModal
       :show="isConfirmModalOpen"
       v-bind="confirmModalProps"
       :loading="isConfirmLoading"
       @cancel="closeConfirmModal"
       @confirm="executeConfirm"
-    /> -->
+    />
   </DetailsModal>
 </template>

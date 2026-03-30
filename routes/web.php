@@ -135,6 +135,9 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/halfday', [HalfDayController::class, 'index'])->name('halfday');
         Route::get('/halfday/{id}', [HalfDayController::class, 'show'])->name('halfday.show');
+        Route::post('/halfday', [HalfDayController::class, 'store'])->name('halfday.store');
+        Route::patch('/halfday/{halfDay}/sign', [HalfDayController::class, 'signHalfDay'])->name('halfday.sign');
+        Route::patch('/halfday/{halfDay}/validate', [HalfDayController::class, 'validateHalfDay'])->name('halfday.validate');
 
         Route::get('/holiday', [HolidayController::class, 'index'])->name('holiday');
         Route::post('/holiday', [HolidayController::class, 'store'])->name('holiday.store');
