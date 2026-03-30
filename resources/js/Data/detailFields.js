@@ -222,3 +222,12 @@ export const getLeaveDetailFields = (activeTab) => {
     },
   ];
 };
+
+export const halfDayDetailFields = [
+  { key: "requester", label: "Requested By" },
+  { key: "date", label: "Date", formatter: longDate },
+  { key: "shift", label: "Shift", formatter: capitalizeFirst },
+  { key: "reason", label: "Reason" },
+  { key: "status", label: "Status", formatter: capitalizeFirst },
+  { key: "signer", label: "Signed By" },
+];

@@ -133,6 +133,11 @@ export const menuItems = [
         routeName: "overtime",
       },
       {
+        name: "HALFDAY FORM", // Inherits parent permission
+        icon: "pi pi-stopwatch",
+        routeName: "halfday",
+      },
+      {
         name: "LEAVE FORM",
         icon: "pi pi-folder-open",
         userType: ["super_admin", "employee"], // Different from parent

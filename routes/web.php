@@ -20,6 +20,7 @@ use App\Http\Controllers\OvertimeController;
 use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\BiMonthlyController;
+use App\Http\Controllers\HalfDayController;
 use Illuminate\Support\Facades\Route;
 
 // Profile info for the qr code
@@ -131,6 +132,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/overtime', [OvertimeController::class, 'store'])->name('overtime.store');
         Route::patch('/overtime/{overtime}/sign', [OvertimeController::class, 'signOvertime'])->name('overtime.sign');
         Route::patch('/overtime/{overtime}/validate', [OvertimeController::class, 'validateOvertime'])->name('overtime.validate');
+
+        Route::get('/halfday', [HalfDayController::class, 'index'])->name('halfday');
+        Route::get('/halfday/{id}', [HalfDayController::class, 'show'])->name('halfday.show');
 
         Route::get('/holiday', [HolidayController::class, 'index'])->name('holiday');
         Route::post('/holiday', [HolidayController::class, 'store'])->name('holiday.store');
