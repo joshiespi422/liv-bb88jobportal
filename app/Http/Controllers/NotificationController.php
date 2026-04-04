@@ -13,6 +13,7 @@ use App\Models\Comment;
 use App\Models\MaterialRequest;
 use App\Models\Overtime;
 use App\Models\ChatMessage;
+use App\Models\HalfDay;
 
 class NotificationController extends Controller
 {
@@ -43,6 +44,7 @@ class NotificationController extends Controller
                         MaterialRequest::class => ['department'],
                         Overtime::class => [],
                         ChatMessage::class => [],
+                        HalfDay::class => [], 
                     ]);
                 }
             ])
@@ -77,6 +79,7 @@ class NotificationController extends Controller
                         MaterialRequest::class => ['department'],
                         Overtime::class => [],
                         ChatMessage::class => [],
+                        HalfDay::class => [],
                     ]);
                 }
             ])

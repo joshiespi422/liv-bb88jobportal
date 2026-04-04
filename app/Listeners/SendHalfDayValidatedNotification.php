@@ -2,13 +2,13 @@
 
 namespace App\Listeners;
 
-use App\Events\OvertimeValidated;
+use App\Events\HalfDayValidated;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use App\Models\Notification;
-use App\Models\Overtime;
+use App\Models\HalfDay;
 
-class SendOvertimeValidatedNotification
+class SendHalfDayValidatedNotification
 {
     /**
      * Create the event listener.
@@ -21,13 +21,13 @@ class SendOvertimeValidatedNotification
     /**
      * Handle the event.
      */
-    public function handle(OvertimeValidated $event): void
+    public function handle(HalfDayValidated $event): void
     {
-        $overtime = $event->overtime->loadMissing([
+        $halfDay = $event->halfDay->loadMissing([
             'requester:id,name',
         ]);
-        $requesterId = $overtime->requester_id;
-        $signerId = $overtime->signer_id;
+        $requesterId = $halfDay->requester_id;
+        $signerId = $halfDay->signer_id;
 
         
         $recipientIds = collect([$requesterId, $signerId])
@@ -35,15 +35,15 @@ class SendOvertimeValidatedNotification
             ->filter();
         
         // Prepare notification message
-        $message = "Overtime request for {$overtime->date} requested by: {$overtime->requester->name} has been validated";
+        $message = "Half day request for {$halfDay->date} requested by: {$halfDay->requester->name} has been validated";
         $now = now();
 
         // Prepare an array of notification data, bulk insert
         $notifications = $recipientIds->map(fn($id) => [
             'user_id' => $id,
             'message' => $message,
-            'notifiable_id' => $overtime->id,
-            'notifiable_type' => Overtime::class,
+            'notifiable_id' => $halfDay->id,
+            'notifiable_type' => HalfDay::class,
             'created_at' => $now,
             'updated_at' => $now,
         ])->toArray();

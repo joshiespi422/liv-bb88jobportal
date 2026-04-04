@@ -10,6 +10,10 @@ use App\Models\HalfDay;
 use App\Models\Status;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use App\Events\HalfDayCreated;
+use App\Events\HalfDaySigned;
+use App\Events\HalfDayValidated;
+use Illuminate\Validation\Rule;
 
 class HalfDayController extends Controller
 {
@@ -116,7 +120,7 @@ class HalfDayController extends Controller
             ]);
 
             // Dispatch event
-            // OvertimeSigned::dispatch($halfDay);
+            HalfDaySigned::dispatch($halfDay);
         });
         
         return back()->with('success', 'Half day signed successfully!');
@@ -160,7 +164,7 @@ class HalfDayController extends Controller
             $halfDay->save();
 
             // Dispatch event
-            // OvertimeValidated::dispatch($halfDay);
+            HalfDayValidated::dispatch($halfDay);
         });
         
         return back()->with('success', 'Half day request validated successfully!');
@@ -180,7 +184,10 @@ class HalfDayController extends Controller
                 'required', 
                 'date', 
                 'before_or_equal:today', 
-                'after_or_equal:' . now()->subMonth()->startOfMonth()->toDateString()
+                'after_or_equal:' . now()->subMonth()->startOfMonth()->toDateString(),
+                    Rule::unique('half_days', 'date')->where(function ($query) use ($user) {
+                    return $query->where('requester_id', $user->id);
+                }),
             ],
             'shift' => 'required|in:morning,afternoon',
             'reason'     => 'required|string|max:1000',
@@ -202,7 +209,7 @@ class HalfDayController extends Controller
             ]);
 
             // Dispatch notification
-            // OvertimeCreated::dispatch($halfDay);
+            HalfDayCreated::dispatch($halfDay);
         });
 
         return back()->with('success', 'Half day request submitted successfully');

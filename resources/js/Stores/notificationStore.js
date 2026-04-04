@@ -130,6 +130,9 @@ export const useNotificationStore = defineStore("notification", {
         case "App\\Models\\ChatMessage":
           this.navigateToChatMessage(notification);
           break;
+        case "App\\Models\\HalfDay":
+          this.navigateToHalfDay(notification);
+          break;
         // Add more cases as needed
       }
     },
@@ -266,6 +269,20 @@ export const useNotificationStore = defineStore("notification", {
         group: chatMessage.group,
       };
       router.visit(route("chat", routeParams), {
+        preserveState: false,
+        preserveScroll: true,
+        replace: false,
+      });
+    },
+
+    navigateToHalfDay(notification) {
+      const halfDay = notification.notifiable;
+
+      const routeParams = {
+        open: halfDay.id,
+      };
+
+      router.visit(route("halfday", routeParams), {
         preserveState: false,
         preserveScroll: true,
         replace: false,
