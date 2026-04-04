@@ -11,6 +11,7 @@ import { capitalizeFirst } from "../Data/detailFields";
 import DataTable from "../Components/DataTable.vue";
 import Department from "../Components/Department.vue";
 import DetailsModal from "../Components/modals/DetailsModal.vue";
+import { useToast } from "../Composables/useToast";
 import FormModal from "../Components/modals/FormModal.vue";
 import ConfirmModal from "../Components/modals/ConfirmModal.vue";
 import ListBox from "../Components/ListBox.vue";
@@ -31,6 +32,7 @@ const props = defineProps({
 // logged in user data
 const page = usePage();
 const authUser = computed(() => page.props.auth.user);
+const { error } = useToast();
 
 // --- Bi-Monthly Report Details ---
 const {

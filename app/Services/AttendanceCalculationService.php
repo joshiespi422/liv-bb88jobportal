@@ -99,9 +99,9 @@ class AttendanceCalculationService
             foreach ($holidaysInRange as $holiday) {
                 $workedOnHoliday = in_array($holiday->date, $userLogDates);
 
-                if ($holiday->type === 'regular') {
+                if ($holiday->type === 'regular' && $workedOnHoliday) {
                     $holidayContribution           += 1.0;
-                    $holidayPivotIds[$holiday->id]  = [];
+                    $holidayPivotIds[$holiday->id] = [];
                 } elseif ($holiday->type === 'special' && $workedOnHoliday) {
                     $holidayContribution           += 0.3;
                     $holidayPivotIds[$holiday->id]  = [];
@@ -127,13 +127,19 @@ class AttendanceCalculationService
             // Base workdays + holiday credit + overtime days − absent days
             // Halfday deduction deferred (no table yet)
             // Lates are tracked but not deducted from total yet
-            $total = round(
-                $totalDaysInPeriod
+            $rawTotal = $totalDaysInPeriod
                 + $holidayContribution
                 + $overtimeDays
-                - $absentDays,
-                2
-            );
+                - $absentDays;
+
+            // Apply the same 0.8 threshold rule to the final total:
+            //   14.63 → fraction 0.63 < 0.8 → round to 1 decimal → 14.6
+            //   13.38 → fraction 0.38 < 0.8 → round to 1 decimal → 13.4
+            //   13.80 → fraction 0.80 >= 0.8 → ceil → 14
+            $totalFraction = $rawTotal - floor($rawTotal);
+            $total = $totalFraction >= self::HOLIDAY_ROUND_THRESHOLD
+                ? (float) ceil($rawTotal)
+                : round($rawTotal, 1);
 
             // ── PERSIST ──────────────────────────────────────────────────────
             $report = AttendanceReport::updateOrCreate(
