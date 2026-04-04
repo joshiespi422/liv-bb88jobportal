@@ -49,26 +49,33 @@ class SalaryCalculationService
             // --- HOLIDAY CALCULATION ---
             foreach ($holidaysInRange as $holiday) {
                 $hasWorked = in_array($holiday->date, $userLogs);
-                $currentHolidayPay = 0;               
+                $currentHolidayPay = 0;
+                $pivotAmount = null;               
 
                 if ($holiday->type === 'regular') {
                     // IF WORKED: 200% (Base 100% + Extra 100%)
                     // IF NOT WORKED: 100% (Base 100% + Extra 0%)
                     $multiplier = $hasWorked ? 2.0 : 1.0;
                     $currentHolidayPay = $dailyRate * $multiplier;
-                } elseif ($holiday->type === 'special' && $hasWorked) {
-                    // IF WORKED: 30% (Base 100% + Extra 70%)
-                    // IF NOT WORKED: 0%
-                    $currentHolidayPay = $dailyRate * 0.30;
+                    // In pivot: 1.0 if worked, 0.00 if not worked
+                    $pivotAmount = $hasWorked ? $dailyRate : 0.00;
+                } elseif ($holiday->type === 'special') {
+                    if ($hasWorked) {
+                        // IF WORKED: 30% (Base 100% + Extra 30%)
+                        $currentHolidayPay = $dailyRate * 0.30;
+                        $pivotAmount = $currentHolidayPay;
+                    } else {
+                        // IF NOT WORKED: 0%
+                        $currentHolidayPay = 0;
+                        $pivotAmount = 0.00;
+                    }
                 }
-
-                if ($currentHolidayPay > 0 || $holiday->type === 'regular') {
-                    $holidayAmountTotal += $currentHolidayPay;                
-                    // Prepare data for the pivot table
-                    $holidayPivotData[$holiday->id] = [
-                        'amount' => round($currentHolidayPay, 2)
-                    ];
-                }
+                // Always record the holiday in the pivot data
+                $holidayPivotData[$holiday->id] = [
+                    'amount' => $pivotAmount !== null ? round($pivotAmount, 2) : null
+                ];
+                // Total holiday pay used for Gross Pay calculation logic
+                $holidayAmountTotal += $currentHolidayPay;
             }
 
             // --- ABSENCE CALCULATION ---
