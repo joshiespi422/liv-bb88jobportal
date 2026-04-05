@@ -126,6 +126,7 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/bi-monthly', [BiMonthlyController::class, 'index'])->name('bi.monthly');
         Route::get('/bi-monthly/{period}', [BiMonthlyController::class, 'show'])->name('bi.monthly.show');
+        Route::post('/bi-monthly/recompute', [BiMonthlyController::class, 'recompute'])->name('bi.monthly.recompute');
 
         Route::get('/overtime', [OvertimeController::class, 'index'])->name('overtime');
         Route::get('/overtime/{id}', [OvertimeController::class, 'show'])->name('overtime.show');

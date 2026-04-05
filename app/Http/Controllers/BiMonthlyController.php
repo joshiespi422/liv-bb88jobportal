@@ -7,6 +7,7 @@ use App\Models\SalaryPeriod;
 use App\Models\User;
 use Carbon\Carbon;
 use Inertia\Inertia;
+use App\Services\AttendanceCalculationService;
 
 class BiMonthlyController extends Controller
 {
@@ -17,9 +18,24 @@ class BiMonthlyController extends Controller
             ->get()
             ->toArray();
 
+        $periodInfo = $this->getPeriodInfo();
+        $period = SalaryPeriod::where('start_date', $periodInfo['start']->toDateString())
+            ->where('end_date', $periodInfo['end']->toDateString())
+            ->first();
+
+        if (!$period) {
+            abort(404);
+        }
+
         // Initialize the base props
         $props = [
             'biMonthlyReports' => $biMonthlyReports,
+            'currentPeriod' => $period,
+            'periodDates' => [
+                    'label' => "{$periodInfo['start']->format('M d')} - {$periodInfo['end']->format('M d, Y')}",
+                    'start' => $periodInfo['start']->toDateString(),
+                    'end' => $periodInfo['end']->toDateString(),
+                ]
         ];
 
         return Inertia::render('BiMonthlyView', $props);
@@ -32,6 +48,35 @@ class BiMonthlyController extends Controller
             return ['start' => $today->copy()->startOfMonth(), 'end' => $today->copy()->day(15)];
         }
         return ['start' => $today->copy()->subMonth()->day(16), 'end' => $today->copy()->subMonth()->endOfMonth()];
+    }
+
+    public function recompute(Request $request, AttendanceCalculationService $service)
+    {
+        $request->validate(['salary_period_id' => 'required']);
+        $periodInfo = $this->getPeriodInfo();
+        $currentPeriod = SalaryPeriod::where('start_date', $periodInfo['start']->toDateString())
+            ->where('end_date', $periodInfo['end']->toDateString())
+            ->first();
+
+        // Checker
+        if (!$currentPeriod || $request->salary_period_id !== $currentPeriod->id) {
+            return back()->withErrors(['message' => 'You can only recompute the current active period.']);
+        }
+
+        $period = SalaryPeriod::findOrFail($request->salary_period_id);
+
+        // Get all active users
+        $users = User::whereHas('status', fn ($q) => $q->where('status_name', 'active'))
+            ->whereHas('employeeDetails')
+            ->get();
+
+        if ($users->isEmpty()) {
+            abort(403, 'no users found matching the criteria');
+        } else {
+            $service->compute($users, $period);
+        }
+
+        return back()->with('success', 'Attendance reports re-computed!');
     }
 
     public function show(SalaryPeriod $period)
@@ -83,6 +128,7 @@ class BiMonthlyController extends Controller
 
         return response()->json([
             'period' => [
+                'id'    => $period->id,
                 'label' => $periodLabel,
                 'days'  => $dayCount,
             ],

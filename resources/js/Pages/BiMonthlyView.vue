@@ -27,12 +27,39 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  currentPeriod: Object,
+  periodDates: Object,
 });
 
 // logged in user data
 const page = usePage();
 const authUser = computed(() => page.props.auth.user);
 const { error } = useToast();
+
+// Holds the action to be executed on confirmation
+const pendingAction = ref(null);
+// confirmation before request
+const isConfirmModalOpen = ref(false);
+const isConfirmLoading = ref(false);
+
+// Holds the properties for the confirmation modal
+const confirmModalProps = reactive({
+  title: "",
+  message: "",
+  confirmText: "",
+  confirmButtonBg: "",
+  iconName: "",
+});
+// Closes the confirmation modal
+const closeConfirmModal = () => {
+  isConfirmModalOpen.value = false;
+};
+// Executes the action on confirmation
+const executeConfirm = () => {
+  if (pendingAction.value) {
+    pendingAction.value();
+  }
+};
 
 // --- Bi-Monthly Report Details ---
 const {
@@ -44,10 +71,48 @@ const {
   close: closeBiMonthlyReport,
 } = useDetailsModal({ baseUrl: "/bi-monthly" });
 
-// Outer table — list of salary periods
+// Outer table — list of bi-monthly periods
 const biMonthlyReportTableColumns = useBiMonthlyReportColumns({
   openBiMonthlyReport,
 });
+
+// Handle re-compute single
+const recompute = () => {
+  Object.assign(confirmModalProps, {
+    title: "Re-Compute Attendance Report",
+    message: `Are you sure you want to re-compute attendance reports in ${props.periodDates.label}`,
+    confirmText: "Re-Compute",
+    confirmButtonBg: "bg-blue-600 hover:bg-blue-700",
+    iconName: "pi pi-wallet",
+    iconColor: "text-blue-600",
+    iconBgColor: "bg-blue-100",
+  });
+
+  pendingAction.value = () => {
+    isConfirmLoading.value = true;
+    router.post(
+      route("bi.monthly.recompute"),
+      {
+        salary_period_id: props.currentPeriod.id,
+      },
+      {
+        preserveScroll: true,
+        onError: (errors) => {
+          error(errors.message);
+        },
+        onFinish: () => {
+          closeConfirmModal();
+          isBiMonthlyModalOpen.value = false;
+          setTimeout(() => {
+            isConfirmLoading.value = false;
+          }, 500);
+        },
+      },
+    );
+  };
+
+  isConfirmModalOpen.value = true;
+};
 
 // Inner table — attendance rows inside the modal
 const attendanceReportColumns = useAttendanceReportColumns();
@@ -96,6 +161,10 @@ const handleExport = async () => {
     modalTitle.value,
   );
 };
+
+const canRecompute = computed(() => {
+  return selectedBiMonthlyReport.value?.period.id === props.currentPeriod?.id;
+});
 </script>
 
 <template>
@@ -153,6 +222,14 @@ const handleExport = async () => {
       >
         <template #custom-actions>
           <button
+            v-if="canRecompute"
+            @click="recompute"
+            class="btn btn-sm @sm:btn-md rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
+          >
+            <i class="pi pi-undo mr-1" />
+            Re-compute
+          </button>
+          <button
             class="btn btn-sm @sm:btn-md rounded-full border-2 border-base-content text-white bg-green-primary-1 shadow-md hover:bg-green-primary-3"
             @click="handleExport"
           >
@@ -162,5 +239,14 @@ const handleExport = async () => {
         </template>
       </DataTable>
     </template>
+
+    <!-- Confirmation Modal -->
+    <ConfirmModal
+      :show="isConfirmModalOpen"
+      v-bind="confirmModalProps"
+      :loading="isConfirmLoading"
+      @cancel="closeConfirmModal"
+      @confirm="executeConfirm"
+    />
   </DetailsModal>
 </template>
