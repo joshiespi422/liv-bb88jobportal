@@ -173,6 +173,11 @@ const isLeaderTab = computed(
 const tabs = computed(() => {
   const items = [{ id: "all", label: "All Accomplish" }];
 
+  // If the user is an intern, remove the "all" tab
+  if (authUser.value.userType === "intern") {
+    items.splice(0, 1);
+  }
+
   if (
     isRegularTab.value ||
     isLeaderTab.value ||

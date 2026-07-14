@@ -82,6 +82,11 @@ class AccomplishmentController extends Controller
      */
     private function getActiveTab(Request $request, $user, string $accomplishmentType): string
     {
+        // If the user is an intern, they are strictly allowed only 'own'
+        if ($user->userType->type_name === 'intern') {
+            return in_array($request->tab, ['own']) ? $request->tab : 'own';
+        }
+
         // Define the default tab
         $isLeaderViewingInterns = $user->userType->type_name === 'employee'
             && $user->employeeDetails?->hierarchy === 'Leader'
