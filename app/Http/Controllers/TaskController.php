@@ -89,7 +89,12 @@ class TaskController extends Controller
      */
     private function getActiveTab(Request $request, $user, string $taskType): string
     {
-        // Define the default tab
+        // If the user is an intern, they are strictly allowed only 'own' or 'archived'
+        if ($user->userType->type_name === 'intern') {
+            return in_array($request->tab, ['own', 'archived']) ? $request->tab : 'own';
+        }
+        
+        // Define the default tab for employees/admins
         $isLeaderViewingInterns = $user->userType->type_name === 'employee'
             && $user->employeeDetails?->hierarchy === 'Leader'
             && $taskType === 'intern';
@@ -126,6 +131,10 @@ class TaskController extends Controller
                 return $query->whereIn('status_id', $activeStatuses)
                                 ->orderByRaw("status_id = ? DESC", [$statuses['for approval']]);
             case 'archived':
+                // If an intern views archives, restrict it to their assigned tasks
+                if ($user->userType->type_name === 'intern') {
+                    $query->whereHas('users', fn($q) => $q->where('user_id', $user->id));
+                }
                 return $query->whereIn('status_id', $archivedStatuses)
                                 ->orderBy('created_at', 'desc');
             default:
