@@ -510,6 +510,11 @@ const tabs = computed(() => {
     { id: "archived", label: "Archived" },
   ];
 
+  // If the user is an intern, remove the "active" tab
+  if (authUser.value.userType === "intern") {
+    items.splice(0, 1);
+  }
+
   if (
     isRegularTab.value ||
     isLeaderTab.value ||
