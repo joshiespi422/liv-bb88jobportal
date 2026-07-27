@@ -15,7 +15,10 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             DummyDataSeeder::class,
-            TimeLogSeeder::class
+            TimeLogSeeder::class,
+            CompanySeeder::class,
+            ComplianceFormSeeder::class,
+            CompanyComplianceFormSeeder::class
         ]);
     }
 }
