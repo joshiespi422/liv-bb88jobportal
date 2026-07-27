@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('compliance_uploads', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('compliance_schedule_id')->constrained()->restrictOnDelete();
+            $table->foreignId('company_compliance_form_id')->constrained()->restrictOnDelete();
             $table->year('year');
             $table->unsignedTinyInteger('period');
             $table->date('start_date');
@@ -22,7 +22,7 @@ return new class extends Migration
             $table->text('remarks')->nullable();
             $table->timestamps();
 
-            $table->unique(['compliance_schedule_id', 'year', 'period']);
+            $table->unique(['company_compliance_form_id', 'year', 'period']);
         });
     }
 

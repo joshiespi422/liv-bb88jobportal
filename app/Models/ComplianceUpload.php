@@ -31,8 +31,8 @@ class ComplianceUpload extends Model
         ];
     }
 
-    public function complianceSchedule(): BelongsTo
+    public function companyComplianceForm(): BelongsTo
     {
-        return $this->belongsTo(ComplianceSchedule::class);
+        return $this->belongsTo(CompanyComplianceForm::class);
     }
 }

@@ -16,8 +16,8 @@ class Company extends Model
         'address',
     ];
 
-    public function complianceSchedules(): HasMany
+    public function companyComplianceForms(): HasMany
     {
-        return $this->hasMany(ComplianceSchedule::class);
+        return $this->hasMany(CompanyComplianceForm::class);
     }
 }
