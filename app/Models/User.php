@@ -234,6 +234,16 @@ class User extends Authenticatable
         return $this->userType && $this->userType->type_name === $typeName;
     }
 
+    /** 
+     * Resolves user department (employee/intern), 
+     * or null for super_admin/none. 
+     */
+    public function getDepartment(): ?Department
+    {
+        return $this->employeeDetails?->department
+            ?? $this->internDetails?->department;
+    }
+
     protected function picture(): Attribute
     {
         return Attribute::make(
