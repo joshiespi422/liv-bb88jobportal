@@ -18,6 +18,13 @@ export const menuItems = [
     routeName: "attendance",
   },
   {
+    name: "ACCOUNTING",
+    icon: "pi pi-folder",
+    userType: ["super_admin", "employee"],
+    department: ["Developer"],
+    routeName: "compliance",
+  },
+  {
     name: "USERS",
     icon: "pi pi-users",
     userType: ["employee", "super_admin"],
