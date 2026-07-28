@@ -22,6 +22,7 @@ use App\Http\Controllers\ChatController;
 use App\Http\Controllers\BiMonthlyController;
 use App\Http\Controllers\HalfDayController;
 use App\Http\Controllers\ComplianceController;
+use App\Http\Controllers\ComplianceFormController;
 use Illuminate\Support\Facades\Route;
 
 // Profile info for the qr code
@@ -155,8 +156,9 @@ Route::middleware('auth')->group(function () {
     });
 
 
-     Route::middleware(['user.type:super_admin,employee', 'department:Developer',])->group(function () {
+     Route::middleware(['user.type:super_admin,employee', 'department:Admin',])->group(function () {
         Route::get('/compliance', [ComplianceController::class, 'index'])->name('compliance');
+        Route::get('/compliance/{company:slug}', [ComplianceFormController::class, 'index'])->name('compliance.form.index');
     });
 });
 

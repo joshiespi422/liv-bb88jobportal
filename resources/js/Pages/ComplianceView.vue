@@ -31,7 +31,7 @@ const authUser = computed(() => page.props.auth.user);
       <!-- Custom card layout -->
       <template #card-item="{ row }">
         <div
-          class="card bg-base-100 shadow-md border border-base-200 hover:shadow-lg transition-shadow duration-200"
+          class="card bg-base-100 shadow-md border-2 border-base-200 hover:shadow-lg transition-shadow duration-200"
         >
           <div class="card-body p-5">
             <!-- Card Header: Name & Slug/Badge -->
@@ -47,7 +47,7 @@ const authUser = computed(() => page.props.auth.user);
                 </span>
               </div>
               <span
-                class="badge badge-sm badge-primary uppercase tracking-wider font-medium"
+                class="badge badge-sm badge-info badge-soft uppercase tracking-wider font-medium"
               >
                 Active
               </span>
@@ -59,7 +59,9 @@ const authUser = computed(() => page.props.auth.user);
             <!-- Card Content Details -->
             <div class="space-y-1.5 text-sm text-base-content/80 my-1">
               <div class="flex items-center justify-between">
-                <span class="font-medium text-base-content/50">TIN:</span>
+                <span class="font-medium text-base-content/50 text-xs"
+                  >TIN:</span
+                >
                 <span class="font-mono text-xs bg-base-200 px-2 py-0.5 rounded">
                   {{ row.tin || "N/A" }}
                 </span>
@@ -76,15 +78,15 @@ const authUser = computed(() => page.props.auth.user);
 
             <!-- Card Actions -->
             <div
+              v-if="row.slug"
               class="card-actions justify-end mt-3 pt-2 border-t border-base-200"
             >
-              <!-- <Link
-                v-if="row.slug"
-                :href="route('compliance.show', row.slug)"
-                class="btn btn-sm btn-primary w-full sm:w-auto"
+              <Link
+                :href="route('compliance.form.index', { company: row.slug })"
+                class="btn btn-sm btn-secondary w-full sm:w-auto"
               >
                 View Details
-              </Link> -->
+              </Link>
             </div>
           </div>
         </div>
