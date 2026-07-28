@@ -6,6 +6,7 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\Company;
 use App\Models\ComplianceForm;
+use Illuminate\Support\Facades\DB;
 
 class CompanyComplianceFormSeeder extends Seeder
 {
@@ -20,8 +21,20 @@ class CompanyComplianceFormSeeder extends Seeder
         }
 
         Company::chunk(100, function ($companies) use ($formIds) {
+            $insertData = [];
             foreach ($companies as $company) {
-                $company->complianceForms()->sync($formIds);
+                foreach ($formIds as $formId) {
+                    $insertData[] = [
+                        'company_id' => $company->id,
+                        'compliance_form_id' => $formId,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                }
+            }
+
+            if (!empty($insertData)) {
+                DB::table('company_compliance_forms')->insertOrIgnore($insertData);
             }
         });
     }
