@@ -15,6 +15,7 @@ const isLogoutLoading = ref(false);
 const userAuth = computed(() => page.props.auth.user || {});
 const userType = computed(() => userAuth.value.userType || "");
 const hierarchy = computed(() => userAuth.value.hierarchy || "");
+const department = computed(() => userAuth.value.department?.name || null);
 
 const promptLogout = () => {
   showLogoutModal.value = true;
@@ -54,8 +55,18 @@ const userTypePermission = (item, parentPermissions) => {
   return effectivePermissions.includes(userType.value);
 };
 
+const departmentPermission = (departments) => {
+  if (!departments) return true;
+  if (userType.value === "super_admin") return true;
+  return department.value && departments.includes(department.value);
+};
+
 // Recursive filtering for menu items
-const filterMenuItems = (items, parentPermissions = []) => {
+const filterMenuItems = (
+  items,
+  parentPermissions = [],
+  parentDepartments = null,
+) => {
   return items.reduce((result, item) => {
     // Check user type permission first
     if (!userTypePermission(item, parentPermissions)) {
@@ -67,12 +78,20 @@ const filterMenuItems = (items, parentPermissions = []) => {
       return result;
     }
 
+    // Department is set on this item, or inherited from parent
+    const effectiveDepartments =
+      item.department !== undefined ? item.department : parentDepartments;
+    if (!departmentPermission(effectiveDepartments)) {
+      return result;
+    }
+
     // Process submenus recursively
     let newItem = { ...item };
     if (item.hasSubmenu && item.submenu) {
       const filteredSubmenu = filterMenuItems(
         item.submenu,
-        item.userType || parentPermissions
+        item.userType || parentPermissions,
+        effectiveDepartments,
       );
 
       if (filteredSubmenu.length === 0) return result;
@@ -270,7 +289,7 @@ const isBelowSm = useMediaQuery("(max-width: 639px)");
                         class="p-2 pl-5 flex items-center cursor-pointer hover:bg-[#f9f6f630] rounded-l-3xl"
                         @click="
                           subItem.hasSubmenu &&
-                            toggleNestedSubmenu($event, subItem.name)
+                          toggleNestedSubmenu($event, subItem.name)
                         "
                       >
                         <i :class="`${subItem.icon} mr-2`"></i>
