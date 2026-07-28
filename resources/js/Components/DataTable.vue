@@ -27,7 +27,7 @@ const props = defineProps({
   },
   columns: {
     type: Array,
-    required: true,
+    required: false,
     default: () => [],
   },
   enableTooltips: {
@@ -58,7 +58,20 @@ const { data: propsData, columns: propsColumns } = toRefs(props);
 
 // Computed properties for reactivity if props change
 // const tableData = computed(() => propsData.value); // deprecated since we are using filteredTableData
-const tableColumns = computed(() => propsColumns.value);
+const tableColumns = computed(() => {
+  if (propsColumns.value && propsColumns.value.length > 0) {
+    return propsColumns.value;
+  }
+  // fallback to props data if columns are not defined
+  if (propsData.value && propsData.value.length > 0) {
+    return Object.keys(propsData.value[0]).map((key) => ({
+      accessorKey: key,
+      header: key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
+    }));
+  }
+
+  return [];
+});
 
 // Reactive state for table features
 const sorting = ref([]);
@@ -148,7 +161,7 @@ const initTooltips = async () => {
     }
 
     const elements = tableRef.value.querySelectorAll(
-      "[data-tippy-content]:not([data-tippy-initialized])"
+      "[data-tippy-content]:not([data-tippy-initialized])",
     );
 
     elements.forEach((el) => {
