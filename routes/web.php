@@ -21,6 +21,7 @@ use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\BiMonthlyController;
 use App\Http\Controllers\HalfDayController;
+use App\Http\Controllers\ComplianceController;
 use Illuminate\Support\Facades\Route;
 
 // Profile info for the qr code
@@ -151,6 +152,11 @@ Route::middleware('auth')->group(function () {
         Route::post('/material-request', [MaterialRequestController::class, 'store'])->name('material.request.store');
         Route::patch('/material-request/{materialRequest}/sign', [MaterialRequestController::class, 'signMaterialRequest'])->name('material.request.sign');
         Route::patch('/material-request/{materialRequest}/validate', [MaterialRequestController::class, 'validateMaterialRequest'])->name('material.request.validate');
+    });
+
+
+     Route::middleware(['user.type:super_admin,employee', 'department:Developer',])->group(function () {
+        Route::get('/compliance', [ComplianceController::class, 'index'])->name('compliance');
     });
 });
 
