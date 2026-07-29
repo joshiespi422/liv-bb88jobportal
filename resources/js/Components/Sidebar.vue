@@ -160,11 +160,15 @@ const setMenuItemRef = (el, itemName) => {
 
 const activeStates = computed(() => {
   const states = {};
-  const currentRoute = page.props.ziggy;
+  const currentPath = page.url;
 
   const checkActive = (item) => {
     if (item.routeName) {
-      return currentRoute.current === item.routeName;
+      // check exact Ziggy route name match
+      const isRouteMatch = route().current(item.routeName);
+      // fallback if current URL starts with the route name
+      const isPathMatch = currentPath.startsWith(`/${item.routeName}`);
+      return isRouteMatch || isPathMatch;
     }
     if (item.submenu) {
       return item.submenu.some((subItem) => checkActive(subItem));
