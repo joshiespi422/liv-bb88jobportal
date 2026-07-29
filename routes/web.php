@@ -23,6 +23,7 @@ use App\Http\Controllers\BiMonthlyController;
 use App\Http\Controllers\HalfDayController;
 use App\Http\Controllers\ComplianceController;
 use App\Http\Controllers\ComplianceFormController;
+use App\Http\Controllers\ComplianceUploadController;
 use Illuminate\Support\Facades\Route;
 
 // Profile info for the qr code
@@ -158,7 +159,14 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware(['user.type:super_admin,employee', 'department:Admin',])->group(function () {
         Route::get('/compliance', [ComplianceController::class, 'index'])->name('compliance');
-        Route::get('/compliance/{company:slug}', [ComplianceFormController::class, 'index'])->name('compliance.forms');
+        Route::get('/compliance/{company:slug}', [ComplianceFormController::class, 'index'])
+            ->name('compliance.forms');
+        Route::get('/compliance/{company:slug}/{form:code}', [ComplianceUploadController::class, 'index'])
+            ->name('compliance.uploads')
+            ->withoutScopedBindings();
+        Route::get('/compliance/{company:slug}/{form:code}/{upload}/view', [ComplianceUploadController::class, 'show'])
+            ->name('compliance.uploads.show')
+            ->withoutScopedBindings();
     });
 });
 

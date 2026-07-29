@@ -36,7 +36,7 @@ const returnTypeBadgeClass = (type) => {
 </script>
 
 <template>
-  <Head :title="`${company.name} - Compliance Forms`" />
+  <Head title="Compliance Forms" />
   <div class="p-2 @lg:p-4 @3xl:p-8 @5xl:p-10 @7xl:p-12">
     <div
       class="flex flex-col items-center gap-2 sm:flex-row sm:justify-between sm:gap-0 mx-4 mb-5"
@@ -129,17 +129,17 @@ const returnTypeBadgeClass = (type) => {
             <div
               class="card-actions justify-end mt-3 pt-2 border-t border-base-200"
             >
-              <!-- <Link
+              <Link
                 :href="
                   route('compliance.uploads', {
                     company: company.slug,
-                    form: row.id,
+                    form: row.code,
                   })
                 "
                 class="btn btn-sm btn-secondary w-full sm:w-auto"
               >
                 Manage Uploads
-              </Link> -->
+              </Link>
             </div>
           </div>
         </div>
