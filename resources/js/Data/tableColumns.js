@@ -10,6 +10,7 @@ import {
   shortMonthDay,
 } from "../Composables/useDateFormatter";
 import { capitalizeFirst } from "./detailFields";
+import { formatPeriod } from "../Utils/formatPeriod";
 
 /**
  * @param {Object} props - The component's props (specifically `activeTab`).
@@ -994,6 +995,71 @@ export function useHalfDayColumns({ handleViewDetails }) {
               "btn btn-sm @sm:btn-md rounded-full bg-green-primary-1 text-white hover:bg-green-primary-3",
           },
           "View Details",
+        ),
+      enableSorting: false,
+    },
+  ];
+}
+
+/**
+ * @param {Object} handlers
+ * @param {Function} handlers.handleViewUploads - Opens the upload's document in a new tab.
+ * @param {import('vue').Ref|Object} complianceForm - The active compliance form (for return_type context).
+ * @returns {Array}
+ */
+export function useComplianceUploadsColumns({
+  handleViewUploads,
+  complianceForm,
+}) {
+  return [
+    {
+      accessorKey: "form_code",
+      header: "FORM",
+      cell: ({ row }) =>
+        h("span", { class: "font-mono font-semibold" }, row.original.form_code),
+    },
+    {
+      accessorKey: "year",
+      header: "YEAR",
+    },
+    {
+      id: "period",
+      header: "PERIOD",
+      cell: ({ row }) =>
+        h(
+          "span",
+          { class: "badge badge-sm badge-ghost" },
+          formatPeriod(complianceForm.return_type, row.original.period),
+        ),
+    },
+    {
+      id: "date_range",
+      header: "COVERAGE",
+      cell: ({ row }) =>
+        `${row.original.start_date} — ${row.original.end_date}`,
+    },
+    {
+      accessorKey: "remarks",
+      header: "REMARKS",
+      cell: ({ row }) =>
+        h(
+          "span",
+          { class: "line-clamp-2 text-xs text-base-content/70" },
+          row.original.remarks || "—",
+        ),
+    },
+    {
+      id: "details",
+      header: "DOCUMENT",
+      cell: ({ row }) =>
+        h(
+          "button",
+          {
+            onClick: () => handleViewUploads(row.original),
+            class:
+              "btn btn-sm @sm:btn-md rounded-full bg-green-primary-1 text-white hover:bg-green-primary-3",
+          },
+          "View Document",
         ),
       enableSorting: false,
     },
