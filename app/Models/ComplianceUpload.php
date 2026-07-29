@@ -11,7 +11,7 @@ class ComplianceUpload extends Model
     use HasFactory;
 
     protected $fillable = [
-        'compliance_schedule_id',
+        'company_compliance_form_id',
         'year',
         'period',
         'start_date',
@@ -23,7 +23,7 @@ class ComplianceUpload extends Model
     protected function casts(): array
     {
         return [
-            'compliance_schedule_id' => 'integer',
+            'company_compliance_form_id' => 'integer',
             'year' => 'integer',
             'period' => 'integer',
             'start_date' => 'date',
