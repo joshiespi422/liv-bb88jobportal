@@ -156,9 +156,9 @@ Route::middleware('auth')->group(function () {
     });
 
 
-     Route::middleware(['user.type:super_admin,employee', 'department:Admin',])->group(function () {
+    Route::middleware(['user.type:super_admin,employee', 'department:Admin',])->group(function () {
         Route::get('/compliance', [ComplianceController::class, 'index'])->name('compliance');
-        Route::get('/compliance/{company:slug}', [ComplianceFormController::class, 'index'])->name('compliance.form.index');
+        Route::get('/compliance/{company:slug}', [ComplianceFormController::class, 'index'])->name('compliance.forms');
     });
 });
 

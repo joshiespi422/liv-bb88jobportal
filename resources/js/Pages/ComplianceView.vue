@@ -16,7 +16,7 @@ const authUser = computed(() => page.props.auth.user);
 </script>
 
 <template>
-  <Head title="Compliance" />
+  <Head title="Company Compliance" />
   <div class="p-2 @lg:p-4 @3xl:p-8 @5xl:p-10 @7xl:p-12">
     <div
       class="flex flex-col items-center gap-2 sm:flex-row sm:justify-between sm:gap-0 mx-4 mb-5"
@@ -82,7 +82,7 @@ const authUser = computed(() => page.props.auth.user);
               class="card-actions justify-end mt-3 pt-2 border-t border-base-200"
             >
               <Link
-                :href="route('compliance.form.index', { company: row.slug })"
+                :href="route('compliance.forms', { company: row.slug })"
                 class="btn btn-sm btn-secondary w-full sm:w-auto"
               >
                 View Details
