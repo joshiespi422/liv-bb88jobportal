@@ -13,6 +13,7 @@ use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\Http\RedirectResponse;
 use App\Http\Requests\StoreComplianceUploadRequest;
+use Illuminate\Support\Str;
 
 class ComplianceUploadController extends Controller
 {
@@ -36,7 +37,7 @@ class ComplianceUploadController extends Controller
                 'document_url' => route('compliance.uploads.show', [
                     'company' => $company->slug,
                     'form' => $form->code,
-                    'upload' => $upload->id,
+                    'upload' => $upload->slug,
                 ]),
             ])
             ->values();
@@ -104,6 +105,7 @@ class ComplianceUploadController extends Controller
 
         ComplianceUpload::create([
             'company_compliance_form_id' => $companyComplianceForm->id,
+            'slug' => (string) Str::ulid(),
             'year' => $validated['year'],
             'period' => $validated['period'],
             'start_date' => $validated['start_date'],
