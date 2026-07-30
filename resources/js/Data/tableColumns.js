@@ -1029,14 +1029,19 @@ export function useComplianceUploadsColumns({
         h(
           "span",
           { class: "badge badge-sm badge-ghost" },
-          formatPeriod(complianceForm.return_type, row.original.period),
+          formatPeriod(
+            complianceForm.return_type,
+            row.original.period,
+            row.original.start_date,
+          ),
         ),
     },
     {
       id: "date_range",
       header: "COVERAGE",
+      size: 160,
       cell: ({ row }) =>
-        `${row.original.start_date} — ${row.original.end_date}`,
+        `${shortDate(row.original.start_date)} — ${shortDate(row.original.end_date)}`,
     },
     {
       accessorKey: "remarks",

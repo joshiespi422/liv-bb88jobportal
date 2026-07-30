@@ -1,5 +1,5 @@
 // helper for compliance upload, tanstack columns definition
-export function formatPeriod(returnType, period) {
+export function formatPeriod(returnType, period, startDate) {
   const months = [
     "Jan",
     "Feb",
@@ -16,8 +16,14 @@ export function formatPeriod(returnType, period) {
   ];
 
   switch (returnType) {
-    case "monthly":
-      return months[period - 1] ?? `Month ${period}`;
+    case "monthly": {
+      if (startDate) {
+        const startMonthIndex = new Date(startDate).getMonth();
+        const monthName = months[startMonthIndex] || "";
+        return `${monthName} - M${period}`;
+      }
+      return `Month ${period}`;
+    }
     case "quarterly":
       return `Q${period}`;
     case "annual":
