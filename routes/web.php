@@ -164,6 +164,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/compliance/{company:slug}/{form:code}', [ComplianceUploadController::class, 'index'])
             ->name('compliance.uploads')
             ->withoutScopedBindings();
+        Route::post('/compliance/{company:slug}/{form:code}', [ComplianceUploadController::class, 'store'])
+            ->name('compliance.uploads.store')
+            ->withoutScopedBindings();
         Route::get('/compliance/{company:slug}/{form:code}/{upload}/view', [ComplianceUploadController::class, 'show'])
             ->name('compliance.uploads.show')
             ->withoutScopedBindings();
