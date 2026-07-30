@@ -11,6 +11,8 @@ use App\Models\CompanyComplianceForm;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Illuminate\Http\RedirectResponse;
+use App\Http\Requests\StoreComplianceUploadRequest;
 
 class ComplianceUploadController extends Controller
 {
@@ -90,5 +92,26 @@ class ComplianceUploadController extends Controller
         abort_if($companyComplianceForm === null, 404, 'This form is not assigned to this company.');
 
         return $companyComplianceForm;
+    }
+
+    public function store(StoreComplianceUploadRequest $request, Company $company, ComplianceForm $form): RedirectResponse
+    {
+        $companyComplianceForm = $this->resolveCompanyComplianceForm($company, $form);
+
+        $validated = $request->validated();
+
+        $path = $request->file('document')->store('compliance-uploads', 'local');
+
+        ComplianceUpload::create([
+            'company_compliance_form_id' => $companyComplianceForm->id,
+            'year' => $validated['year'],
+            'period' => $validated['period'],
+            'start_date' => $validated['start_date'],
+            'end_date' => $validated['end_date'],
+            'document' => $path,
+            'remarks' => $validated['remarks'] ?? null,
+        ]);
+
+        return back()->with('success', 'Compliance upload created successfully!');
     }
 }
