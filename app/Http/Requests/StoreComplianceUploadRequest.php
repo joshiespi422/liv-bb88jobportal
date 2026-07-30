@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Enums\ComplianceFormReturnType;
 use App\Models\CompanyComplianceForm;
 use App\Models\ComplianceUpload;
+use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -25,15 +26,24 @@ class StoreComplianceUploadRequest extends FormRequest
     public function rules(): array
     {
         $companyComplianceForm = $this->companyComplianceForm();
-        $form = $this->route('form'); // ComplianceForm, bound via {form:code}
+        $form = $this->route('form');
 
         return [
+            'start_date' => [
+                'required',
+                'date',
+                'after_or_equal:2000-01-01',
+                'before_or_equal:' . now()->addYear()->endOfYear()->toDateString(),
+            ],
+            'end_date' => [
+                'required',
+                'date',
+                'after:start_date',
+            ],
             'year' => [
                 'required',
                 'integer',
                 'digits:4',
-                'min:2000',
-                'max:' . (now()->year + 1),
             ],
             'period' => [
                 'required',
@@ -44,15 +54,6 @@ class StoreComplianceUploadRequest extends FormRequest
                         ->where('company_compliance_form_id', $companyComplianceForm->id)
                         ->where('year', $this->input('year'))
                     ),
-            ],
-            'start_date' => [
-                'required',
-                'date',
-            ],
-            'end_date' => [
-                'required',
-                'date',
-                'after_or_equal:start_date',
             ],
             'document' => [
                 'required',
@@ -72,37 +73,55 @@ class StoreComplianceUploadRequest extends FormRequest
     {
         return [
             'period.unique' => 'A compliance upload for this period and year already exists.',
+            'end_date.after' => 'The end date must be after the start date.',
             'document.mimes' => 'The document must be a PDF file.',
             'document.max' => 'The document must not be larger than 2MB.',
-            'end_date.after_or_equal' => 'The end date must be on or after the start date.',
         ];
     }
 
     /**
-     * Additional checks that can't be expressed as simple rules:
-     * - start_date/end_date must fall within the declared year
-     * - date range must not overlap with any existing upload for this form
+     * Checks that need cross-field logic or a DB lookup:
+     * - the date span is a sane length for the return type
+     * - the range doesn't overlap an existing upload for this form
      */
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator) {
-            if ($validator->errors()->has('start_date') || $validator->errors()->has('end_date')) {
-                return; // don't stack more errors on already-invalid dates
+            if ($validator->errors()->has('start_date') || $validator->errors()->has('year')) {
+                return;
             }
 
-            $year = (int) $this->input('year');
-            $startDate = $this->date('start_date');
-            $endDate = $this->date('end_date');
+            $startDate = Carbon::parse($this->input('start_date'));
+            $submittedYear = (int) $this->input('year');
 
-            if ($startDate && $startDate->year !== $year) {
-                $validator->errors()->add('start_date', "The start date must fall within {$year}.");
+            // The year must match the year start_date falls in — this is what
+            // anchors mid-year fiscal periods and Dec→Jan spans consistently,
+            // and it must be something the user explicitly confirms, not
+            // something we silently correct for them.
+            if ($startDate->year !== $submittedYear) {
+                $validator->errors()->add(
+                    'year',
+                    "The year must match the start date's year ({$startDate->year})."
+                );
+                return;
             }
 
-            if ($endDate && $endDate->year !== $year) {
-                $validator->errors()->add('end_date', "The end date must fall within {$year}.");
+            if ($validator->errors()->has('end_date')) {
+                return;
             }
 
-            if (! $startDate || ! $endDate) {
+            $form = $this->route('form');
+            $endDate = Carbon::parse($this->input('end_date'));
+            $spanDays = $startDate->diffInDays($endDate) + 1;
+
+            [$min, $max] = $this->expectedSpanDays($form->return_type);
+
+            if ($spanDays < $min || $spanDays > $max) {
+                $validator->errors()->add(
+                    'end_date',
+                    "The date range ({$spanDays} days) doesn't match a typical " .
+                        strtolower($form->return_type->label()) . ' period.'
+                );
                 return;
             }
 
@@ -121,10 +140,6 @@ class StoreComplianceUploadRequest extends FormRequest
         });
     }
 
-    /**
-     * Resolve (and verify) the pivot connecting the company and form,
-     * mirroring the controller's own ownership check.
-     */
     private function companyComplianceForm(): CompanyComplianceForm
     {
         if ($this->companyComplianceForm !== null) {
@@ -154,6 +169,20 @@ class StoreComplianceUploadRequest extends FormRequest
             ComplianceFormReturnType::QUARTERLY => 'between:1,4',
             ComplianceFormReturnType::ANNUAL => 'in:1',
             ComplianceFormReturnType::CUSTOM => 'between:1,366',
+        };
+    }
+
+    /**
+     * [min, max] allowed days for the date range, per return type.
+     * Buffers account for short/long months, leap years, and inclusive counting.
+     */
+    private function expectedSpanDays(ComplianceFormReturnType $returnType): array
+    {
+        return match ($returnType) {
+            ComplianceFormReturnType::MONTHLY => [28, 31],
+            ComplianceFormReturnType::QUARTERLY => [89, 92],
+            ComplianceFormReturnType::ANNUAL => [365, 366],
+            ComplianceFormReturnType::CUSTOM => [1, 731], // up to ~2 years, deliberately loose
         };
     }
 }
