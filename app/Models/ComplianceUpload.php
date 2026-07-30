@@ -12,6 +12,7 @@ class ComplianceUpload extends Model
 
     protected $fillable = [
         'company_compliance_form_id',
+        'slug',
         'year',
         'period',
         'start_date',

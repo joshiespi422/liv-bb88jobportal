@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('compliance_uploads', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_compliance_form_id')->constrained()->restrictOnDelete();
+            $table->string('slug')->unique();
             $table->year('year');
             $table->unsignedTinyInteger('period');
             $table->date('start_date');
