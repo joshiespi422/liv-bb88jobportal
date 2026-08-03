@@ -21,7 +21,7 @@ export const menuItems = [
     name: "ACCOUNTING",
     icon: "pi pi-folder",
     userType: ["super_admin", "employee"],
-    department: ["Developer"],
+    department: ["Admin"],
     routeName: "compliance",
   },
   {
